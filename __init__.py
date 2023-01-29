@@ -2,7 +2,7 @@ from nonebot import get_driver
 from nonebot import on_command, on_keyword, on_message
 from nonebot.log import logger
 from nonebot.params import Arg, ArgPlainText, CommandArg, Matcher, Event
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, PrivateMessageEvent, MessageSegment, GroupMessageEvent
+from nonebot.adapters.onebot.v11 import Message, PrivateMessageEvent, GroupMessageEvent
 
 import time
 import random
@@ -38,15 +38,17 @@ class Chat:
         self.change_presettings(preset_key)
 
     # 更新全局对话历史行
-    def update_chat_history_row(self, sender:str, msg: str) -> None:
+    def update_chat_history_row(self, sender:str, msg: str, require_summary:bool = False) -> None:
         messageunit = tg.generate_msg_template(sender=sender, msg=msg)
         self.chat_presets['chat_history'].append(messageunit)
         logger.info(f"添加对话历史行: {messageunit}  |  当前对话历史行数: {len(self.chat_presets['chat_history'])}")
+        while len(self.chat_presets['chat_history']) > config['CHAT_MEMORY_MAX_LENGTH'] * 2:    # 保证对话历史不超过最大长度的两倍
+            self.chat_presets['chat_history'].pop(0)
         # 保证对话历史不超过最大长度
-        if len(self.chat_presets['chat_history']) > config['CHAT_MEMORY_MAX_LENGTH']:
+        if len(self.chat_presets['chat_history']) > config['CHAT_MEMORY_MAX_LENGTH'] and require_summary: # 只有在需要时才进行总结 避免不必要的计算
             prev_summarized = f"上次的对话摘要:{self.chat_presets['chat_summarized']}\n\n" \
                 if self.chat_presets.get('chat_summarized') else ''
-            history_str = '\n\n'.join(self.chat_presets['chat_history'])
+            history_str = '\n'.join(self.chat_presets['chat_history'])
             prompt = f"{prev_summarized}对话记录:\n" \
                 f"{history_str}" \
                 f"\n\n{self.chat_presets['bot_self_introl']}\n从{self.chat_presets['bot_name']}的视角用一段话总结以上聊天并尽可能多地记录下对话中的重要信息:" # 以机器人的视角总结对话
@@ -92,7 +94,7 @@ class Chat:
             if global_preset_userdata[self.preset_key].get(userid, {}).get('chat_impression', None) else ''  # 用户印象描述
 
         offset = 0
-        chat_history = '\n\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])  # 从对话历史中截取短期对话
+        chat_history = '\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])  # 从对话历史中截取短期对话
         while tg.cal_token_count(chat_history) > config['CHAT_HISTORY_MAX_TOKENS']:
             offset += 1 # 如果对话历史过长，则逐行删除对话历史
             chat_history = '\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])
@@ -195,15 +197,17 @@ async def handler(event: Event) -> None:
         chat = Chat(chat_key)
         chat_dict[chat_key] = chat
 
-    # 更新全局对话历史记录
-    chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext())
-
     if not (    # 如果不是 bot 相关的信息，则直接返回
         (config['REPLY_ON_NAME_MENTION'] and (chat.get_chat_bot_name() in event.get_plaintext())) or \
         (config['REPLY_ON_AT'] and event.is_tome())\
     ):
+        chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=False)
         logger.info("不是 bot 相关的信息，记录但不进行回复")
         return
+    else:
+        # 更新全局对话历史记录
+        chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=True)
+        logger.info("符合 bot 发言条件，进行回复...")
 
     # 记录对用户的对话信息
     chat.update_chat_history_row_for_user(sender=sender_name, msg=event.get_plaintext(), userid=event.get_user_id(), username=sender_name)
@@ -236,7 +240,7 @@ async def handler(event: Event) -> None:
     # 发送对话结果
     await matcher.send(res)
     logger.info(f"token消耗: {cost_token} | 对话响应: \"{res}\"")
-    chat.update_chat_history_row(sender=chat.get_chat_bot_name(), msg=res)  # 更新全局对话历史记录
+    chat.update_chat_history_row(sender=chat.get_chat_bot_name(), msg=res, require_summary=True)  # 更新全局对话历史记录
     # 更新对用户的对话信息
     chat.update_chat_history_row_for_user(sender=chat.get_chat_bot_name(), msg=res, userid=event.get_user_id(), username=sender_name)
     save_data()  # 保存数据

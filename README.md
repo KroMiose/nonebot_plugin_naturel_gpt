@@ -1,4 +1,4 @@
-# [nonebot]更人性化的GPT聊天Ai插件
+# [NoneBot]更人性化的GPT聊天Ai插件
 
 ## 功能列表
 
@@ -15,11 +15,12 @@
 
 ## 使用方式
 
-1. 安装插件
-2. 加载插件并启动一次nonebot服务
+1. 安装本插件并启用，详见NoneBot关于插件安装的说明
+2. 加载插件并启动一次NoneBot服务
 3. 查看自动生成的 `config/naturel_gpt.config.yml` ，并填入你的OpenAi_Api_key
 4. 在机器人所在的群组或者私聊窗口@TA或者 `提到`TA当前的 `人格名` 即开始聊天
 5. 使用命令 `rg / 人格设定 / 人格 / identity` 即可查看相关指令
+6. 启用后bot会开始监听所有消息并适时作出记录和回应，如果你不希望bot处理某条消息，请在消息前加上忽视符（默认为 `#` ，可在配置文件中修改）
 
 ## 参数说明—— `config/naturel_gpt.config.yml`
 
