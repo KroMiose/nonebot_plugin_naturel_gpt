@@ -58,6 +58,10 @@ CONFIG_TEMPLATE = {
     'NG_DATA_PATH': "./data/naturel_gpt/", # 数据文件目录
 }
 
+# 检查config文件夹是否存在 不存在则创建
+if not Path("config").exists():
+    Path("config").mkdir()
+
 if config.NG_DEBUG: # debug模式下不读取原配置文件
     with open(config.NG_CONFIG_PATH, 'w', encoding='utf-8') as f:
         yaml.dump(CONFIG_TEMPLATE, f, allow_unicode=True)
