@@ -280,10 +280,7 @@ async def _(event: Event, arg: Message = CommandArg()):
     logger.info(f"接收到指令: {cmd} | 来源: {chat_key}")
 
     if not cmd:
-        # 获取当前对话人格
-        current_identity = chat_dict[chat_key].get_chat_preset_key()
-
-        presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == current_identity else k}' for k in list(presets_dict.keys())])
+        presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == chat_key else k}' for k in list(presets_dict.keys())])
         await identity.finish((
             f"当前可用人格预设有:\n"
             f"{presets_show_text}\n"
