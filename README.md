@@ -5,7 +5,8 @@
 </div>
 
 <div align="center">
-    ✨ 更人性化~~(拟人)~~的GPT聊天Ai插件! ✨<br/>
+    ✨ 更人性化(拟人)的GPT聊天Ai插件! ✨<br/>
+    🧬 支持多个人格自定义 / 切换 | 尽情发挥你的想象力吧！ ⚙️<br/>
     <a href="./LICENSE">
         <img src="https://img.shields.io/badge/license-Apache 2.0-6cg.svg" alt="license">
     </a>
@@ -69,6 +70,7 @@
 - 新增了预设编辑功能
 - 新增自定义管理员id功能，管理员可以删除预设 / 修改锁定的预设
 - 增加debug开关控制生成文本时的控制台输出（默认关闭）
+
 ### [2023/2/2] v1.1.1
 
 - 修复查询人格错误的问题
