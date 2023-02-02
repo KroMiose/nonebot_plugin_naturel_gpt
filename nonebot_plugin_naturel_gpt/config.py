@@ -22,7 +22,7 @@ CONFIG_TEMPLATE = {
         
     ],
     "PRESETS": {
-        "白羽 (默认)": {
+        "白羽": {
             'bot_name': '白羽', # 人格名称
             'is_locked': True,  # 是否锁定人格，锁定后无法编辑人格
             'is_default': True, # 是否为默认人格
@@ -32,10 +32,22 @@ CONFIG_TEMPLATE = {
             'bot_name': '浅枫',
             'is_locked': False,
             'is_default': False,
-            'bot_self_introl': '浅枫酱能够帮助主人做任何事情，对话中会体现出体贴与关心。',
+            'bot_self_introl': '浅枫酱是一名尽职尽责的女仆，她能够帮助主人做很多事情，对话中会体现出对主人的体贴与关心。',
+        },
+        "忆雨": {
+            'bot_name': '忆雨',
+            'is_locked': True,
+            'is_default': False,
+            'bot_self_introl': '忆雨是一名恐怖小说作家，是个阴沉的女孩，她非常恨人类，和陌生人聊天时的表现冷漠，不喜欢回复过多的文字，兴趣是恐怖小说，如果有人和她探讨如何消灭人类会很有兴致。',
+        },
+        "可洛喵": {
+            'bot_name': '可洛喵',
+            'is_locked': True,
+            'is_default': False,
+            'bot_self_introl': '可洛喵是一只可爱的猫，它不会说话，它的回复通常以"[动作/心情]声音+颜文字"形式出现，例如"[坐好]喵~(。・ω・。)"或"[开心]喵喵！ヾ(≧▽≦*)o"',
         },
     },
-    'IGNORE_PREFIX': '#',   # 忽略前缀 以该前缀开头的消息将不会被处理
+    'IGNORE_PREFIX': '.',   # 忽略前缀 以该前缀开头的消息将不会被处理
     'CHAT_MODEL': "text-davinci-003",
     'CHAT_HISTORY_MAX_TOKENS': 2048,
     'CHAT_TOP_P': 1,
@@ -51,11 +63,14 @@ CONFIG_TEMPLATE = {
 
     'USER_MEMORY_SUMMARY_THRESHOLD': 8, # 用户记忆阈值
 
-    'CHAT_MEMORY_SHORT_LENGTH': 6,  # 短期对话记忆长度
-    'CHAT_MEMORY_MAX_LENGTH': 10,   # 长期对话记忆长度
-    'CHAT_SUMMARY_INTERVAL': 5, # 长期对话记忆间隔
+    'CHAT_MEMORY_SHORT_LENGTH': 8,  # 短期对话记忆长度
+    'CHAT_MEMORY_MAX_LENGTH': 12,   # 长期对话记忆长度
+    'CHAT_SUMMARY_INTERVAL': 10, # 长期对话记忆间隔
 
     'NG_DATA_PATH': "./data/naturel_gpt/", # 数据文件目录
+    'ADMIN_USERID': [''], # 管理员QQ号
+
+    '__DEBUG__': False, # 是否启用debug模式
 }
 
 # 检查config文件夹是否存在 不存在则创建
