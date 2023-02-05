@@ -291,6 +291,9 @@ async def _(event: Event, arg: Message = CommandArg()):
             f"+ 查询预设: rg 查询 <预设名>\n"
             f"+ 更新预设: rg 更新 <预设名> <人格信息>\n"
             f"+ 添加预设: rg 添加 <预设名> <人格信息>\n"
+            f"+ 删除预设(管理): rg 删除 <预设名>\n"
+            f"+ 锁定预设(管理): rg 锁定 <预设名>\n"
+            f"+ 解锁预设(管理): rg 解锁 <预设名>\n"
             f"Tip: <人格信息> 是一段第三人称的人设说明(不超过200字, 不包含空格)\n"
         ))
 
@@ -360,6 +363,26 @@ async def _(event: Event, arg: Message = CommandArg()):
         del presets_dict[target_preset_key]
         is_progress = True
         await identity.send(f"删除预设: {target_preset_key} 成功! (￣▽￣)")
+
+    elif cmd.split(' ')[0] == "锁定" and len(cmd.split(' ')) == 2:
+        target_preset_key = cmd.split(' ')[1]
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        if target_preset_key not in presets_dict:
+            await identity.finish("找不到匹配的人格预设! 是不是手滑了呢？(；′⌒`)")
+        presets_dict[target_preset_key]['is_locked'] = True
+        is_progress = True
+        await identity.send(f"锁定预设: {target_preset_key} 成功! (￣▽￣)")
+
+    elif cmd.split(' ')[0] == "解锁" and len(cmd.split(' ')) == 2:
+        target_preset_key = cmd.split(' ')[1]
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        if target_preset_key not in presets_dict:
+            await identity.finish("找不到匹配的人格预设! 是不是手滑了呢？(；′⌒`)")
+        presets_dict[target_preset_key]['is_locked'] = False
+        is_progress = True
+        await identity.send(f"解锁预设: {target_preset_key} 成功! (￣▽￣)")
 
     else:
         await identity.finish("输入的命令好像有点问题呢... 请检查下再试试吧！ ╮(>_<)╭")
