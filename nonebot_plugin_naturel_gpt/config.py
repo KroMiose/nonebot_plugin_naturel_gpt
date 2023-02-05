@@ -47,7 +47,7 @@ CONFIG_TEMPLATE = {
             'bot_self_introl': '可洛喵是一只可爱的猫，它不会说话，它的回复通常以"[动作/心情]声音+颜文字"形式出现，例如"[坐好]喵~(。・ω・。)"或"[开心]喵喵！ヾ(≧▽≦*)o"',
         },
     },
-    'IGNORE_PREFIX': '.',   # 忽略前缀 以该前缀开头的消息将不会被处理
+    'IGNORE_PREFIX': '#',   # 忽略前缀 以该前缀开头的消息将不会被处理
     'CHAT_MODEL': "text-davinci-003",
     'CHAT_HISTORY_MAX_TOKENS': 2048,
     'CHAT_TOP_P': 1,
@@ -61,7 +61,7 @@ CONFIG_TEMPLATE = {
     'REPLY_ON_NAME_MENTION': True,  # 是否在被提及时回复
     'REPLY_ON_AT': True,            # 是否在被at时回复
 
-    'USER_MEMORY_SUMMARY_THRESHOLD': 8, # 用户记忆阈值
+    'USER_MEMORY_SUMMARY_THRESHOLD': 12, # 用户记忆阈值
 
     'CHAT_MEMORY_SHORT_LENGTH': 8,  # 短期对话记忆长度
     'CHAT_MEMORY_MAX_LENGTH': 12,   # 长期对话记忆长度

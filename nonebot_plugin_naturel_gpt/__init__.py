@@ -173,21 +173,23 @@ tg: TextGenerator = TextGenerator(api_keys, {
     'max_summary_tokens': config['CHAT_MAX_SUMMARY_TOKENS'],
 })
 
-# 注册消息响应器
-matcher = on_message(priority=5, block=True)
+# 注册消息响应器 收到任意消息时触发
+matcher = on_message(priority=10, block=False)
 @matcher.handle()
 async def handler(event: Event) -> None:
     sender_name = event.dict().get('sender', {}).get('nickname', '未知')
-    resTmplate = f"收到消息: {event.get_message()}"\
-        f"\n消息名称: {event.get_event_name()}"\
-        f"\n消息描述: {event.get_event_description()}"\
-        f"\n消息来源: {event.get_session_id()}"\
-        f"\n消息文本: {event.get_plaintext()}"\
-        f"\n消息主体: {event.get_user_id()}"\
-        f"\n消息内容: {event.get_message()}"\
-        f"\n发送者: {sender_name}"\
-        f"\n是否to-me: {event.is_tome()}"\
+    resTmplate = (  # 测试用，获取消息的相关信息
+        f"收到消息: {event.get_message()}"
+        f"\n消息名称: {event.get_event_name()}"
+        f"\n消息描述: {event.get_event_description()}"
+        f"\n消息来源: {event.get_session_id()}"
+        f"\n消息文本: {event.get_plaintext()}"
+        f"\n消息主体: {event.get_user_id()}"
+        f"\n消息内容: {event.get_message()}"
+        f"\n发送者: {sender_name}"
+        f"\n是否to-me: {event.is_tome()}"
         f"\nJSON: {event.json()}"
+    )
     # logger.info(resTmplate)
 
     # 如果是忽略前缀 或者 消息为空，则跳过处理
@@ -262,7 +264,7 @@ async def handler(event: Event) -> None:
     chat.update_chat_history_row_for_user(sender=chat.get_chat_bot_name(), msg=res, userid=event.get_user_id(), username=sender_name)
     save_data()  # 保存数据
 
-# 人格设定指令
+# 人格设定指令 用于设定人格的相关参数
 identity:Matcher = on_command("identity", aliases={"人格设定", "人格", "rg"}, priority=2, block=True)
 @identity.handle()
 async def _(event: Event, arg: Message = CommandArg()):
@@ -284,7 +286,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         await identity.finish((
             f"当前可用人格预设有:\n"
             f"{presets_show_text}\n"
-            f"=========================\n"
+            f"=======================\n"
             f"+ 使用预设: rg 设定 <预设名>\n"
             f"+ 查询预设: rg 查询 <预设名>\n"
             f"+ 更新预设: rg 更新 <预设名> <人格信息>\n"
@@ -389,9 +391,3 @@ def save_data():
         pickle.dump(global_data, f)
     last_save_data_time = time.time()
     logger.info("数据保存成功")
-
-# 帮助指令插件修复
-# help_fix = on_command("help", aliases={"帮助"}, priority=2, block=True)
-# @help_fix.handle()  # 修复帮助指令后不打断传递的问题
-# async def _(event: Event, arg: Message = CommandArg()):
-#     return
