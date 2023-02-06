@@ -1,14 +1,13 @@
 from nonebot import get_driver
-from nonebot import on_command, on_keyword, on_message
+from nonebot import on_command, on_message
 from nonebot.log import logger
-from nonebot.params import Arg, ArgPlainText, CommandArg, Matcher, Event
+from nonebot.params import CommandArg, Matcher, Event
 from nonebot.adapters.onebot.v11 import Message, PrivateMessageEvent, GroupMessageEvent
 
 import time
-import random
+import copy
 import difflib
 import os
-from pathlib import Path
 import pickle
 
 from .config import *
@@ -23,10 +22,16 @@ global_data_path = f"{config['NG_DATA_PATH']}naturel_gpt.pkl"
 
 # 对话类
 class Chat:
-    chat_presets = {}   # 当前对话预设
-    chat_preset_dicts = {}   # 预设字典
+    preset_key = ''  # 预设标识
+    chat_presets = None         # 当前对话预设
+    chat_preset_dicts = None    # 预设字典
+    is_insilence = False        # 是否处于沉默状态
+    chat_attitude = 0           # 对话态度
+    silence_time = 0            # 沉默时长
 
     def __init__(self, chat_key:str, preset_key:str = ''):
+        self.chat_presets = {}   # 当前对话预设
+        self.chat_preset_dicts = {}   # 预设字典
         self.chat_key = chat_key    # 对话标识
         if not preset_key:  # 如果没有预设，选择默认预设
             for pk in presets_dict:
@@ -37,15 +42,15 @@ class Chat:
                 preset_key = list(presets_dict.keys())[0]
         self.change_presettings(preset_key)
 
-    # 更新全局对话历史行
+    # 更新当前会话的全局对话历史行
     def update_chat_history_row(self, sender:str, msg: str, require_summary:bool = False) -> None:
         messageunit = tg.generate_msg_template(sender=sender, msg=msg)
         self.chat_presets['chat_history'].append(messageunit)
-        logger.info(f"添加对话历史行: {messageunit}  |  当前对话历史行数: {len(self.chat_presets['chat_history'])}")
+        logger.info(f"[会话: {self.chat_key}]添加对话历史行: {messageunit}  |  当前对话历史行数: {len(self.chat_presets['chat_history'])}")
         while len(self.chat_presets['chat_history']) > config['CHAT_MEMORY_MAX_LENGTH'] * 2:    # 保证对话历史不超过最大长度的两倍
             self.chat_presets['chat_history'].pop(0)
-        # 保证对话历史不超过最大长度
-        if len(self.chat_presets['chat_history']) > config['CHAT_MEMORY_MAX_LENGTH'] and require_summary: # 只有在需要时才进行总结 避免不必要的计算
+
+        if len(self.chat_presets['chat_history']) > config['CHAT_MEMORY_MAX_LENGTH'] and require_summary: # 只有在需要时才进行总结 避免不必要的token消耗
             prev_summarized = f"上次的对话摘要:{self.chat_presets['chat_summarized']}\n\n" \
                 if self.chat_presets.get('chat_summarized') else ''
             history_str = '\n'.join(self.chat_presets['chat_history'])
@@ -69,24 +74,25 @@ class Chat:
         logger.info(f"添加对话历史行: {messageunit}  |  当前对话历史行数: {len(global_preset_userdata[self.preset_key][userid]['chat_history'])}")
         # 保证对话历史不超过最大长度
         if len(global_preset_userdata[self.preset_key][userid]['chat_history']) > config['USER_MEMORY_SUMMARY_THRESHOLD']:
-            prev_summarized = f"上次的对话摘要:{global_preset_userdata[self.preset_key][userid].get('chat_summarized')}\n\n" \
+            prev_summarized = f"上次的印象:{global_preset_userdata[self.preset_key][userid].get('chat_summarized')}\n\n" \
                 if global_preset_userdata[self.preset_key][userid].get('chat_summarized') else ''
             history_str = '\n'.join(global_preset_userdata[self.preset_key][userid]['chat_history'])
             prompt = (   # 以机器人的视角总结对话
                 f"{prev_summarized}对话记录:\n"
                 f"{history_str}"
-                f"\n\n{self.chat_presets['bot_self_introl']}\n从{self.chat_presets['bot_name']}的视角描述对{username}的印象:"
+                f"\n\n{self.chat_presets['bot_self_introl']}\n从{self.chat_presets['bot_name']}的视角更新对{username}的印象:"
             )
             if config.get('__DEBUG__'): logger.info(f"生成对话历史摘要prompt: {prompt}")
             global_preset_userdata[self.preset_key][userid]['chat_impression'] = tg.get_response(prompt, type='summarize').strip()  # 生成新的对话历史摘要
-            # logger.info(f"生成对话历史摘要: {global_preset_userdata[self.preset_key][userid]['chat_impression']}")
-            logger.info(f"摘要生成消耗token数: {tg.cal_token_count(prompt + global_preset_userdata[self.preset_key][userid]['chat_impression'])}")
+            # logger.info(f"生成对话印象摘要: {global_preset_userdata[self.preset_key][userid]['chat_impression']}")
+            logger.info(f"印象生成消耗token数: {tg.cal_token_count(prompt + global_preset_userdata[self.preset_key][userid]['chat_impression'])}")
             global_preset_userdata[self.preset_key][userid]['chat_history'] = global_preset_userdata[self.preset_key][userid]['chat_history'][-config['CHAT_MEMORY_SHORT_LENGTH']:]
 
     # 修改对话预设
     def change_presettings(self, preset_key:str) -> None:
-        if preset_key not in self.chat_preset_dicts:    # 如果聊天预设字典中没有该预设，则从全局预设字典中复制一个
-            self.chat_preset_dicts[preset_key] = presets_dict[preset_key].copy()
+        if preset_key not in self.chat_preset_dicts:    # 如果聊天预设字典中没有该预设，则从全局预设字典中拷贝一个
+            self.chat_preset_dicts[preset_key] = copy.deepcopy(presets_dict[preset_key])
+            logger.info(f"从全局预设中拷贝预设 {preset_key} 到聊天预设字典")
         self.chat_presets = self.chat_preset_dicts[preset_key]
         if 'chat_history' not in self.chat_presets: # 如果预设中没有对话历史，则添加一个空的对话历史
             self.chat_presets['chat_history'] = []
@@ -113,7 +119,7 @@ class Chat:
 
         summary = f"\n\n[历史聊天摘要]: {self.chat_presets['chat_summarized']}" if self.chat_presets.get('chat_summarized', None) else ''  # 如果有对话历史摘要，则添加摘要
 
-        return (
+        return (    # 返回对话 prompt 模板
             f"{self.chat_presets['bot_self_introl']}"
             f"\n{summary}\n{impression_text}\n"
             f"以下是与 \"{self.chat_presets['bot_name']}\" 的对话:"
@@ -190,7 +196,7 @@ async def handler(event: Event) -> None:
         f"\n是否to-me: {event.is_tome()}"
         f"\nJSON: {event.json()}"
     )
-    # logger.info(resTmplate)
+    logger.info(resTmplate)
 
     # 如果是忽略前缀 或者 消息为空，则跳过处理
     if event.get_plaintext().startswith(config['IGNORE_PREFIX']) or not event.get_plaintext():   
@@ -208,13 +214,12 @@ async def handler(event: Event) -> None:
 
     # 判断是否已经存在对话
     if chat_key in chat_dict:
-        logger.info("已存在对话 - 继续对话")
-        chat = chat_dict[chat_key]
+        logger.info(f"已存在对话 {chat_key} - 继续对话")
     else:
         logger.info("不存在对话 - 创建新对话")
         # 创建新对话
-        chat = Chat(chat_key)
-        chat_dict[chat_key] = chat
+        chat_dict[chat_key] = Chat(chat_key)
+    chat = chat_dict[chat_key]
 
     if not (    # 如果不是 bot 相关的信息，则直接返回
         (config['REPLY_ON_NAME_MENTION'] and (chat.get_chat_bot_name() in event.get_plaintext())) or \
@@ -225,7 +230,8 @@ async def handler(event: Event) -> None:
         return
     else:
         # 更新全局对话历史记录
-        chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=True)
+        # chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=True)
+        chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=False)
         logger.info("符合 bot 发言条件，进行回复...")
 
     # 记录对用户的对话信息
@@ -277,12 +283,13 @@ async def _(event: Event, arg: Message = CommandArg()):
     else:
         logger.info("未知消息来源: " + event.get_session_id())
         return
+    chat = chat_dict[chat_key]
 
     cmd:str = arg.extract_plain_text()
     logger.info(f"接收到指令: {cmd} | 来源: {chat_key}")
 
     if not cmd:
-        presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == chat_key else k}' for k in list(presets_dict.keys())])
+        presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == chat.get_chat_preset_key() else k}' for k in list(presets_dict.keys())])
         await identity.finish((
             f"当前可用人格预设有:\n"
             f"{presets_show_text}\n"
@@ -354,7 +361,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         is_progress = True
         await identity.send(f"添加预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif cmd.split(' ')[0] == "删除" and len(cmd.split(' ')) == 2:
+    elif (cmd.split(' ')[0] == "删除" or cmd.split(' ')[0] == "del") and len(cmd.split(' ')) == 2:
         target_preset_key = cmd.split(' ')[1]
         if str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
@@ -364,7 +371,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         is_progress = True
         await identity.send(f"删除预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif cmd.split(' ')[0] == "锁定" and len(cmd.split(' ')) == 2:
+    elif (cmd.split(' ')[0] == "锁定" or cmd.split(' ')[0] == "lock") and len(cmd.split(' ')) == 2:
         target_preset_key = cmd.split(' ')[1]
         if str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
@@ -374,7 +381,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         is_progress = True
         await identity.send(f"锁定预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif cmd.split(' ')[0] == "解锁" and len(cmd.split(' ')) == 2:
+    elif (cmd.split(' ')[0] == "解锁" or cmd.split(' ')[0] == "unlock") and len(cmd.split(' ')) == 2:
         target_preset_key = cmd.split(' ')[1]
         if str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
@@ -383,6 +390,15 @@ async def _(event: Event, arg: Message = CommandArg()):
         presets_dict[target_preset_key]['is_locked'] = False
         is_progress = True
         await identity.send(f"解锁预设: {target_preset_key} 成功! (￣▽￣)")
+
+    elif cmd.split(' ')[0] == "debug":
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        debug_cmd = cmd.split(' ')[1]
+        if debug_cmd == 'show':
+            await identity.finish(str(chat_dict))
+        elif debug_cmd == 'run':
+            await identity.finish(str(exec(cmd.split(' ', 2)[2])))
 
     else:
         await identity.finish("输入的命令好像有点问题呢... 请检查下再试试吧！ ╮(>_<)╭")

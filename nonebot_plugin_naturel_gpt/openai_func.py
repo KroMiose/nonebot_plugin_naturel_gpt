@@ -47,7 +47,6 @@ class TextGenerator:
                 presence_penalty=self.config['presence_penalty'],
                 stop=[f"\n{custom.get('bot_name', 'AI')}:", f"\n{custom.get('sender_name', 'Human')}:", '\n\n']
             )
-            logger.info(response)
             res = response['choices'][0]['text'].strip()
             if start_sequence[1:] in res:
                 res = res.split(start_sequence[1:])[1]
@@ -68,7 +67,6 @@ class TextGenerator:
                 frequency_penalty=0,
                 presence_penalty=0
             )
-            logger.info(response)
             res = response['choices'][0]['text'].strip()
             return res, True
         except Exception as e:
@@ -87,7 +85,6 @@ class TextGenerator:
                 frequency_penalty=0,
                 presence_penalty=0
             )
-            logger.info(response)
             res = response['choices'][0]['text'].strip()
             return res, True
         except Exception as e:

@@ -10,7 +10,7 @@ class Config(BaseModel, extra=Extra.ignore):
     """Plugin Config Here"""
     NG_CONFIG_PATH: str = "config/naturel_gpt_config.yml"
     NG_DATA_PATH: str = "data/naturel_gpt/naturel_gpt.json"
-    NG_DEBUG: bool = False
+    NG_DEV_MODE: bool = False
 
 driver = get_driver()
 global_config = driver.config
@@ -19,7 +19,7 @@ config = Config.parse_obj(global_config)
 # 配置文件模板
 CONFIG_TEMPLATE = {
     "OPENAI_API_KEYS": [    # OpenAI API Key 列表
-        
+        ''
     ],
     "PRESETS": {
         "白羽": {
@@ -77,7 +77,7 @@ CONFIG_TEMPLATE = {
 if not Path("config").exists():
     Path("config").mkdir()
 
-if config.NG_DEBUG: # debug模式下不读取原配置文件
+if config.NG_DEV_MODE: # 开发模式下不读取原配置文件
     with open(config.NG_CONFIG_PATH, 'w', encoding='utf-8') as f:
         yaml.dump(CONFIG_TEMPLATE, f, allow_unicode=True)
 
