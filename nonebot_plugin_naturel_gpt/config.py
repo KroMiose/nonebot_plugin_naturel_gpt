@@ -9,7 +9,6 @@ from pathlib import Path
 class Config(BaseModel, extra=Extra.ignore):
     """Plugin Config Here"""
     NG_CONFIG_PATH: str = "config/naturel_gpt_config.yml"
-    NG_DATA_PATH: str = "data/naturel_gpt/naturel_gpt.json"
     NG_DEV_MODE: bool = False
 
 driver = get_driver()
@@ -70,27 +69,44 @@ CONFIG_TEMPLATE = {
     'NG_DATA_PATH': "./data/naturel_gpt/", # 数据文件目录
     'ADMIN_USERID': [''], # 管理员QQ号
 
+    'WORD_FOR_WAKE_UP': [], # 自定义触发词
+    'WORD_FOR_FORBIDDEN': [], # 自定义禁止触发词
+
+    'RANDOM_CHAT_PROBABILITY': 0,   # 随机聊天概率
+
     '__DEBUG__': False, # 是否启用debug模式
 }
+
+config_path = config.NG_CONFIG_PATH
 
 # 检查config文件夹是否存在 不存在则创建
 if not Path("config").exists():
     Path("config").mkdir()
 
-if config.NG_DEV_MODE: # 开发模式下不读取原配置文件
-    with open(config.NG_CONFIG_PATH, 'w', encoding='utf-8') as f:
+if config.NG_DEV_MODE: # 开发模式下不读取原配置文件，直接使用模板覆盖原配置文件
+    with open(config_path, 'w', encoding='utf-8') as f:
         yaml.dump(CONFIG_TEMPLATE, f, allow_unicode=True)
 
 else:
     # 检查配置文件是否存在 不存在则创建
-    if not Path(config.NG_CONFIG_PATH).exists():
-        with open(config.NG_CONFIG_PATH, 'w', encoding='utf-8') as f:
+    if not Path(config_path).exists():
+        with open(config_path, 'w', encoding='utf-8') as f:
             yaml.dump(CONFIG_TEMPLATE, f, allow_unicode=True)
             logger.info('Naturel GPT 配置文件创建成功')
 
 # 读取配置文件
-with open(config.NG_CONFIG_PATH, 'r', encoding='utf-8') as f:
+with open(config_path, 'r', encoding='utf-8') as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
+    # 对比配置模板和配置文件
+    for k, v in CONFIG_TEMPLATE.items():
+        if k not in config:
+            config[k] = v
+            logger.info(f'Naturel GPT 配置文件缺少 {k} 项，已自动补充')
+    # 将配置文件内容写入config
     for k, v in config.items():
         setattr(Config, k, v)
-    logger.info('Naturel GPT 配置文件加载成功')
+
+# 保存配置文件
+with open(config_path, 'w', encoding='utf-8') as f:
+    yaml.dump(config, f, allow_unicode=True)
+logger.info('Naturel GPT 配置文件加载成功')

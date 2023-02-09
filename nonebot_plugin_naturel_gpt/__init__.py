@@ -9,6 +9,7 @@ import copy
 import difflib
 import os
 import pickle
+import random
 
 from .config import *
 global_config = get_driver().config
@@ -194,7 +195,7 @@ async def handler(event: Event) -> None:
         f"\n消息内容: {event.get_message()}"
         f"\n发送者: {sender_name}"
         f"\n是否to-me: {event.is_tome()}"
-        f"\nJSON: {event.json()}"
+        # f"\nJSON: {event.json()}"
     )
     if config.get('__DEBUG__'): logger.info(resTmplate)
 
@@ -221,18 +222,38 @@ async def handler(event: Event) -> None:
         chat_dict[chat_key] = Chat(chat_key)
     chat = chat_dict[chat_key]
 
-    if not (    # 如果不是 bot 相关的信息，则直接返回
+    wake_up = False
+    # 检测是否包含违禁词
+    for w in config['WORD_FOR_FORBIDDEN']:
+        if w in event.get_plaintext():
+            logger.info(f"检测到违禁词 {w}，拒绝处理...")
+            return
+
+    # 唤醒词检测
+    for w in config['WORD_FOR_WAKE_UP']:
+        if w in event.get_plaintext():
+            wake_up = True
+            break
+
+    # 随机回复判断
+    if random.random() < config['RANDOM_CHAT_PROBABILITY']:
+        wake_up = True
+
+    # 判断是否需要回复
+    if (    # 如果不是 bot 相关的信息，则直接返回
         (config['REPLY_ON_NAME_MENTION'] and (chat.get_chat_bot_name() in event.get_plaintext())) or \
-        (config['REPLY_ON_AT'] and event.is_tome())\
+        (config['REPLY_ON_AT'] and event.is_tome()) or wake_up\
     ):
+        # 更新全局对话历史记录
+        # chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=True)
+        chat.update_chat_history_row(sender=sender_name,
+                                    msg=f"@{chat.get_chat_bot_name()} {event.get_plaintext()}" if event.is_tome() else event.get_plaintext(),
+                                    require_summary=False)
+        logger.info("符合 bot 发言条件，进行回复...")
+    else:
         chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=False)
         logger.info("不是 bot 相关的信息，记录但不进行回复")
         return
-    else:
-        # 更新全局对话历史记录
-        # chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=True)
-        chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=False)
-        logger.info("符合 bot 发言条件，进行回复...")
 
     # 记录对用户的对话信息
     chat.update_chat_history_row_for_user(sender=sender_name, msg=event.get_plaintext(), userid=event.get_user_id(), username=sender_name, require_summary=False)
@@ -283,6 +304,14 @@ async def _(event: Event, arg: Message = CommandArg()):
     else:
         logger.info("未知消息来源: " + event.get_session_id())
         return
+
+    # 判断是否已经存在对话
+    if chat_key in chat_dict:
+        logger.info(f"已存在对话 {chat_key} - 继续对话")
+    else:
+        logger.info("不存在对话 - 创建新对话")
+        # 创建新对话
+        chat_dict[chat_key] = Chat(chat_key)
     chat = chat_dict[chat_key]
 
     cmd:str = arg.extract_plain_text()
