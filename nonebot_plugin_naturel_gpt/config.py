@@ -74,6 +74,9 @@ CONFIG_TEMPLATE = {
 
     'RANDOM_CHAT_PROBABILITY': 0,   # 随机聊天概率
 
+    'NG_MSG_PRIORITY': 10,       # 消息响应优先级
+    'NG_BLOCK_OTHERS': False,    # 是否阻止其他插件响应
+
     '__DEBUG__': False, # 是否启用debug模式
 }
 

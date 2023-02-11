@@ -17,8 +17,8 @@ class TextGenerator:
 
     # 获取文本生成
     def get_response(self, prompt: str, type: str = 'chat', custom: dict = {}) -> str:
-        # if True:
-        #     return '测试中...'
+        # return 'debug...'
+        # prompt = prompt.replace('，', ',').replace('。', '.').replace('？', '?').replace('！', '!').replace('：', ':').replace('；', ';')
         for i in range(len(self.api_keys)):
             if type == 'chat':
                 res, success = self.get_chat_response(self.api_keys[self.key_index], prompt, custom)
@@ -29,7 +29,7 @@ class TextGenerator:
             if success:
                 return res
             self.key_index = (self.key_index + 1) % len(self.api_keys)
-            logger.warning(f"当前 Api Key 失效，正在尝试使用下一个 Api Key")
+            logger.warning(f"当前 Api Key: [{self.api_keys[self.key_index][:4]}...{self.api_keys[self.key_index][-4:]}] 失效，正在尝试使用下一个 Api Key")
         logger.error("无法连接到 OpenAi 或者当前所有 Api Key 失效")
         return "哎呀，OpenAi Api 好像挂了呢 (´；ω；`)"
 

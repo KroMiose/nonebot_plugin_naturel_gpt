@@ -29,11 +29,13 @@ class Chat:
     is_insilence = False        # 是否处于沉默状态
     chat_attitude = 0           # 对话态度
     silence_time = 0            # 沉默时长
+    is_enable = None            # 是否启用
 
     def __init__(self, chat_key:str, preset_key:str = ''):
         self.chat_presets = {}   # 当前对话预设
         self.chat_preset_dicts = {}   # 预设字典
         self.chat_key = chat_key    # 对话标识
+        self.is_enable = True       # 启用会话
         if not preset_key:  # 如果没有预设，选择默认预设
             for pk in presets_dict:
                 if presets_dict[pk]['is_default']:
@@ -100,7 +102,13 @@ class Chat:
         self.preset_key = preset_key
 
     # 从全局预设更新对话预设
-    def update_presettings(self):
+    def update_presettings(self, preset_key='', inplace:bool = False) -> None:
+        if preset_key and inplace:  # 如果指定了预设名且是原地更新，则直接覆盖指定预设
+            self.chat_preset_dicts[preset_key] = copy.deepcopy(presets_dict[preset_key])
+            self.chat_preset_dicts[preset_key]['chat_history'] = []
+            if self.get_chat_preset_key() == preset_key:    # 如果当前预设名与指定预设名相同，则更新当前预设
+                logger.info(f"预设名相同... {preset_key}")
+                self.chat_presets = self.chat_preset_dicts[preset_key]
         try:
             self.chat_presets['bot_self_introl'] = presets_dict[self.preset_key]['bot_self_introl']
             self.chat_presets['bot_name'] = presets_dict[self.preset_key]['bot_name']
@@ -135,6 +143,10 @@ class Chat:
     def get_chat_preset_key(self) -> str:
         return self.preset_key
 
+    # 开关对话
+    def toggle_chat(self, enabled:bool=True) -> None:
+        self.is_enable = enabled
+
 # 检测历史数据pickle文件是否存在 不存在则初始化 存在则读取
 if os.path.exists(global_data_path):
     with open(global_data_path, 'rb') as f:
@@ -143,6 +155,11 @@ if os.path.exists(global_data_path):
         global_preset_userdata:dict = global_data['PRESET_USERDATA']  # 用于存储所有人格预设的用户数据的字典
         chat_dict:dict = global_data['CHAT_DICT']  # 用于存储所有对话的字典
         logger.info("读取历史数据成功")
+    # 检查所有会话是否合法
+    for chat in chat_dict.values():
+        # 检查会话对象的 is_enable 属性是否存在 不存在则添加避免更新后使用旧版本数据时出错
+        if not hasattr(chat, 'is_enable'):
+            chat.is_enable = True
 else:   # 如果不存在历史数据json文件，则初始化
     # 检测目录是否存在 不存在则创建
     if not os.path.exists(config['NG_DATA_PATH']):
@@ -181,7 +198,7 @@ tg: TextGenerator = TextGenerator(api_keys, {
 })
 
 # 注册消息响应器 收到任意消息时触发
-matcher = on_message(priority=10, block=False)
+matcher = on_message(priority=config['NG_MSG_PRIORITY'], block=config['NG_BLOCK_OTHERS'])
 @matcher.handle()
 async def handler(event: Event) -> None:
     sender_name = event.dict().get('sender', {}).get('nickname', '未知')
@@ -207,8 +224,10 @@ async def handler(event: Event) -> None:
     # 判断群聊/私聊
     if isinstance(event, GroupMessageEvent):
         chat_key = 'group_' + event.get_session_id().split("_")[1]
+        chat_type = 'group'
     elif isinstance(event, PrivateMessageEvent):
         chat_key = 'private_' + event.get_user_id()
+        chat_type = 'private'
     else:
         logger.info("未知消息来源: " + event.get_session_id())
         return
@@ -220,7 +239,12 @@ async def handler(event: Event) -> None:
         logger.info("不存在对话 - 创建新对话")
         # 创建新对话
         chat_dict[chat_key] = Chat(chat_key)
-    chat = chat_dict[chat_key]
+    chat:Chat = chat_dict[chat_key]
+
+    # 判断对话是否被禁用
+    if not chat.is_enable:
+        logger.info("对话已被禁用，跳过处理...")
+        return
 
     wake_up = False
     # 检测是否包含违禁词
@@ -247,7 +271,7 @@ async def handler(event: Event) -> None:
         # 更新全局对话历史记录
         # chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=True)
         chat.update_chat_history_row(sender=sender_name,
-                                    msg=f"@{chat.get_chat_bot_name()} {event.get_plaintext()}" if event.is_tome() else event.get_plaintext(),
+                                    msg=f"@{chat.get_chat_bot_name()} {event.get_plaintext()}" if event.is_tome() and chat_type=='group' else event.get_plaintext(),
                                     require_summary=False)
         logger.info("符合 bot 发言条件，进行回复...")
     else:
@@ -312,13 +336,27 @@ async def _(event: Event, arg: Message = CommandArg()):
         logger.info("不存在对话 - 创建新对话")
         # 创建新对话
         chat_dict[chat_key] = Chat(chat_key)
-    chat = chat_dict[chat_key]
+    chat:Chat = chat_dict[chat_key]
 
     cmd:str = arg.extract_plain_text()
     logger.info(f"接收到指令: {cmd} | 来源: {chat_key}")
+    presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == chat.get_chat_preset_key() else k}' for k in list(presets_dict.keys())])
 
     if not cmd:
-        presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == chat.get_chat_preset_key() else k}' for k in list(presets_dict.keys())])
+        await identity.finish((
+            f"当前可用人格预设有:\n"
+            f"{presets_show_text}\n"
+            f"=======================\n"
+            f"+ 使用预设: rg 设定 <预设名>\n"
+            f"+ 查询预设: rg 查询 <预设名>\n"
+            f"+ 更新预设: rg 更新 <预设名> <人格信息>\n"
+            f"+ 添加预设: rg 添加 <预设名> <人格信息>\n"
+            f"Tip: <人格信息> 是一段第三人称的人设说明(不超过200字, 不包含空格)\n"
+        ))
+
+    elif cmd in ['admin']:
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("您没有权限执行此操作！")
         await identity.finish((
             f"当前可用人格预设有:\n"
             f"{presets_show_text}\n"
@@ -330,6 +368,9 @@ async def _(event: Event, arg: Message = CommandArg()):
             f"+ 删除预设(管理): rg 删除 <预设名>\n"
             f"+ 锁定预设(管理): rg 锁定 <预设名>\n"
             f"+ 解锁预设(管理): rg 解锁 <预设名>\n"
+            f"+ 开启会话(管理): rg <开启/on>\n"
+            f"+ 停止会话(管理): rg <关闭/off>\n"
+            f"+ 重置会话(管理): rg <重置/reset>\n"
             f"Tip: <人格信息> 是一段第三人称的人设说明(不超过200字, 不包含空格)\n"
         ))
 
@@ -345,15 +386,15 @@ async def _(event: Event, arg: Message = CommandArg()):
                 await identity.send(f"预设不存在! 已为您匹配并应用最相似的预设: {target_preset_key} v(￣▽￣)v")
 
         if chat_key in chat_dict:
-            chat = chat_dict[chat_key]
+            chat:Chat = chat_dict[chat_key]
             chat.change_presettings(target_preset_key)
         else:
-            chat = Chat(chat_key, target_preset_key)
+            chat:Chat = Chat(chat_key, target_preset_key)
             chat_dict[chat_key] = chat
         is_progress = True
         await identity.finish(f"应用预设: {target_preset_key} (￣▽￣)-ok!")
 
-    elif (cmd.split(' ')[0] == "查询" or cmd.split(' ')[0] == "query") and len(cmd.split(' ')) == 2:
+    elif (cmd.split(' ')[0] in ["查询", "query"]) and len(cmd.split(' ')) == 2:
         target_preset_key = cmd.split(' ')[1]
         if target_preset_key not in presets_dict:
             # 如果预设不存在，进行逐一进行字符匹配，选择最相似的预设
@@ -366,7 +407,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         is_progress = True
         await identity.finish(f"预设: {target_preset_key} | 人设信息:\n    {presets_dict[target_preset_key]['bot_self_introl']}")
 
-    elif (cmd.split(' ')[0] == "更新" or cmd.split(' ')[0] == "update") and len(cmd.split(' ')) >= 3:
+    elif (cmd.split(' ')[0] in ["更新", "update"]) and len(cmd.split(' ')) >= 3:
         target_preset_key = cmd.split(' ')[1]
         if target_preset_key not in presets_dict:
             await identity.finish("找不到匹配的人格预设! 是不是手滑了呢？(；′⌒`)")
@@ -376,7 +417,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         is_progress = True
         await identity.send(f"更新预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif (cmd.split(' ')[0] == "添加" or cmd.split(' ')[0] == "new") and len(cmd.split(' ')) >= 3:
+    elif (cmd.split(' ')[0] in ["添加", "new"]) and len(cmd.split(' ')) >= 3:
         target_preset_key = cmd.split(' ')[1]
         introl = cmd.split(' ', 2)[2]
         if target_preset_key in presets_dict:
@@ -390,7 +431,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         is_progress = True
         await identity.send(f"添加预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif (cmd.split(' ')[0] == "删除" or cmd.split(' ')[0] == "del") and len(cmd.split(' ')) == 2:
+    elif (cmd.split(' ')[0] in ["删除", "del"]) and len(cmd.split(' ')) == 2:
         target_preset_key = cmd.split(' ')[1]
         if str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
@@ -400,7 +441,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         is_progress = True
         await identity.send(f"删除预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif (cmd.split(' ')[0] == "锁定" or cmd.split(' ')[0] == "lock") and len(cmd.split(' ')) == 2:
+    elif (cmd.split(' ')[0] in ["锁定", "lock"]) and len(cmd.split(' ')) == 2:
         target_preset_key = cmd.split(' ')[1]
         if str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
@@ -410,7 +451,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         is_progress = True
         await identity.send(f"锁定预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif (cmd.split(' ')[0] == "解锁" or cmd.split(' ')[0] == "unlock") and len(cmd.split(' ')) == 2:
+    elif (cmd.split(' ')[0] in ["解锁", "unlock"]) and len(cmd.split(' ')) == 2:
         target_preset_key = cmd.split(' ')[1]
         if str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
@@ -419,6 +460,33 @@ async def _(event: Event, arg: Message = CommandArg()):
         presets_dict[target_preset_key]['is_locked'] = False
         is_progress = True
         await identity.send(f"解锁预设: {target_preset_key} 成功! (￣▽￣)")
+
+    elif cmd in ["开启", "on"]:
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        chat.toggle_chat(enabled=True)
+        await identity.finish("已开启会话! <(￣▽￣)>")
+
+    elif cmd in ["关闭", "off"]:
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        chat.toggle_chat(enabled=False)
+        await identity.finish("已停止会话! <(＿　＿)>")
+
+    elif (cmd.split(' ')[0] in ["重置", "reset"]) and len(cmd.split(' ')) == 2:
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        target_preset_key = cmd.split(' ')[1]
+        tmp_preset_key = chat.get_chat_preset_key()
+        if target_preset_key == '-all': # 重置所有预设
+            chat.chat_presets = {}      # 当前对话预设
+            chat.chat_preset_dicts = {} # 预设字典
+            chat.change_presettings(tmp_preset_key)
+            await identity.finish("已重置当前会话所有预设! <(￣▽￣)>")
+        if target_preset_key not in presets_dict:
+            await identity.finish("找不到匹配的人格预设! 是不是手滑了呢？(；′⌒`)")
+        chat.update_presettings(preset_key=tmp_preset_key, inplace=True)    # 更新当前预设并覆盖
+        await identity.finish(f"已重置当前会话预设: {target_preset_key}! <(￣▽￣)>")
 
     elif cmd.split(' ')[0] == "debug":
         if str(event.user_id) not in config['ADMIN_USERID']:
