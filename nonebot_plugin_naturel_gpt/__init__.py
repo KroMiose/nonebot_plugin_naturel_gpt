@@ -46,7 +46,7 @@ class Chat:
         self.change_presettings(preset_key)
 
     # 更新当前会话的全局对话历史行
-    def update_chat_history_row(self, sender:str, msg: str, require_summary:bool = False) -> None:
+    async def update_chat_history_row(self, sender:str, msg: str, require_summary:bool = False) -> None:
         messageunit = tg.generate_msg_template(sender=sender, msg=msg)
         self.chat_presets['chat_history'].append(messageunit)
         logger.info(f"[会话: {self.chat_key}]添加对话历史行: {messageunit}  |  当前对话历史行数: {len(self.chat_presets['chat_history'])}")
@@ -63,13 +63,18 @@ class Chat:
                 f"\n\n{self.chat_presets['bot_self_introl']}\n从{self.chat_presets['bot_name']}的视角用一段话总结以上聊天并尽可能多地记录下对话中的重要信息:"
             )
             if config.get('__DEBUG__'): logger.info(f"生成对话历史摘要prompt: {prompt}")
-            self.chat_presets['chat_summarized'] = tg.get_response(prompt, type='summarize').strip()  # 生成新的对话历史摘要
+            res, success = await tg.get_response(prompt, type='summarize')  # 生成新的对话历史摘要
+            if success:
+                self.chat_presets['chat_summarized'] = res.strip()
+            else:
+                logger.error(f"生成对话历史摘要失败: {res}")
+                return
             # logger.info(f"生成对话历史摘要: {self.chat_presets['chat_summarized']}")
             logger.info(f"摘要生成消耗token数: {tg.cal_token_count(prompt + self.chat_presets['chat_summarized'])}")
             self.chat_presets['chat_history'] = self.chat_presets['chat_history'][-config['CHAT_MEMORY_SHORT_LENGTH']:]
 
     # 更新对特定用户的对话历史行
-    def update_chat_history_row_for_user(self, sender:str, msg: str, userid:str, username:str, require_summary:bool = False) -> None:
+    async def update_chat_history_row_for_user(self, sender:str, msg: str, userid:str, username:str, require_summary:bool = False) -> None:
         if userid not in global_preset_userdata[self.preset_key]:
             global_preset_userdata[self.preset_key][userid] = {'chat_history': []}
         messageunit = tg.generate_msg_template(sender=sender, msg=msg)
@@ -86,7 +91,12 @@ class Chat:
                 f"\n\n{self.chat_presets['bot_self_introl']}\n从{self.chat_presets['bot_name']}的视角更新对{username}的印象:"
             )
             if config.get('__DEBUG__'): logger.info(f"生成对话历史摘要prompt: {prompt}")
-            global_preset_userdata[self.preset_key][userid]['chat_impression'] = tg.get_response(prompt, type='summarize').strip()  # 生成新的对话历史摘要
+            res, success = await tg.get_response(prompt, type='summarize')  # 生成新的对话历史摘要
+            if success:
+                global_preset_userdata[self.preset_key][userid]['chat_impression'] = res.strip()
+            else:
+                logger.error(f"生成对话印象摘要失败: {res}")
+                return
             # logger.info(f"生成对话印象摘要: {global_preset_userdata[self.preset_key][userid]['chat_impression']}")
             logger.info(f"印象生成消耗token数: {tg.cal_token_count(prompt + global_preset_userdata[self.preset_key][userid]['chat_impression'])}")
             global_preset_userdata[self.preset_key][userid]['chat_history'] = global_preset_userdata[self.preset_key][userid]['chat_history'][-config['CHAT_MEMORY_SHORT_LENGTH']:]
@@ -201,6 +211,7 @@ tg: TextGenerator = TextGenerator(api_keys, {
 matcher = on_message(priority=config['NG_MSG_PRIORITY'], block=config['NG_BLOCK_OTHERS'])
 @matcher.handle()
 async def handler(event: Event) -> None:
+    sta = time.time()
     sender_name = event.dict().get('sender', {}).get('nickname', '未知')
     resTmplate = (  # 测试用，获取消息的相关信息
         f"收到消息: {event.get_message()}"
@@ -270,17 +281,17 @@ async def handler(event: Event) -> None:
     ):
         # 更新全局对话历史记录
         # chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=True)
-        chat.update_chat_history_row(sender=sender_name,
+        await chat.update_chat_history_row(sender=sender_name,
                                     msg=f"@{chat.get_chat_bot_name()} {event.get_plaintext()}" if event.is_tome() and chat_type=='group' else event.get_plaintext(),
                                     require_summary=False)
         logger.info("符合 bot 发言条件，进行回复...")
     else:
-        chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=False)
+        await chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=False)
         logger.info("不是 bot 相关的信息，记录但不进行回复")
         return
 
     # 记录对用户的对话信息
-    chat.update_chat_history_row_for_user(sender=sender_name, msg=event.get_plaintext(), userid=event.get_user_id(), username=sender_name, require_summary=False)
+    await chat.update_chat_history_row_for_user(sender=sender_name, msg=event.get_plaintext(), userid=event.get_user_id(), username=sender_name, require_summary=False)
 
     # 潜在人格唤醒机制 *待实现
     # 通过对话历史中的关键词进行检测，如果检测到潜在人格，进行累计，达到一定阈值后，抢占当前生效的人格
@@ -301,7 +312,10 @@ async def handler(event: Event) -> None:
     prompt_template = chat.get_chat_prompt_template(userid=event.get_user_id())
     if config.get('__DEBUG__'): logger.info("对话 prompt 模板: \n" + prompt_template)
 
-    res = tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.get_chat_bot_name(), 'sender_name': sender_name})  # 生成对话结果
+    res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.get_chat_bot_name(), 'sender_name': sender_name})  # 生成对话结果
+    if not success:  # 如果生成对话结果失败，则直接返回
+        logger.info("生成对话结果失败，跳过处理...")
+        await matcher.finish(res)
     cost_token = tg.cal_token_count(prompt_template + res)      # 计算对话结果的 token 数量
 
     while time.time() - sta_time < 1.5:   # 限制对话响应时间
@@ -310,10 +324,11 @@ async def handler(event: Event) -> None:
     # 发送对话结果
     await matcher.send(res)
     logger.info(f"token消耗: {cost_token} | 对话响应: \"{res}\"")
-    chat.update_chat_history_row(sender=chat.get_chat_bot_name(), msg=res, require_summary=True)  # 更新全局对话历史记录
+    await chat.update_chat_history_row(sender=chat.get_chat_bot_name(), msg=res, require_summary=True)  # 更新全局对话历史记录
     # 更新对用户的对话信息
-    chat.update_chat_history_row_for_user(sender=chat.get_chat_bot_name(), msg=res, userid=event.get_user_id(), username=sender_name, require_summary=True)
+    await chat.update_chat_history_row_for_user(sender=chat.get_chat_bot_name(), msg=res, userid=event.get_user_id(), username=sender_name, require_summary=True)
     save_data()  # 保存数据
+    if config.get('__DEBUG__'): logger.info(f"对话响应完成 | 耗时: {time.time() - sta_time}s")
 
 # 人格设定指令 用于设定人格的相关参数
 identity:Matcher = on_command("identity", aliases={"人格设定", "人格", "rg"}, priority=2, block=True)
