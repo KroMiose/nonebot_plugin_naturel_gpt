@@ -47,7 +47,7 @@ class TextGenerator:
                 top_p=self.config['top_p'],
                 frequency_penalty=self.config['frequency_penalty'],
                 presence_penalty=self.config['presence_penalty'],
-                stop=[f"\n{custom.get('bot_name', 'AI')}:", f"\n{custom.get('sender_name', 'Human')}:", "#$"]
+                stop=[f"\n{custom.get('bot_name', 'AI')}:", f"\n{custom.get('sender_name', 'Human')}:", "$#"]
             )
             res = response['choices'][0]['text'].strip()
             if start_sequence[1:] in res:

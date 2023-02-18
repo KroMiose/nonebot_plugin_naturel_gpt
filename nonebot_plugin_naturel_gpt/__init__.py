@@ -157,7 +157,8 @@ class Chat:
             'Speeking options can be used in the following strict format.\n'
             # '- Random > min:a; max:b (send a random number between a and b)'
             f'{ext_descs}'
-            'example use in reply: i will send 2 random number /#Random&0&5#/ /#Random&5&10#/ #$\n\n'    # 拓展使用示例 /#拓展名&参数1&参数2#/，参数之间用&分隔
+            'Use format: /#extension_name&param1&param2#/ (parameters are separated by &)\n\n'
+            # 'example use in reply: i will send 2 random number /#Random&0&5#/ /#Random&5&10#/\n\n'    # 拓展使用示例 /#拓展名&参数1&参数2#/，参数之间用&分隔
         ) if config.get('NG_ENABLE_EXT') else ''
 
         # 返回对话 prompt 模板
@@ -167,7 +168,7 @@ class Chat:
             # f"以下是与 \"{self.chat_presets['bot_name']}\" 的对话:"
             f"{extension_text}"
             f"[Chat - current time: {time.strftime('%Y-%m-%d %H:%M:%S')}]\n"
-            f"\n{chat_history}\n{self.chat_presets['bot_name']}(must be end with '#$'):"
+            f"\n{chat_history}\n{self.chat_presets['bot_name']}:"
         )
 
     # 获取当前对话bot的名称
@@ -283,7 +284,7 @@ if config.get('NG_ENABLE_EXT'):
 
 """ ======== 注册消息响应器 ======== """
 # 注册消息响应器 收到任意消息时触发
-matcher = on_message(priority=config['NG_MSG_PRIORITY'], block=config['NG_BLOCK_OTHERS'])
+matcher:Matcher = on_message(priority=config['NG_MSG_PRIORITY'], block=config['NG_BLOCK_OTHERS'])
 @matcher.handle()
 async def handler(event: Event) -> None:
     sta = time.time()
@@ -392,6 +393,9 @@ async def handler(event: Event) -> None:
         logger.info("生成对话结果失败，跳过处理...")
         await matcher.finish(raw_res)
 
+    # 输出对话原始响应结果
+    if config.get('__DEBUG__'): logger.info(f"原始回应: {raw_res}")
+
     # 用于存储最终回复顺序内容的列表
     reply_list = []
 
@@ -406,11 +410,18 @@ async def handler(event: Event) -> None:
         ext_name, *ext_args = ext_call_str.split('&')
         if ext_name in global_extensions.keys():
             # 提取出拓展调用指令中的参数为字典
-            ext_args:dict = {k:v for k,v in zip(ext_args[::2], ext_args[1::2])}
-            logger.info(f"检测到拓展调用指令: {ext_name} {ext_args} | 正在调用拓展模块...")
+            ext_args_dict:dict = {}
+            # 按照参数顺序依次提取参数值
+            for arg_name in global_extensions[ext_name].get_config().get('arguments').keys():
+                if len(ext_args) > 0:
+                    ext_args_dict[arg_name] = ext_args.pop(0)
+                else:
+                    ext_args_dict[arg_name] = None
+
+            logger.info(f"检测到拓展调用指令: {ext_name} {ext_args_dict} | 正在调用拓展模块...")
             # 调用拓展的call方法
             try:
-                ext_res:dict = await global_extensions[ext_name].call(ext_args)
+                ext_res:dict = await global_extensions[ext_name].call(ext_args_dict)
                 if config.get('__DEBUG__'): logger.info(f"拓展 {ext_name} 返回结果: {ext_res}")
                 if ext_res is not None:
                     # 将拓展返回的结果插入到回复列表的最后
@@ -437,7 +448,9 @@ async def handler(event: Event) -> None:
                 elif key == 'image' and reply.get(key): # 如果回复内容为图片，则发送图片
                     await matcher.send(MessageSegment.image(file=reply.get(key, '')))
                 elif key == 'voice' and reply.get(key): # 如果回复内容为语音，则发送语音
-                    await matcher.send(MessageSegment.record(file=reply.get(key, '')))
+                    logger.info(f"回复语音消息: {reply.get(key)}")
+                    await matcher.send(Message(MessageSegment.record(file=reply.get(key), cache=0)))
+
                 res_times -= 1
                 if res_times < 1:  # 如果回复次数超过限制，则跳出循环
                     break
@@ -446,9 +459,6 @@ async def handler(event: Event) -> None:
 
     while time.time() - sta_time < 1.5:   # 限制对话响应时间
         time.sleep(0.1)
-
-    # 发送对话原始响应结果
-    # if config.get('__DEBUG__'): await matcher.send(f'原始回应: {raw_res}')
 
     logger.info(f"token消耗: {cost_token} | 对话响应: \"{raw_res}\"")
     await chat.update_chat_history_row(sender=chat.get_chat_bot_name(), msg=raw_res, require_summary=True)  # 更新全局对话历史记录
@@ -650,6 +660,9 @@ async def _(event: Event, arg: Message = CommandArg()):
             await identity.finish(str(chat_dict))
         elif debug_cmd == 'run':
             await identity.finish(str(exec(cmd.split(' ', 2)[2])))
+
+    elif cmd.split(' ')[0] == "test":
+        ...
 
     else:
         await identity.finish("输入的命令好像有点问题呢... 请检查下再试试吧！ ╮(>_<)╭")
