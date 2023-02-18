@@ -18,10 +18,15 @@
     <a href="https://jq.qq.com/?_wv=1027&k=71t9iCT7">
         <img src="https://img.shields.io/badge/加入交流群-636925153-c42.svg" alt="python">
     </a>
+    <h2>🧩 [2023/2/18] v1.3.0 重要更新: 自定义拓展支持 🧩</h2>
+    <p>本次更新后插件开始支持自定义拓展，您可以直接通过自然语言直接调用多种拓展功能，包括 文本/图片/语音</p>
+    <p>默认提供了两个样例拓展（生成随机数、获取随机图片），支持仅使用少量的代码就能实现各种自定义功能</p>
+    <p>! 详见下方 <strong>自定义拓展部分</strong> !</p>
 </div>
 
 ## 💡 功能列表
 
+> 以下未勾选功能仅表示未来可能开发的方向，不代表实际规划进度，具体开发事项可能随时变动
 > 勾选: 已实现功能；未勾选: 正在开发 / 计划开发 / 待定设计
 
 * [X] 自动切换api_key: 支持同时使用多个openai_api_key，失效时自动切换
@@ -36,6 +41,7 @@
 * [X] 自定义屏蔽词: 不想让TA学坏？或者更安全一点？
 * [X] 随机参与聊天: 希望TA主动一些？
 * [X] 异步支持：赋予TA更强大的消息处理能力（注意：该功能尚在测试中，如果您更追求稳定性，请选择v1.1.6版本）
+* [X] 可拓展功能: 厌倦了单调的问答AI？为TA解锁超能力吧！TA能够根据你的语言主动调用拓展模块 (如:发送图片、语音等) TA的上限取决于你的想象
 * [ ] 潜在人格唤醒机制: 一定条件下，潜在人格会被主动唤醒
 * [ ] 主动聊天参与逻辑: 尽力模仿人类的聊天参与逻辑，目标是让TA能够真正融入你的群组
 * [ ] 回忆录生成: 记录你们之间的点点滴滴，获取你与TA的专属回忆
@@ -53,33 +59,37 @@
 
 ## 🛠️ 参数说明 — `config/naturel_gpt.config.yml`
 
-| 参数名                        | 类型  | 释义                                       | 默认值              | 编辑建议                                                |
-| ----------------------------- | ----- | ------------------------------------------ | ------------------- | ------------------------------------------------------- |
-| OPENAI_API_KEYS               | array | OpenAi的 `Api_Key，以字符串列表方式填入    | ['']                |                                                         |
-| CHAT_HISTORY_MAX_TOKENS       | int   | 聊天记录最大token数                        | 2048                |                                                         |
-| CHAT_MAX_SUMMARY_TOKENS       | int   | 聊天记录总结最大token数                    | 512                 |                                                         |
-| CHAT_MEMORY_MAX_LENGTH        | int   | 聊天记忆最大条数                           | 12                  | 超出此长度后会进行记忆总结并删除更早的记录              |
-| CHAT_MEMORY_SHORT_LENGTH      | int   | 短期聊天记忆参考条数                       | 8                   |                                                         |
-| CHAT_MODEL                    | str   | 聊天生成的语言模型                         | text-davinci-003    |                                                         |
-| CHAT_FREQUENCY_PENALTY        | float | 聊天频率重复惩罚                           | 0.4                 |                                                         |
-| CHAT_PRESENCE_PENALTY         | float | 聊天主题重复惩罚                           | 0.6                 |                                                         |
-| CHAT_TEMPERATURE              | float | 聊天生成温度: 越高越随机                   | 0.6                 |                                                         |
-| CHAT_TOP_P                    | float | 聊天信息采样率                             | 1                   |                                                         |
-| IGNORE_PREFIX                 | str   | 忽略前置修饰：添加此修饰的聊天信息将被忽略 | #                   |                                                         |
-| REPLY_MAX_TOKENS              | int   | 生成回复的最大token数                      | 1024                |                                                         |
-| REQ_MAX_TOKENS                | int   | 发起请求的最大token数（即请求+回复）       | 2048                |                                                         |
-| USER_MEMORY_SUMMARY_THRESHOLD | int   | 用户聊天印象总结触发阈值                   | 12                  | 越小触发越频繁，推荐10-20                               |
-| REPLY_ON_AT                   | bool  | 在被 `@TA` 时回复                        | True                |                                                         |
-| REPLY_ON_NAME_MENTION         | bool  | 在被 `提及` 时回复                       | True                | `提及` 即用户发言中含有当前bot人格名                  |
-| PRESETS                       | dict  | 人格预设集合                               | 略                  | 默认有四个预设，详见生成的配置文件                      |
-| NG_DATA_PATH                  | str   | 数据文件目录                               | ./data/naturel_gpt/ | 保存实现数据持久化                                      |
-| ADMIN_USERID                  | array | 管理员id，以字符串列表方式填入             | ['']                | 只有管理员可删除预设                                    |
-| WORD_FOR_WAKE_UP              | array | 自定义触发词，以字符串列表方式填入         | []                  | 消息中含有列表中的词将唤醒bot                           |
-| WORD_FOR_FORBIDDEN            | array | 自定义禁止触发词，以字符串列表方式填入     | []                  | 消息中含有列表中的词将呗拒绝唤醒bot（优先级高于触发词） |
-| RANDOM_CHAT_PROBABILITY       | float | 随机触发聊天概率，设为0禁用                | 0                   | 调整范围[0~1]，设置过高会大量消耗token                  |
-| NG_MSG_PRIORITY               | int   | 消息响应优先级                             | 10                  | 大于1，数值越大优先级越低                               |
-| NG_BLOCK_OTHERS               | bool  | 是否拦截其它插件的响应                     | False               | 开启后可能导致优先级低于本插件的其他插件不响应          |
-| \_\_DEBUG\_\_                 | bool  | 是否开启DEBUG输出                          | False               | 开启可查看prompt模板输出                                |
+| 参数名                        | 类型  | 释义                                       | 默认值                         | 编辑建议                                                                                           |
+| ----------------------------- | ----- | ------------------------------------------ | ------------------------------ | -------------------------------------------------------------------------------------------------- |
+| OPENAI_API_KEYS               | array | OpenAi的 `Api_Key，以字符串列表方式填入    | ['']                           |                                                                                                    |
+| CHAT_HISTORY_MAX_TOKENS       | int   | 聊天记录最大token数                        | 2048                           |                                                                                                    |
+| CHAT_MAX_SUMMARY_TOKENS       | int   | 聊天记录总结最大token数                    | 512                            |                                                                                                    |
+| CHAT_MEMORY_MAX_LENGTH        | int   | 聊天记忆最大条数                           | 12                             | 超出此长度后会进行记忆总结并删除更早的记录                                                         |
+| CHAT_MEMORY_SHORT_LENGTH      | int   | 短期聊天记忆参考条数                       | 8                              |                                                                                                    |
+| CHAT_MODEL                    | str   | 聊天生成的语言模型                         | text-davinci-003               |                                                                                                    |
+| CHAT_FREQUENCY_PENALTY        | float | 聊天频率重复惩罚                           | 0.4                            |                                                                                                    |
+| CHAT_PRESENCE_PENALTY         | float | 聊天主题重复惩罚                           | 0.6                            |                                                                                                    |
+| CHAT_TEMPERATURE              | float | 聊天生成温度: 越高越随机                   | 0.6                            |                                                                                                    |
+| CHAT_TOP_P                    | float | 聊天信息采样率                             | 1                              |                                                                                                    |
+| IGNORE_PREFIX                 | str   | 忽略前置修饰：添加此修饰的聊天信息将被忽略 | #                              |                                                                                                    |
+| REPLY_MAX_TOKENS              | int   | 生成回复的最大token数                      | 1024                           |                                                                                                    |
+| REQ_MAX_TOKENS                | int   | 发起请求的最大token数（即请求+回复）       | 2048                           |                                                                                                    |
+| USER_MEMORY_SUMMARY_THRESHOLD | int   | 用户聊天印象总结触发阈值                   | 12                             | 越小触发越频繁，推荐10-20                                                                          |
+| REPLY_ON_AT                   | bool  | 在被 `@TA` 时回复                        | True                           |                                                                                                    |
+| REPLY_ON_NAME_MENTION         | bool  | 在被 `提及` 时回复                       | True                           | `提及` 即用户发言中含有当前bot人格名                                                             |
+| PRESETS                       | dict  | 人格预设集合                               | 略                             | 默认有四个预设，详见生成的配置文件                                                                 |
+| NG_DATA_PATH                  | str   | 数据文件目录                               | ./data/naturel_gpt/            | 保存实现数据持久化                                                                                 |
+| NG_EXT_PATH                   | str   | 拓展脚本文件目录                           | ./data/naturel_gpt/extensions/ | 保存用于保存拓展脚本                                                                               |
+| NG_EXT_LOAD_LIST              | str   | 加载拓展列表                               |                                | 只有在此列表中的拓展会被bot使用                                                                    |
+| ADMIN_USERID                  | array | 管理员id，以字符串列表方式填入             | ['']                           | 只有管理员可删除预设                                                                               |
+| WORD_FOR_WAKE_UP              | array | 自定义触发词，以字符串列表方式填入         | []                             | 消息中含有列表中的词将唤醒bot                                                                      |
+| WORD_FOR_FORBIDDEN            | array | 自定义禁止触发词，以字符串列表方式填入     | []                             | 消息中含有列表中的词将呗拒绝唤醒bot（优先级高于触发词）                                            |
+| RANDOM_CHAT_PROBABILITY       | float | 随机触发聊天概率，设为0禁用                | 0                              | 调整范围[0~1]，设置过高会大量消耗token                                                             |
+| NG_MSG_PRIORITY               | int   | 消息响应优先级                             | 10                             | 大于1，数值越大优先级越低                                                                          |
+| NG_BLOCK_OTHERS               | bool  | 是否拦截其它插件的响应                     | False                          | 开启后可能导致优先级低于本插件的其他插件不响应                                                     |
+| NG_ENABLE_EXT                 | bool  | 是否启用聊天自定义拓展                     | True                           | 开启后bot可使用拓展功能，但会额外消耗token（取决于拓展描述复杂度，如果没有安装任何拓展请务必关闭） |
+| NG_MAX_RESPONSE_PER_MSG       | int   | 每条消息最大回复次数                       | 5                              | 限制bot针对每条信息最大回复次数，避免封禁                                                          |
+| \_\_DEBUG\_\_                 | bool  | 是否开启DEBUG输出                          | False                          | 开启可查看prompt模板输出                                                                           |
 
 ## 🪄 指令说明
 
@@ -119,6 +129,10 @@
   + 别称: unlock
   + 功能: 用于解锁指定人格预设，解锁后允许所有用户修改此预设
   + 使用示例: `rg unlock 白羽` (解锁白羽人格预设)
+- 查询拓展——"rg 拓展" (仅限bot管理员使用)
+  + 别称: ext
+  + 功能: 用于查询当前正常加载的所有拓展信息
+  + 使用示例: `rg ext`
 - 开启会话——"rg 开启" (仅限bot管理员使用)
   + 别称: on
   + 功能: 用于开启会话，开启后bot会开始按预定程序进行消息回应
@@ -162,11 +176,77 @@ Q: 为什么我在编辑了配置文件中的人格预设信息后重载插件�
 
 A: 由于用户数据信息与人格预设信息高度绑定，如果已经生成过pickle文件后程序不会再响应配置文件中人格预设的修改，而是会直接读取已有的pickle文件中的信息，您可以尝试使用 `!rg` 指令根据响应提示直接进行编辑，或者直接删除数据目录中的 `.pkl` 文件(注意：会造成bot记忆丢失)后重载程序重新生成
 
-## ❔ 已知问题
+## 🧩 自定义拓展
 
-- 程序在计算对话token数消耗时长过长，甚至高于生成回复的耗时，正在寻找更好的计算token数方案(但是过快的回复速度同时也会使bot表现不自然，导致bot的"拟人"效果变差)
+> 自定义拓展指的是本插件所提供的一个拓展接口，支持加载其它自定义脚本提供的功能，并且提供一套引导流程来 `教会` Bot使用这个功能，从而在bot在与用户通过自然语言聊天时能够根据场景情况主动调用对应的拓展功能
+
+- 拓展模块存放目录(默认): `./data/naturel_gpt/extensions/` (启动加载一次本插件会自动创建)
+- 注意：启用拓展后会自动在 nonebot 根目录下创建一个名为 `ext_cache` 的文件夹，该文件夹用于暂存加载的拓展包，请不要 存入/删除 其中的文件！否则可能导致 文件被误删/插件运行出错！
+
+### 使用自定义拓展
+
+> 你可以使用任意来源于本仓库 `/extensions/` 目录下的拓展，也可使用其它用户自行编写的拓展，但是请注意仅从你信任的来源获取，否则可能包含危险程序！
+
+1. 生成拓展模块存放目录(启动一次插件)
+2. 将你需要安装的拓展 (通常是 `ext_xxx.py`) 放入拓展模块存放目录
+3. 在本插件的配置文件中正确填写以下内容( `#` 号 后内容为注释)
+
+```yaml
+  NG_EXT_LOAD_LIST:
+  - EXT_CONFIG: {}  # 拓展配置 如该拓展插件无要求可为空
+    EXT_NAME: ext_random  # 拓展文件名 (不含'.py')
+    IS_ACTIVE: true   # 是否启用
+  - ... # 可填写多项
+```
+
+### 编写自定义拓展
+> 自行编写拓展需要具有一定的 Python 编程基础，如果您有相关能力可直接参考本仓库 `/extensions` 目录下的拓展进行编写(非常简单！) 自行编写的拓展安装流程与上述相同
+> 注意：该功能尚处于早期阶段，拓展编写在未来版本有可能随时变化！
+
+#### 基本的拓展模块模板
+```python
+from .Extension import Extension
+
+# 拓展的配置信息，用于ai理解拓展的功能 *必填*
+ext_config:dict = {
+    "name": "ExtensionName",   # 拓展名称，用于标识拓展，尽量简短
+    "arguments": {      
+        "arg1": "int",   # 填写希望的参数类型，尽量使用简单类型，便于ai理解含义使用
+        "arg2": "int",   # 注意：实际接收到的参数类型为str(由ai生成)，需要自行转换
+    },
+    # 拓展的描述信息，用于提示ai理解拓展的功能 *必填* 尽量简短 使用英文更节省token
+    "description": "send ...",
+    # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
+    "refer_word": ['use extension'],
+}
+
+class CustomExtension(Extension):
+    async def call(self, arg_dict: dict) -> dict:
+        """ 当拓展被调用时执行的函数 *由拓展自行实现*
+        
+        参数:
+            arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值}
+        """
+        custom_config:dict = self.get_custom_config()  # 获取yaml中的配置信息
+
+        ### 在这里处理主要的自定义逻辑
+
+        return {  # 返回的信息将会被发送到会话中
+            'text': f"[来自拓展的消息]...", # 文字信息
+            'image': f"http://...",  # 图片url
+            'voice': f"http://...",  # 语音url
+        }
+
+    def __init__(self, custom_config: dict):
+        super().__init__(ext_config.copy(), custom_config)
+```
 
 ## 🎢 更新日志
+
+## [2023/2/18] v1.3.0
+
+- *拓展支持：增加了插件拓展支持(插件的插件？)，支持使用自然语言自定义拓展更多功能，提供了两个示例拓展
+- 多处细节优化
 
 ## [2023/2/16] v1.2.0
 

@@ -2,25 +2,33 @@ from nonebot import get_driver
 from nonebot import on_command, on_message
 from nonebot.log import logger
 from nonebot.params import CommandArg, Matcher, Event
-from nonebot.adapters.onebot.v11 import Message, PrivateMessageEvent, GroupMessageEvent
+from nonebot.adapters.onebot.v11 import Message, PrivateMessageEvent, GroupMessageEvent, MessageSegment
 
 import time
 import copy
 import difflib
 import os
+import shutil
+import re
 import pickle
 import random
+import importlib
+import traceback
 
 from .config import *
 global_config = get_driver().config
 # logger.info(config) # 这里可以打印出配置文件的内容
 
 from .openai_func import TextGenerator
+from .Extension import Extension
 
 global_data = {}  # 用于存储所有数据的字典
 global_data_path = f"{config['NG_DATA_PATH']}naturel_gpt.pkl"
 
+global_extensions = {}  # 用于存储所有扩展的字典
 
+
+""" ======== 定义会话类 ======== """
 # 对话类
 class Chat:
     preset_key = ''  # 预设标识
@@ -127,22 +135,39 @@ class Chat:
 
     # 对话 prompt 模板生成
     def get_chat_prompt_template(self, userid: None) -> str:
-        impression_text = f"[印象]{global_preset_userdata[self.preset_key][userid].get('chat_impression')}" \
+        # 印象描述
+        impression_text = f"[impression]{global_preset_userdata[self.preset_key][userid].get('chat_impression')}\n" \
             if global_preset_userdata[self.preset_key].get(userid, {}).get('chat_impression', None) else ''  # 用户印象描述
 
+        # 对话历史
         offset = 0
-        chat_history = '\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])  # 从对话历史中截取短期对话
+        chat_history:str = '\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])  # 从对话历史中截取短期对话
         while tg.cal_token_count(chat_history) > config['CHAT_HISTORY_MAX_TOKENS']:
             offset += 1 # 如果对话历史过长，则逐行删除对话历史
             chat_history = '\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])
 
-        summary = f"\n\n[历史聊天摘要]: {self.chat_presets['chat_summarized']}" if self.chat_presets.get('chat_summarized', None) else ''  # 如果有对话历史摘要，则添加摘要
+        # 对话历史摘要
+        summary = f"\n\n[Summary]: {self.chat_presets['chat_summarized']}" if self.chat_presets.get('chat_summarized', None) else ''  # 如果有对话历史摘要，则添加摘要
 
+        # 拓展描述
+        ext_descs = ''.join([global_extensions[ek].generate_description(chat_history) for ek in global_extensions.keys()])
+
+        extension_text = (
+            '[Speaking options]\n'
+            'Speeking options can be used in the following strict format.\n'
+            # '- Random > min:a; max:b (send a random number between a and b)'
+            f'{ext_descs}'
+            'example use in reply: i will send 2 random number /#Random&0&5#/ /#Random&5&10#/ #$\n\n'    # 拓展使用示例 /#拓展名&参数1&参数2#/，参数之间用&分隔
+        ) if config.get('NG_ENABLE_EXT') else ''
+
+        # 返回对话 prompt 模板
         return (    # 返回对话 prompt 模板
             f"{self.chat_presets['bot_self_introl']}"
-            f"\n{summary}\n{impression_text}\n"
-            f"以下是与 \"{self.chat_presets['bot_name']}\" 的对话:"
-            f"\n\n{chat_history}\n{self.chat_presets['bot_name']}:"
+            f"\n{summary}\n{impression_text}"
+            # f"以下是与 \"{self.chat_presets['bot_name']}\" 的对话:"
+            f"{extension_text}"
+            f"[Chat - current time: {time.strftime('%Y-%m-%d %H:%M:%S')}]\n"
+            f"\n{chat_history}\n{self.chat_presets['bot_name']}(must be end with '#$'):"
         )
 
     # 获取当前对话bot的名称
@@ -157,6 +182,7 @@ class Chat:
     def toggle_chat(self, enabled:bool=True) -> None:
         self.is_enable = enabled
 
+""" ======== 读取历史记忆数据 ======== """
 # 检测历史数据pickle文件是否存在 不存在则初始化 存在则读取
 if os.path.exists(global_data_path):
     with open(global_data_path, 'rb') as f:
@@ -207,6 +233,55 @@ tg: TextGenerator = TextGenerator(api_keys, {
     'max_summary_tokens': config['CHAT_MAX_SUMMARY_TOKENS'],
 })
 
+""" ======== 加载拓展模块 ======== """
+# 加载拓展模块
+if config.get('NG_ENABLE_EXT'):
+    ext_path = config['NG_EXT_PATH']
+    abs_ext_path = os.path.abspath(ext_path)
+
+    # 在当前文件夹下建立一个ext_cache文件夹 用于暂存拓展模块的.py文件以便于动态导入
+    if not os.path.exists('ext_cache'):
+        os.makedirs('ext_cache')
+    # 删除ext_cache文件夹下的所有文件和文件夹
+    for file in os.listdir('ext_cache'):
+        file_path = os.path.join('ext_cache', file)
+        if os.path.isdir(file_path):
+            shutil.rmtree(file_path)
+        else:
+            os.remove(file_path)
+    # 在ext_cache文件夹下建立一个__init__.py文件 用于标记该文件夹为一个python包
+    if not os.path.exists('ext_cache/__init__.py'):
+        with open('ext_cache/__init__.py', 'w', encoding='utf-8') as f:
+            f.write('')
+
+    # 根据 Extension 文件 生成 Extension.py 并覆盖到拓展模块路径和 ext_cache 文件夹下
+    with open(os.path.join(os.path.dirname(__file__), 'Extension.py'), 'r', encoding='utf-8') as f:
+        ext_file = f.read()
+    with open(f'{ext_path}Extension.py', 'w', encoding='utf-8') as f:
+        f.write(ext_file)
+    with open(f'ext_cache/Extension.py', 'w', encoding='utf-8') as f:
+        f.write(ext_file)
+
+    for tmpExt in config['NG_EXT_LOAD_LIST']:   # 遍历拓展模块列表
+        logger.info(f"正在从加载拓展模块 \"{tmpExt.get('EXT_NAME')}\" ...")
+        try:
+            file_name = tmpExt.get("EXT_NAME") + '.py'  # 拓展模块文件名
+
+            # 复制拓展模块文件到ext_cache文件夹下
+            shutil.copyfile(f'{ext_path}{file_name}', f'ext_cache/{file_name}')
+            time.sleep(0.5)  # 等待文件复制完成
+            # 从 ext_cache 文件夹下导入拓展模块
+            CustomExtension:Extension = getattr(importlib.import_module(f'ext_cache.{tmpExt.get("EXT_NAME")}'), 'CustomExtension')
+            time.sleep(0.5)  # 等待文件导入完成
+
+            ext = CustomExtension(tmpExt.get("EXT_CONFIG"))  # 加载拓展模块并实例化
+            global_extensions[ext.get_config().get('name')] = ext  # 将拓展模块添加到全局拓展模块字典中
+            logger.info(f"加载拓展模块 {ext} 成功")
+        except Exception as e:
+            logger.error(f"加载拓展模块 \"{tmpExt.get('EXT_NAME')}\" 失败 | 原因: {e}")
+
+
+""" ======== 注册消息响应器 ======== """
 # 注册消息响应器 收到任意消息时触发
 matcher = on_message(priority=config['NG_MSG_PRIORITY'], block=config['NG_BLOCK_OTHERS'])
 @matcher.handle()
@@ -312,24 +387,77 @@ async def handler(event: Event) -> None:
     prompt_template = chat.get_chat_prompt_template(userid=event.get_user_id())
     if config.get('__DEBUG__'): logger.info("对话 prompt 模板: \n" + prompt_template)
 
-    res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.get_chat_bot_name(), 'sender_name': sender_name})  # 生成对话结果
+    raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.get_chat_bot_name(), 'sender_name': sender_name})  # 生成对话结果
     if not success:  # 如果生成对话结果失败，则直接返回
         logger.info("生成对话结果失败，跳过处理...")
-        await matcher.finish(res)
-    cost_token = tg.cal_token_count(prompt_template + res)      # 计算对话结果的 token 数量
+        await matcher.finish(raw_res)
+
+    # 用于存储最终回复顺序内容的列表
+    reply_list = []
+
+    # 按照拓展调用的格式，将所有非调用部分去除后再将剩余信息放入回复列表
+    pattern = '/#.*?#/'
+    reply_list = re.sub(pattern, '', raw_res).split()
+    if config.get('__DEBUG__'): logger.info("分割对话结果: " + str(reply_list))
+
+    # 分割对话结果提取出所有 "/#拓展名&参数1&参数2#/" 格式的拓展调用指令 参数之间用&分隔
+    ext_calls = re.findall(r"/#(.+?)#/", raw_res)
+    for ext_call_str in ext_calls:  # 遍历所有拓展调用指令
+        ext_name, *ext_args = ext_call_str.split('&')
+        if ext_name in global_extensions.keys():
+            # 提取出拓展调用指令中的参数为字典
+            ext_args:dict = {k:v for k,v in zip(ext_args[::2], ext_args[1::2])}
+            logger.info(f"检测到拓展调用指令: {ext_name} {ext_args} | 正在调用拓展模块...")
+            # 调用拓展的call方法
+            try:
+                ext_res:dict = await global_extensions[ext_name].call(ext_args)
+                if config.get('__DEBUG__'): logger.info(f"拓展 {ext_name} 返回结果: {ext_res}")
+                if ext_res is not None:
+                    # 将拓展返回的结果插入到回复列表的最后
+                    reply_list.append(ext_res)
+            except Exception as e:
+                logger.error(f"调用拓展 {ext_name} 时发生错误: {e}")
+                if config.get('__DEBUG__'): logger.error(f"[拓展 {ext_name}] 错误详情: {traceback.format_exc()}")
+                ext_res = None
+        else:
+            logger.error(f"未找到拓展 {ext_name}，跳过调用...")
+
+    if config.get('__DEBUG__'): logger.info(f"回复序列内容: {reply_list}")
+
+    res_times = config.get('NG_MAX_RESPONSE_PER_MSG', 3)  # 获取每条消息最大回复次数
+    # 根据回复内容列表逐条发送回复
+    for reply in reply_list:
+        # 判断回复内容是否为str
+        if isinstance(reply, str) and reply.strip():
+            await matcher.send(reply)
+        else:
+            for key in reply:   # 遍历回复内容类型字典
+                if key == 'text' and reply.get(key) and reply.get(key).strip():    # 如果回复内容为文本，则发送文本
+                    await matcher.send(reply.get(key))
+                elif key == 'image' and reply.get(key): # 如果回复内容为图片，则发送图片
+                    await matcher.send(MessageSegment.image(file=reply.get(key, '')))
+                elif key == 'voice' and reply.get(key): # 如果回复内容为语音，则发送语音
+                    await matcher.send(MessageSegment.record(file=reply.get(key, '')))
+                res_times -= 1
+                if res_times < 1:  # 如果回复次数超过限制，则跳出循环
+                    break
+
+    cost_token = tg.cal_token_count(prompt_template + raw_res)      # 计算对话结果的 token 数量
 
     while time.time() - sta_time < 1.5:   # 限制对话响应时间
         time.sleep(0.1)
 
-    # 发送对话结果
-    await matcher.send(res)
-    logger.info(f"token消耗: {cost_token} | 对话响应: \"{res}\"")
-    await chat.update_chat_history_row(sender=chat.get_chat_bot_name(), msg=res, require_summary=True)  # 更新全局对话历史记录
+    # 发送对话原始响应结果
+    # if config.get('__DEBUG__'): await matcher.send(f'原始回应: {raw_res}')
+
+    logger.info(f"token消耗: {cost_token} | 对话响应: \"{raw_res}\"")
+    await chat.update_chat_history_row(sender=chat.get_chat_bot_name(), msg=raw_res, require_summary=True)  # 更新全局对话历史记录
     # 更新对用户的对话信息
-    await chat.update_chat_history_row_for_user(sender=chat.get_chat_bot_name(), msg=res, userid=event.get_user_id(), username=sender_name, require_summary=True)
+    await chat.update_chat_history_row_for_user(sender=chat.get_chat_bot_name(), msg=raw_res, userid=event.get_user_id(), username=sender_name, require_summary=True)
     save_data()  # 保存数据
     if config.get('__DEBUG__'): logger.info(f"对话响应完成 | 耗时: {time.time() - sta_time}s")
 
+""" ======== 注册指令响应器 ======== """
 # 人格设定指令 用于设定人格的相关参数
 identity:Matcher = on_command("identity", aliases={"人格设定", "人格", "rg"}, priority=2, block=True)
 @identity.handle()
@@ -476,6 +604,17 @@ async def _(event: Event, arg: Message = CommandArg()):
         is_progress = True
         await identity.send(f"解锁预设: {target_preset_key} 成功! (￣▽￣)")
 
+    elif cmd in ["拓展", "ext"]:
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        # 查询所有拓展插件并生成汇报信息
+        ext_info = ''
+        for ext in global_extensions.values():
+            ext_info += f"  {ext.generate_description()}"
+        await identity.finish((
+            f"当前已加载的拓展插件:\n{ext_info}"
+        ))
+
     elif cmd in ["开启", "on"]:
         if str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
@@ -525,7 +664,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         logger.info(f"用户: {event.get_user_id()} 进行了人格预设编辑: {cmd}")
         save_data()  # 保存数据
 
-
+""" ======== 保存记忆数据 ======== """
 # 保存数据到本地
 def save_data():
     global last_save_data_time

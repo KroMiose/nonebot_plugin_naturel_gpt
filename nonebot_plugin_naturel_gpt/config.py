@@ -67,6 +67,8 @@ CONFIG_TEMPLATE = {
     'CHAT_SUMMARY_INTERVAL': 10, # 长期对话记忆间隔
 
     'NG_DATA_PATH': "./data/naturel_gpt/", # 数据文件目录
+    'NG_EXT_PATH': "./data/naturel_gpt/extensions/", # 拓展目录
+
     'ADMIN_USERID': [''], # 管理员QQ号
 
     'WORD_FOR_WAKE_UP': [], # 自定义触发词
@@ -76,6 +78,15 @@ CONFIG_TEMPLATE = {
 
     'NG_MSG_PRIORITY': 10,       # 消息响应优先级
     'NG_BLOCK_OTHERS': False,    # 是否阻止其他插件响应
+    'NG_ENABLE_EXT': False,      # 是否启用拓展
+
+    'NG_MAX_RESPONSE_PER_MSG': 5,  # 每条消息最大响应次数
+
+    'NG_EXT_LOAD_LIST': [{
+        'EXT_NAME': 'ext_random',
+        'IS_ACTIVE': True,
+        'EXT_CONFIG': {},
+    }],     # 加载的拓展列表
 
     '__DEBUG__': False, # 是否启用debug模式
 }
@@ -108,6 +119,12 @@ with open(config_path, 'r', encoding='utf-8') as f:
     # 将配置文件内容写入config
     for k, v in config.items():
         setattr(Config, k, v)
+
+# 检查数据文件夹目录和拓展目录是否存在 不存在则创建
+if not Path(config['NG_DATA_PATH'][:-1]).exists():
+    Path(config['NG_DATA_PATH'][:-1]).mkdir()
+if not Path(config['NG_EXT_PATH'][:-1]).exists():
+    Path(config['NG_EXT_PATH'][:-1]).mkdir()
 
 # 保存配置文件
 with open(config_path, 'w', encoding='utf-8') as f:
