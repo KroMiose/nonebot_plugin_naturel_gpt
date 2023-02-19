@@ -8,9 +8,10 @@ ext_config:dict = {
         
     },
     # 拓展的描述信息，用于提示ai理解拓展的功能 *必填* 尽量简短 使用英文更节省token
-    "description": "send 1 random pic. (not parameters!)",
+    # 如果bot无法理解拓展的功能，可适当添加使用示例 格式: /#拓展名&参数1&...&参数n#/
+    "description": "send 1 random pic. (not parameters! use eg: /#Pic#/)",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
-    "refer_word": ["图", "pic", "Pic", "再"],
+    "refer_word": ["图", "pic", "Pic", "再", "还"],
 }
 
 class CustomExtension(Extension):

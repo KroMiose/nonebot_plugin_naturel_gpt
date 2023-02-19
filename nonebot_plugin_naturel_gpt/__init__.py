@@ -154,7 +154,7 @@ class Chat:
 
         extension_text = (
             '[Speaking options]\n'
-            'Speeking options can be used in the following strict format.\n'
+            'Speeking options can be used in the following strict format. Multiple options can be used in one reply.\n'
             # '- Random > min:a; max:b (send a random number between a and b)'
             f'{ext_descs}'
             'Use format: /#extension_name&param1&param2#/ (parameters are separated by &)\n\n'
@@ -168,7 +168,7 @@ class Chat:
             # f"以下是与 \"{self.chat_presets['bot_name']}\" 的对话:"
             f"{extension_text}"
             f"[Chat - current time: {time.strftime('%Y-%m-%d %H:%M:%S')}]\n"
-            f"\n{chat_history}\n{self.chat_presets['bot_name']}:"
+            f"\n{chat_history}\n{self.chat_presets['bot_name']}(Multiple segment replies are separated by Spaces):"
         )
 
     # 获取当前对话bot的名称
@@ -264,22 +264,23 @@ if config.get('NG_ENABLE_EXT'):
         f.write(ext_file)
 
     for tmpExt in config['NG_EXT_LOAD_LIST']:   # 遍历拓展模块列表
-        logger.info(f"正在从加载拓展模块 \"{tmpExt.get('EXT_NAME')}\" ...")
-        try:
-            file_name = tmpExt.get("EXT_NAME") + '.py'  # 拓展模块文件名
+        if tmpExt.get('IS_ACTIVE') and tmpExt.get('EXT_NAME'):
+            logger.info(f"正在从加载拓展模块 \"{tmpExt.get('EXT_NAME')}\" ...")
+            try:
+                file_name = tmpExt.get("EXT_NAME") + '.py'  # 拓展模块文件名
 
-            # 复制拓展模块文件到ext_cache文件夹下
-            shutil.copyfile(f'{ext_path}{file_name}', f'ext_cache/{file_name}')
-            time.sleep(0.5)  # 等待文件复制完成
-            # 从 ext_cache 文件夹下导入拓展模块
-            CustomExtension:Extension = getattr(importlib.import_module(f'ext_cache.{tmpExt.get("EXT_NAME")}'), 'CustomExtension')
-            time.sleep(0.5)  # 等待文件导入完成
+                # 复制拓展模块文件到ext_cache文件夹下
+                shutil.copyfile(f'{ext_path}{file_name}', f'ext_cache/{file_name}')
+                time.sleep(0.3)  # 等待文件复制完成
+                # 从 ext_cache 文件夹下导入拓展模块
+                CustomExtension:Extension = getattr(importlib.import_module(f'ext_cache.{tmpExt.get("EXT_NAME")}'), 'CustomExtension')
+                time.sleep(0.3)  # 等待文件导入完成
 
-            ext = CustomExtension(tmpExt.get("EXT_CONFIG"))  # 加载拓展模块并实例化
-            global_extensions[ext.get_config().get('name')] = ext  # 将拓展模块添加到全局拓展模块字典中
-            logger.info(f"加载拓展模块 {ext} 成功")
-        except Exception as e:
-            logger.error(f"加载拓展模块 \"{tmpExt.get('EXT_NAME')}\" 失败 | 原因: {e}")
+                ext = CustomExtension(tmpExt.get("EXT_CONFIG", {}))  # 加载拓展模块并实例化
+                global_extensions[ext.get_config().get('name')] = ext  # 将拓展模块添加到全局拓展模块字典中
+                logger.info(f"加载拓展模块 {ext} 成功")
+            except Exception as e:
+                logger.error(f"加载拓展模块 \"{tmpExt.get('EXT_NAME')}\" 失败 | 原因: {e}")
 
 
 """ ======== 注册消息响应器 ======== """
@@ -497,6 +498,7 @@ async def _(event: Event, arg: Message = CommandArg()):
 
     if not cmd:
         await identity.finish((
+            f"会话: {chat_key} [{'启用' if chat.is_enable else '禁用'}]\n"
             f"当前可用人格预设有:\n"
             f"{presets_show_text}\n"
             f"=======================\n"
@@ -631,11 +633,27 @@ async def _(event: Event, arg: Message = CommandArg()):
         chat.toggle_chat(enabled=True)
         await identity.finish("已开启会话! <(￣▽￣)>")
 
+    elif (cmd.split(' ')[0] in ["开启", "on"]) and len(cmd.split(' ')) == 2:
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        if cmd.split(' ')[1] == '-all':
+            for c in chat_dict.values():
+                c.toggle_chat(enabled=True)
+        await identity.finish("已开启所有会话! <(￣▽￣)>")
+
     elif cmd in ["关闭", "off"]:
         if str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
         chat.toggle_chat(enabled=False)
         await identity.finish("已停止会话! <(＿　＿)>")
+
+    elif (cmd.split(' ')[0] in ["关闭", "off"]) and len(cmd.split(' ')) == 2:
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        if cmd.split(' ')[1] == '-all':
+            for c in chat_dict.values():
+                c.toggle_chat(enabled=False)
+        await identity.finish("已停止所有会话! <(＿　＿)>")
 
     elif (cmd.split(' ')[0] in ["重置", "reset"]) and len(cmd.split(' ')) == 2:
         if str(event.user_id) not in config['ADMIN_USERID']:

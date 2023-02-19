@@ -84,7 +84,7 @@ CONFIG_TEMPLATE = {
 
     'NG_EXT_LOAD_LIST': [{
         'EXT_NAME': 'ext_random',
-        'IS_ACTIVE': True,
+        'IS_ACTIVE': False,
         'EXT_CONFIG': {},
     }],     # 加载的拓展列表
 
