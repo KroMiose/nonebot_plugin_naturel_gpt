@@ -221,6 +221,8 @@ ext_config:dict = {
     "description": "send ...",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": ['use extension'],
+    # 每次消息回复中最大调用次数，不填则默认为99
+    "max_call_times_per_msg": 99,
 }
 
 class CustomExtension(Extension):
