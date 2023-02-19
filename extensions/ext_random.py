@@ -15,6 +15,10 @@ ext_config:dict = {
     "refer_word": [],
     # 每次消息回复中最大调用次数，不填则默认为99
     "max_call_times_per_msg": 5,
+    # 作者信息
+    "author": "KroMiose",
+    # 版本
+    "version": "v0.0.1"
 }
 
 class CustomExtension(Extension):
