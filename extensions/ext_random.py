@@ -13,10 +13,12 @@ ext_config:dict = {
     "description": "send a random number beteen the range.",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
+    # 每次消息回复中最大调用次数，不填则默认为99
+    "max_call_times_per_msg": 5,
 }
 
 class CustomExtension(Extension):
-    async def call(self, arg_dict: dict) -> dict:
+    async def run(self, arg_dict: dict) -> dict:
         """ 当拓展被调用时执行的函数 *由拓展自行实现*
         
         参数:

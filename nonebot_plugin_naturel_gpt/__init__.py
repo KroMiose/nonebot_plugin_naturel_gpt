@@ -14,6 +14,7 @@ import pickle
 import random
 import importlib
 import traceback
+import asyncio
 
 from .config import *
 global_config = get_driver().config
@@ -62,13 +63,13 @@ class Chat:
             self.chat_presets['chat_history'].pop(0)
 
         if len(self.chat_presets['chat_history']) > config['CHAT_MEMORY_MAX_LENGTH'] and require_summary: # 只有在需要时才进行总结 避免不必要的token消耗
-            prev_summarized = f"上次的对话摘要:{self.chat_presets['chat_summarized']}\n\n" \
+            prev_summarized = f"Summary of last conversation:{self.chat_presets['chat_summarized']}\n\n" \
                 if self.chat_presets.get('chat_summarized') else ''
             history_str = '\n'.join(self.chat_presets['chat_history'])
             prompt = (  # 以机器人的视角总结对话历史
-                f"{prev_summarized}对话记录:\n"
+                f"{prev_summarized}[Chat]\n"
                 f"{history_str}"
-                f"\n\n{self.chat_presets['bot_self_introl']}\n从{self.chat_presets['bot_name']}的视角用一段话总结以上聊天并尽可能多地记录下对话中的重要信息:"
+                f"\n\n{self.chat_presets['bot_self_introl']}\nSummarize the chat in one paragraph from the perspective of '{self.chat_presets['bot_name']}' and record as much important information as possible from the conversation:"
             )
             if config.get('__DEBUG__'): logger.info(f"生成对话历史摘要prompt: {prompt}")
             res, success = await tg.get_response(prompt, type='summarize')  # 生成新的对话历史摘要
@@ -90,13 +91,13 @@ class Chat:
         logger.info(f"添加对话历史行: {messageunit}  |  当前对话历史行数: {len(global_preset_userdata[self.preset_key][userid]['chat_history'])}")
         # 保证对话历史不超过最大长度
         if len(global_preset_userdata[self.preset_key][userid]['chat_history']) > config['USER_MEMORY_SUMMARY_THRESHOLD'] and require_summary:
-            prev_summarized = f"上次的印象:{global_preset_userdata[self.preset_key][userid].get('chat_summarized')}\n\n" \
+            prev_summarized = f"Last impression:{global_preset_userdata[self.preset_key][userid].get('chat_summarized')}\n\n" \
                 if global_preset_userdata[self.preset_key][userid].get('chat_summarized') else ''
             history_str = '\n'.join(global_preset_userdata[self.preset_key][userid]['chat_history'])
             prompt = (   # 以机器人的视角总结对话
-                f"{prev_summarized}对话记录:\n"
+                f"{prev_summarized}[Chat]\n"
                 f"{history_str}"
-                f"\n\n{self.chat_presets['bot_self_introl']}\n从{self.chat_presets['bot_name']}的视角更新对{username}的印象:"
+                f"\n\n{self.chat_presets['bot_self_introl']}\nUpdate {username} impressions from the perspective of {self.chat_presets['bot_name']}:"
             )
             if config.get('__DEBUG__'): logger.info(f"生成对话历史摘要prompt: {prompt}")
             res, success = await tg.get_response(prompt, type='summarize')  # 生成新的对话历史摘要
@@ -153,22 +154,25 @@ class Chat:
         ext_descs = ''.join([global_extensions[ek].generate_description(chat_history) for ek in global_extensions.keys()])
 
         extension_text = (
-            '[Speaking options]\n'
-            'Speeking options can be used in the following strict format. Multiple options can be used in one reply.\n'
+            '[Speak options]\n'
+            'importrant: The speak option is available if and only if in the following strict format. Multiple options can be used in one reply.\n'
             # '- Random > min:a; max:b (send a random number between a and b)'
-            f'{ext_descs}'
+            f'{ext_descs}\n'
             'Use format: /#extension_name&param1&param2#/ (parameters are separated by &)\n\n'
             # 'example use in reply: i will send 2 random number /#Random&0&5#/ /#Random&5&10#/\n\n'    # 拓展使用示例 /#拓展名&参数1&参数2#/，参数之间用&分隔
-        ) if config.get('NG_ENABLE_EXT') else ''
+        ) if config.get('NG_ENABLE_EXT') and ext_descs else (
+            '[Speak options]\n'
+            'No extension is currently available. Do not use the extension function like /#extension_name&param1&param2#/.\n\n'
+        )
 
         # 返回对话 prompt 模板
         return (    # 返回对话 prompt 模板
             f"{self.chat_presets['bot_self_introl']}"
             f"\n{summary}\n{impression_text}"
-            # f"以下是与 \"{self.chat_presets['bot_name']}\" 的对话:"
             f"{extension_text}"
+            # f"以下是与 \"{self.chat_presets['bot_name']}\" 的对话:"
             f"[Chat - current time: {time.strftime('%Y-%m-%d %H:%M:%S')}]\n"
-            f"\n{chat_history}\n{self.chat_presets['bot_name']}(Multiple segment replies are separated by Spaces):"
+            f"\n{chat_history}\n{self.chat_presets['bot_name']}(Multiple segment replies are separated by '*;', single quotes are not included):"
         )
 
     # 获取当前对话bot的名称
@@ -179,7 +183,7 @@ class Chat:
     def get_chat_preset_key(self) -> str:
         return self.preset_key
 
-    # 开关对话
+    # 开关当前会话
     def toggle_chat(self, enabled:bool=True) -> None:
         self.is_enable = enabled
 
@@ -400,10 +404,17 @@ async def handler(event: Event) -> None:
     # 用于存储最终回复顺序内容的列表
     reply_list = []
 
-    # 按照拓展调用的格式，将所有非调用部分去除后再将剩余信息放入回复列表
+    # 按照拓展调用的格式，将所有非调用部分去除后再将剩余信息切分放入回复列表
     pattern = '/#.*?#/'
     reply_list = re.sub(pattern, '', raw_res).split()
+    # 对分割后的对话再次根据 '*;' 进行分割，表示对话结果中的分句，处理结果为列表，其中每个元素为一句话
+    reply_list = [reply.strip() for reply in re.split(r'\*;', ' '.join(reply_list)) if reply.strip()]
+
     if config.get('__DEBUG__'): logger.info("分割对话结果: " + str(reply_list))
+
+    # 重置所有拓展调用次数
+    for ext_name in global_extensions.keys():
+        global_extensions[ext_name].reset_call_times()
 
     # 分割对话结果提取出所有 "/#拓展名&参数1&参数2#/" 格式的拓展调用指令 参数之间用&分隔
     ext_calls = re.findall(r"/#(.+?)#/", raw_res)
@@ -431,8 +442,12 @@ async def handler(event: Event) -> None:
                 logger.error(f"调用拓展 {ext_name} 时发生错误: {e}")
                 if config.get('__DEBUG__'): logger.error(f"[拓展 {ext_name}] 错误详情: {traceback.format_exc()}")
                 ext_res = None
+                # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的信息
+                raw_res = raw_res.replace(f"/#{ext_call_str}#/", '')
         else:
             logger.error(f"未找到拓展 {ext_name}，跳过调用...")
+            # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的信息
+            raw_res = raw_res.replace(f"/#{ext_call_str}#/", '')
 
     if config.get('__DEBUG__'): logger.info(f"回复序列内容: {reply_list}")
 
@@ -455,6 +470,7 @@ async def handler(event: Event) -> None:
                 res_times -= 1
                 if res_times < 1:  # 如果回复次数超过限制，则跳出循环
                     break
+        await asyncio.sleep(1.5)  # 每条回复之间间隔1.5秒
 
     cost_token = tg.cal_token_count(prompt_template + raw_res)      # 计算对话结果的 token 数量
 
@@ -523,13 +539,14 @@ async def _(event: Event, arg: Message = CommandArg()):
             f"+ 删除预设(管理): rg 删除 <预设名>\n"
             f"+ 锁定预设(管理): rg 锁定 <预设名>\n"
             f"+ 解锁预设(管理): rg 解锁 <预设名>\n"
-            f"+ 开启会话(管理): rg <开启/on>\n"
-            f"+ 停止会话(管理): rg <关闭/off>\n"
-            f"+ 重置会话(管理): rg <重置/reset>\n"
+            f"+ 开启会话(管理): rg <开启/on> <-all?>\n"
+            f"+ 停止会话(管理): rg <关闭/off> <-all?>\n"
+            f"+ 重置会话(管理): rg <重置/reset> <-all?>\n"
+            f"+ 拓展信息(管理): rg <拓展/ext>\n"
             f"Tip: <人格信息> 是一段第三人称的人设说明(不超过200字, 不包含空格)\n"
         ))
 
-    elif (cmd.split(' ')[0] == "设定" or cmd.split(' ')[0] == "set") and len(cmd.split(' ')) == 2:
+    elif (cmd.split(' ')[0] in ["设定", "set"]) and len(cmd.split(' ')) == 2:
         target_preset_key = cmd.split(' ')[1]
         if target_preset_key not in presets_dict:
             # 如果预设不存在，进行逐一进行字符匹配，选择最相似的预设
