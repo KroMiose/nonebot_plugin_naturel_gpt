@@ -71,6 +71,7 @@ CONFIG_TEMPLATE = {
     'NG_EXT_PATH': "./data/naturel_gpt/extensions/", # 拓展目录
 
     'ADMIN_USERID': ['填写管理员QQ号'], # 管理员QQ号
+    'FORBIDDEN_USERS': ['123456'],   # 拒绝回应的QQ号
 
     'WORD_FOR_WAKE_UP': [], # 自定义触发词
     'WORD_FOR_FORBIDDEN': [], # 自定义禁止触发词

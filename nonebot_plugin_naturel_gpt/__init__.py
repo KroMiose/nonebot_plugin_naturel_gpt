@@ -299,6 +299,11 @@ if config.get('NG_ENABLE_EXT'):
 matcher:Matcher = on_message(priority=config['NG_MSG_PRIORITY'], block=config['NG_BLOCK_OTHERS'])
 @matcher.handle()
 async def handler(event: Event) -> None:
+    # 判断用户账号是否被屏蔽
+    if event.get_user_id() in config['FORBIDDEN_USERS']:
+        logger.info(f"用户 {event.get_user_id()} 被屏蔽，拒绝处理消息")
+        return
+
     sta = time.time()
     sender_name = event.dict().get('sender', {}).get('nickname', '未知')
     resTmplate = (  # 测试用，获取消息的相关信息
@@ -498,6 +503,10 @@ identity:Matcher = on_command("identity", aliases={"人格设定", "人格", "rg
 @identity.handle()
 async def _(event: Event, arg: Message = CommandArg()):
     is_progress = False
+    # 判断是否是禁止使用的用户
+    if event.get_user_id() in config.get('FORBIDDEN_USERS', []):
+        await identity.finish(f"您的账号({event.get_user_id()})已被禁用，请联系管理员。")
+
     # 判断群聊/私聊
     if isinstance(event, GroupMessageEvent):
         chat_key = 'group_' + event.get_session_id().split("_")[1]

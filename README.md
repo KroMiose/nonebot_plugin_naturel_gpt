@@ -60,6 +60,8 @@
 
 ## 🛠️ 参数说明 — `config/naturel_gpt.config.yml`
 
+<details> <summary>🔍点击查看可配置的参数说明</summary> <pre><code>
+
 | 参数名                        | 类型  | 释义                                       | 默认值                         | 编辑建议                                                                                           |
 | ----------------------------- | ----- | ------------------------------------------ | ------------------------------ | -------------------------------------------------------------------------------------------------- |
 | OPENAI_API_KEYS               | array | OpenAi的 `Api_Key，以字符串列表方式填入    | ['']                           |                                                                                                    |
@@ -76,13 +78,14 @@
 | REPLY_MAX_TOKENS              | int   | 生成回复的最大token数                      | 1024                           |                                                                                                    |
 | REQ_MAX_TOKENS                | int   | 发起请求的最大token数（即请求+回复）       | 2048                           |                                                                                                    |
 | USER_MEMORY_SUMMARY_THRESHOLD | int   | 用户聊天印象总结触发阈值                   | 12                             | 越小触发越频繁，推荐10-20                                                                          |
-| REPLY_ON_AT                   | bool  | 在被 `@TA` 时回复                        | True                           |                                                                                                    |
-| REPLY_ON_NAME_MENTION         | bool  | 在被 `提及` 时回复                       | True                           | `提及` 即用户发言中含有当前bot人格名                                                             |
+| REPLY_ON_AT                   | bool  | 在被 `@TA` 时回复                          | True                           |                                                                                                    |
+| REPLY_ON_NAME_MENTION         | bool  | 在被 `提及` 时回复                         | True                           | `提及` 即用户发言中含有当前bot人格名                                                               |
 | PRESETS                       | dict  | 人格预设集合                               | 略                             | 默认有四个预设，详见生成的配置文件                                                                 |
 | NG_DATA_PATH                  | str   | 数据文件目录                               | ./data/naturel_gpt/            | 保存实现数据持久化                                                                                 |
 | NG_EXT_PATH                   | str   | 拓展脚本文件目录                           | ./data/naturel_gpt/extensions/ | 保存用于保存拓展脚本                                                                               |
 | NG_EXT_LOAD_LIST              | str   | 加载拓展列表                               |                                | 只有在此列表中的拓展会被bot使用                                                                    |
 | ADMIN_USERID                  | array | 管理员id，以字符串列表方式填入             | ['']                           | 只有管理员可删除预设                                                                               |
+| FORBIDDEN_USERS               | array | 黑名单用户id，以字符串列表方式填入         | ['']                           | 黑名单中的用户消息不会被记录和响应设                                                               |
 | WORD_FOR_WAKE_UP              | array | 自定义触发词，以字符串列表方式填入         | []                             | 消息中含有列表中的词将唤醒bot                                                                      |
 | WORD_FOR_FORBIDDEN            | array | 自定义禁止触发词，以字符串列表方式填入     | []                             | 消息中含有列表中的词将呗拒绝唤醒bot（优先级高于触发词）                                            |
 | RANDOM_CHAT_PROBABILITY       | float | 随机触发聊天概率，设为0禁用                | 0                              | 调整范围[0~1]，设置过高会大量消耗token                                                             |
@@ -92,6 +95,7 @@
 | NG_MAX_RESPONSE_PER_MSG       | int   | 每条消息最大回复次数                       | 5                              | 限制bot针对每条信息最大回复次数，避免封禁                                                          |
 | NG_ENABLE_MSG_SPLIT           | bool  | 是否允许消息分割发送                       | True                           | 如果允许，bot有可能会在一次回复中发送多条消息                                                      |
 | \_\_DEBUG\_\_                 | bool  | 是否开启DEBUG输出                          | False                          | 开启可查看prompt模板输出                                                                           |
+</code> </pre> </details>
 
 ## 🪄 指令说明
 
@@ -103,7 +107,7 @@
 
 ### 衍生命令
 
-<details> <summary>展开查看详细命令</summary> <pre> <code>
+<details> <summary>🔍点击展开查看详细命令和示例</summary> <pre> <code>
 
 - 切换人格——"rg 设定 <-all>"
   + 别称: set
@@ -229,6 +233,11 @@ A: 由于用户数据信息与人格预设信息高度绑定，如果已经生�
 > 说明: 调用 `alapi` 接口，搜索指定关键字(由bot自主决定)的表情包并发送
 > 配置项: - token*: 平台 token (需自行申请)
 
+#### > 发送语音消息（测试中）
+
+> 拓展文件: ext_voice.py
+> 说明: 调用语音生成接口(需自行搭建)
+
 ### 编写自定义拓展
 
 > 自行编写拓展需要具有一定的 Python 编程基础，如果您有相关能力可直接参考本仓库 `/extensions/` 目录下的拓展进行编写(非常简单！) 自行编写的拓展安装流程与上述相同
@@ -237,7 +246,7 @@ A: 由于用户数据信息与人格预设信息高度绑定，如果已经生�
 ✨ 如果您想分析您自行开发的拓展，可向本仓库提交pr，将您的拓展命名为 `share_ext_xxx.py`('xxx'部分可自行命名，请勿与已存在的拓展名冲突) 并上传至本仓库的 `/share_exts/` 目录下，欢迎您成为本项目的贡献者！
 
 #### 基本的拓展模块模板
-<details> <summary>查看拓展模块编写模板</summary> <pre><code>
+<details> <summary>🔍点击查看拓展模块编写模板</summary> <pre><code>
 
 ```python
 from .Extension import Extension
@@ -250,7 +259,7 @@ ext_config:dict = {
         "arg2": "int",   # 注意：实际接收到的参数类型为str(由ai生成)，需要自行转换
     },
     # 拓展的描述信息，用于提示ai理解拓展的功能 *必填* 尽量简短 使用英文更节省token
-    "description": "send ...",
+    "description": "send ... (use eg: /#Send&xxx#/)",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": ['use extension'],
     # 每次消息回复中最大调用次数，不填则默认为99
@@ -292,6 +301,9 @@ class CustomExtension(Extension):
 - 修复第一次启动自动创建数据文件夹目录失败的问题
 - 为更换人格预设增加了批量操作 `-all` 指令
 - 增加了 `chats` 指令，用于查看所有会话状态
+- 优化 README.md 文档
+- 增加了是否开启消息切分多条发送的配置项（默认开启）
+- 增加了黑名单功能，在黑名单中的用户消息不会被记录和响应
 
 ## [2023/2/20] v1.3.3
 

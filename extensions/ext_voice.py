@@ -33,7 +33,6 @@ class CustomExtension(Extension):
 
         # 获取参数
         text = arg_dict.get('sentence', None)
-        
         text = urllib.parse.quote(text) # url编码
 
         url = f"http://127.0.0.1:23211/to_voice?text={text}"
@@ -50,9 +49,7 @@ class CustomExtension(Extension):
             return {
                 'voice': local_url,    # 语音url
             }
-        else:
-            # 返回的信息将会被发送到会话中
-            return {}
+        return {}
 
     def __init__(self, custom_config: dict):
         super().__init__(ext_config.copy(), custom_config)
