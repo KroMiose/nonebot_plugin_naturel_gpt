@@ -18,7 +18,8 @@ config = Config.parse_obj(global_config)
 # 配置文件模板
 CONFIG_TEMPLATE = {
     "OPENAI_API_KEYS": [    # OpenAI API Key 列表
-        ''
+        'sak-xxxxxxxxxxxxx',
+        'sak-xxxxxxxxxxxxx',
     ],
     "PRESETS": {
         "白羽": {
@@ -51,7 +52,7 @@ CONFIG_TEMPLATE = {
     'CHAT_HISTORY_MAX_TOKENS': 2048,
     'CHAT_TOP_P': 1,
     'CHAT_TEMPERATURE': 0.6,    # 温度越高越随机
-    'CHAT_FREQUENCY_PENALTY': 0.4,  # 频率惩罚
+    'CHAT_FREQUENCY_PENALTY': 0.6,  # 频率惩罚
     'CHAT_PRESENCE_PENALTY': 0.6,   # 出现惩罚
     'REQ_MAX_TOKENS': 2048, # 单次请求最大token数
     'REPLY_MAX_TOKENS': 1024,   # 单次回复最大token数
@@ -69,18 +70,19 @@ CONFIG_TEMPLATE = {
     'NG_DATA_PATH': "./data/naturel_gpt/", # 数据文件目录
     'NG_EXT_PATH': "./data/naturel_gpt/extensions/", # 拓展目录
 
-    'ADMIN_USERID': [''], # 管理员QQ号
+    'ADMIN_USERID': ['填写管理员QQ号'], # 管理员QQ号
 
     'WORD_FOR_WAKE_UP': [], # 自定义触发词
     'WORD_FOR_FORBIDDEN': [], # 自定义禁止触发词
 
     'RANDOM_CHAT_PROBABILITY': 0,   # 随机聊天概率
 
-    'NG_MSG_PRIORITY': 10,       # 消息响应优先级
+    'NG_MSG_PRIORITY': 99,       # 消息响应优先级
     'NG_BLOCK_OTHERS': False,    # 是否阻止其他插件响应
     'NG_ENABLE_EXT': False,      # 是否启用拓展
 
     'NG_MAX_RESPONSE_PER_MSG': 5,  # 每条消息最大响应次数
+    'NG_ENABLE_MSG_SPLIT': True,   # 是否启用消息分割
 
     'NG_EXT_LOAD_LIST': [{
         'EXT_NAME': 'ext_random',
@@ -122,9 +124,9 @@ with open(config_path, 'r', encoding='utf-8') as f:
 
 # 检查数据文件夹目录和拓展目录是否存在 不存在则创建
 if not Path(config['NG_DATA_PATH'][:-1]).exists():
-    Path(config['NG_DATA_PATH'][:-1]).mkdir()
+    Path(config['NG_DATA_PATH'][:-1]).mkdir(parents=True)
 if not Path(config['NG_EXT_PATH'][:-1]).exists():
-    Path(config['NG_EXT_PATH'][:-1]).mkdir()
+    Path(config['NG_EXT_PATH'][:-1]).mkdir(parents=True)
 
 # 保存配置文件
 with open(config_path, 'w', encoding='utf-8') as f:

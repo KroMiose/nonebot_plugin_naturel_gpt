@@ -45,3 +45,5 @@ if __name__ == '__main__':
     import os, shutil
     # 复制 Extension.py 到 ../extensions/ 目录下
     shutil.copyfile(os.path.join(os.path.dirname(__file__), 'Extension.py'), os.path.join(os.path.dirname(__file__), '..', 'extensions', 'Extension.py'))
+    # 复制 Extension.py 到 ../share_exts/ 目录下
+    shutil.copyfile(os.path.join(os.path.dirname(__file__), 'Extension.py'), os.path.join(os.path.dirname(__file__), '..', 'share_exts', 'Extension.py'))

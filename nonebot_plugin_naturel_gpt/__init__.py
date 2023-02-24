@@ -152,7 +152,7 @@ class Chat:
 
         # 拓展描述
         ext_descs = ''.join([global_extensions[ek].generate_description(chat_history) for ek in global_extensions.keys()])
-
+        # 拓展使用示例
         extension_text = (
             '[Speak options]\n'
             'importrant: The speak option is available if and only if in the following strict format. Multiple options can be used in one reply.\n'
@@ -165,6 +165,9 @@ class Chat:
             'No extension is currently available. Do not use the extension function like /#extension_name&param1&param2#/.\n\n'
         )
 
+        # 发言提示
+        say_prompt = "(Multiple segment replies are separated by '*;', single quotes are not included)" if config.get('NG_ENABLE_MSG_SPLIT') else ''
+
         # 返回对话 prompt 模板
         return (    # 返回对话 prompt 模板
             f"{self.chat_presets['bot_self_introl']}"
@@ -172,7 +175,7 @@ class Chat:
             f"{extension_text}"
             # f"以下是与 \"{self.chat_presets['bot_name']}\" 的对话:"
             f"[Chat - current time: {time.strftime('%Y-%m-%d %H:%M:%S')}]\n"
-            f"\n{chat_history}\n{self.chat_presets['bot_name']}(Multiple segment replies are separated by '*;', single quotes are not included):"
+            f"\n{chat_history}\n{self.chat_presets['bot_name']}{say_prompt}:"
         )
 
     # 获取当前对话bot的名称
@@ -186,6 +189,10 @@ class Chat:
     # 开关当前会话
     def toggle_chat(self, enabled:bool=True) -> None:
         self.is_enable = enabled
+
+    # 获取当前会话描述
+    def generate_description(self):
+        return f"[{'启用' if self.is_enable else '禁用'}] 会话: {self.chat_key} 预设: {self.get_chat_bot_name()}\n"
 
 """ ======== 读取历史记忆数据 ======== """
 # 检测历史数据pickle文件是否存在 不存在则初始化 存在则读取
@@ -204,7 +211,7 @@ if os.path.exists(global_data_path):
 else:   # 如果不存在历史数据json文件，则初始化
     # 检测目录是否存在 不存在则创建
     if not os.path.exists(config['NG_DATA_PATH']):
-        os.makedirs(config['NG_DATA_PATH'])
+        os.makedirs(config['NG_DATA_PATH'], exist_ok=True)
 
     # 创建用于存储所有人格预设的字典
     presets_dict:dict = config['PRESETS']
@@ -246,7 +253,7 @@ if config.get('NG_ENABLE_EXT'):
 
     # 在当前文件夹下建立一个ext_cache文件夹 用于暂存拓展模块的.py文件以便于动态导入
     if not os.path.exists('ext_cache'):
-        os.makedirs('ext_cache')
+        os.makedirs('ext_cache', exist_ok=True)
     # 删除ext_cache文件夹下的所有文件和文件夹
     for file in os.listdir('ext_cache'):
         file_path = os.path.join('ext_cache', file)
@@ -281,7 +288,7 @@ if config.get('NG_ENABLE_EXT'):
                 time.sleep(0.3)  # 等待文件导入完成
 
                 ext = CustomExtension(tmpExt.get("EXT_CONFIG", {}))  # 加载拓展模块并实例化
-                global_extensions[ext.get_config().get('name')] = ext  # 将拓展模块添加到全局拓展模块字典中
+                global_extensions[ext.get_config().get('name').lower()] = ext  # 将拓展模块添加到全局拓展模块字典中
                 logger.info(f"加载拓展模块 {ext} 成功")
             except Exception as e:
                 logger.error(f"加载拓展模块 \"{tmpExt.get('EXT_NAME')}\" 失败 | 原因: {e}")
@@ -341,13 +348,13 @@ async def handler(event: Event) -> None:
     wake_up = False
     # 检测是否包含违禁词
     for w in config['WORD_FOR_FORBIDDEN']:
-        if w in event.get_plaintext():
+        if str(w) in event.get_plaintext():
             logger.info(f"检测到违禁词 {w}，拒绝处理...")
             return
 
     # 唤醒词检测
     for w in config['WORD_FOR_WAKE_UP']:
-        if w in event.get_plaintext():
+        if str(w) in event.get_plaintext():
             wake_up = True
             break
 
@@ -408,7 +415,8 @@ async def handler(event: Event) -> None:
     pattern = '/#.*?#/'
     reply_list = re.sub(pattern, '', raw_res).split()
     # 对分割后的对话再次根据 '*;' 进行分割，表示对话结果中的分句，处理结果为列表，其中每个元素为一句话
-    reply_list = [reply.strip() for reply in re.split(r'\*;', ' '.join(reply_list)) if reply.strip()]
+    if config.get('NG_ENABLE_MSG_SPLIT'):
+        reply_list = [reply.strip() for reply in re.split(r'\*;', ' '.join(reply_list)) if reply.strip()]
 
     if config.get('__DEBUG__'): logger.info("分割对话结果: " + str(reply_list))
 
@@ -420,7 +428,7 @@ async def handler(event: Event) -> None:
     ext_calls = re.findall(r"/#(.+?)#/", raw_res)
     for ext_call_str in ext_calls:  # 遍历所有拓展调用指令
         ext_name, *ext_args = ext_call_str.split('&')
-        if ext_name in global_extensions.keys():
+        if ext_name.lower() in global_extensions.keys():
             # 提取出拓展调用指令中的参数为字典
             ext_args_dict:dict = {}
             # 按照参数顺序依次提取参数值
@@ -472,7 +480,7 @@ async def handler(event: Event) -> None:
                     break
         await asyncio.sleep(1.5)  # 每条回复之间间隔1.5秒
 
-    cost_token = tg.cal_token_count(prompt_template + raw_res)      # 计算对话结果的 token 数量
+    cost_token = tg.cal_token_count(prompt_template + raw_res)  # 计算对话结果的 token 数量
 
     while time.time() - sta_time < 1.5:   # 限制对话响应时间
         time.sleep(0.1)
@@ -546,7 +554,7 @@ async def _(event: Event, arg: Message = CommandArg()):
             f"Tip: <人格信息> 是一段第三人称的人设说明(不超过200字, 不包含空格)\n"
         ))
 
-    elif (cmd.split(' ')[0] in ["设定", "set"]) and len(cmd.split(' ')) == 2:
+    elif (cmd.split(' ')[0] in ["设定", "set"]) and len(cmd.split(' ')) >= 2:
         target_preset_key = cmd.split(' ')[1]
         if target_preset_key not in presets_dict:
             # 如果预设不存在，进行逐一进行字符匹配，选择最相似的预设
@@ -555,18 +563,23 @@ async def _(event: Event, arg: Message = CommandArg()):
                 await identity.finish("找不到匹配的人格预设! 是不是手滑了呢？(；′⌒`)")
             else:
                 target_preset_key = target_preset_key[0]
-                await identity.send(f"预设不存在! 已为您匹配并应用最相似的预设: {target_preset_key} v(￣▽￣)v")
+                await identity.send(f"预设不存在! 已为您匹配最相似的预设: {target_preset_key} v(￣▽￣)v")
 
-        if chat_key in chat_dict:
-            chat:Chat = chat_dict[chat_key]
-            chat.change_presettings(target_preset_key)
+        if len(cmd.split(' ')) >= 2 and cmd.split(' ')[2] == '-all':
+            for chat_key in chat_dict.keys():
+                chat_dict[chat_key].change_presettings(target_preset_key)
+            await identity.send(f"应用预设: {target_preset_key} (￣▽￣)-ok! (所有会话)")
         else:
-            chat:Chat = Chat(chat_key, target_preset_key)
-            chat_dict[chat_key] = chat
+            if chat_key in chat_dict:
+                chat:Chat = chat_dict[chat_key]
+                chat.change_presettings(target_preset_key)
+            else:
+                chat:Chat = Chat(chat_key, target_preset_key)
+                chat_dict[chat_key] = chat
+            await identity.send(f"应用预设: {target_preset_key} (￣▽￣)-ok!")
         is_progress = True
-        await identity.finish(f"应用预设: {target_preset_key} (￣▽￣)-ok!")
 
-    elif (cmd.split(' ')[0] in ["查询", "query"]) and len(cmd.split(' ')) == 2:
+    elif (cmd.split(' ')[0] in ["查询", "query"]) and len(cmd.split(' ')) >= 2:
         target_preset_key = cmd.split(' ')[1]
         if target_preset_key not in presets_dict:
             # 如果预设不存在，进行逐一进行字符匹配，选择最相似的预设
@@ -696,8 +709,13 @@ async def _(event: Event, arg: Message = CommandArg()):
         elif debug_cmd == 'run':
             await identity.finish(str(exec(cmd.split(' ', 2)[2])))
 
-    elif cmd.split(' ')[0] == "test":
-        ...
+    elif cmd in ["会话", "chats"]:
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        chat_info = ''
+        for chat in chat_dict.values():
+            chat_info += f"+ {chat.generate_description()}"
+        await identity.finish((f"当前已加载的会话:\n{chat_info}"))
 
     else:
         await identity.finish("输入的命令好像有点问题呢... 请检查下再试试吧！ ╮(>_<)╭")
@@ -716,14 +734,14 @@ async def _(event: Event, arg: Message = CommandArg()):
 # 保存数据到本地
 def save_data():
     global last_save_data_time
-    if time.time() - last_save_data_time < 10:  # 如果距离上次保存时间不足300秒，则不保存
+    if time.time() - last_save_data_time < 60:  # 如果距离上次保存时间不足60秒则不保存
         return
     global_data['PRESETS'] = presets_dict
     global_data['PRESET_USERDATA'] = global_preset_userdata
     global_data['CHAT_DICT'] = chat_dict
     # 检测目录是否存在 不存在则创建
     if not os.path.exists(config['NG_DATA_PATH']):
-        os.makedirs(config['NG_DATA_PATH'])
+        os.makedirs(config['NG_DATA_PATH'], exist_ok=True)
     # 保存到pickle文件
     with open(global_data_path, 'wb') as f:
         pickle.dump(global_data, f)

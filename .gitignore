@@ -2,4 +2,4 @@ __pycache__
 dist
 pyproject.toml
 
-extensions/ext_voice.py
+extensions/ext_lolicon_pic.py
