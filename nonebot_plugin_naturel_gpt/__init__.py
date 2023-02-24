@@ -549,7 +549,7 @@ async def _(event: Event, arg: Message = CommandArg()):
             f"当前可用人格预设有:\n"
             f"{presets_show_text}\n"
             f"=======================\n"
-            f"+ 使用预设: rg 设定 <预设名>\n"
+            f"+ 使用预设: rg 设定 <预设名> <-all?>\n"
             f"+ 查询预设: rg 查询 <预设名>\n"
             f"+ 更新预设: rg 更新 <预设名> <人格信息>\n"
             f"+ 添加预设: rg 添加 <预设名> <人格信息>\n"
@@ -558,6 +558,7 @@ async def _(event: Event, arg: Message = CommandArg()):
             f"+ 解锁预设(管理): rg 解锁 <预设名>\n"
             f"+ 开启会话(管理): rg <开启/on> <-all?>\n"
             f"+ 停止会话(管理): rg <关闭/off> <-all?>\n"
+            f"+ 停止会话(管理): rg <会话/chats>\n"
             f"+ 重置会话(管理): rg <重置/reset> <-all?>\n"
             f"+ 拓展信息(管理): rg <拓展/ext>\n"
             f"Tip: <人格信息> 是一段第三人称的人设说明(不超过200字, 不包含空格)\n"
@@ -575,6 +576,8 @@ async def _(event: Event, arg: Message = CommandArg()):
                 await identity.send(f"预设不存在! 已为您匹配最相似的预设: {target_preset_key} v(￣▽￣)v")
 
         if len(cmd.split(' ')) >= 2 and cmd.split(' ')[2] == '-all':
+            if str(event.user_id) not in config['ADMIN_USERID']:
+                await identity.finish("您没有权限执行此操作！")
             for chat_key in chat_dict.keys():
                 chat_dict[chat_key].change_presettings(target_preset_key)
             await identity.send(f"应用预设: {target_preset_key} (￣▽￣)-ok! (所有会话)")
