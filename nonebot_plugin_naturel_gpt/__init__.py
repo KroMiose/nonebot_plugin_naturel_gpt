@@ -444,8 +444,7 @@ async def handler(event: Event) -> None:
                     ext_args_dict[arg_name] = None
 
             logger.info(f"检测到拓展调用指令: {ext_name} {ext_args_dict} | 正在调用拓展模块...")
-            # 调用拓展的call方法
-            try:
+            try:    # 调用拓展的call方法
                 ext_res:dict = await global_extensions[ext_name].call(ext_args_dict)
                 if config.get('__DEBUG__'): logger.info(f"拓展 {ext_name} 返回结果: {ext_res}")
                 if ext_res is not None:
@@ -455,11 +454,11 @@ async def handler(event: Event) -> None:
                 logger.error(f"调用拓展 {ext_name} 时发生错误: {e}")
                 if config.get('__DEBUG__'): logger.error(f"[拓展 {ext_name}] 错误详情: {traceback.format_exc()}")
                 ext_res = None
-                # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的信息
+                # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
                 raw_res = raw_res.replace(f"/#{ext_call_str}#/", '')
         else:
             logger.error(f"未找到拓展 {ext_name}，跳过调用...")
-            # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的信息
+            # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
             raw_res = raw_res.replace(f"/#{ext_call_str}#/", '')
 
     if config.get('__DEBUG__'): logger.info(f"回复序列内容: {reply_list}")
@@ -549,10 +548,10 @@ async def _(event: Event, arg: Message = CommandArg()):
             f"当前可用人格预设有:\n"
             f"{presets_show_text}\n"
             f"=======================\n"
-            f"+ 使用预设: rg 设定 <预设名> <-all?>\n"
-            f"+ 查询预设: rg 查询 <预设名>\n"
-            f"+ 更新预设: rg 更新 <预设名> <人格信息>\n"
-            f"+ 添加预设: rg 添加 <预设名> <人格信息>\n"
+            f"+ 使用预设: rg <设定/set> <预设名> <-all?>\n"
+            f"+ 查询预设: rg <查询/query> <预设名>\n"
+            f"+ 更新预设: rg <更新/update> <预设名> <人格信息>\n"
+            f"+ 添加预设: rg <添加/new> <预设名> <人格信息>\n"
             f"+ 删除预设(管理): rg 删除 <预设名>\n"
             f"+ 锁定预设(管理): rg 锁定 <预设名>\n"
             f"+ 解锁预设(管理): rg 解锁 <预设名>\n"
@@ -561,7 +560,7 @@ async def _(event: Event, arg: Message = CommandArg()):
             f"+ 停止会话(管理): rg <会话/chats>\n"
             f"+ 重置会话(管理): rg <重置/reset> <-all?>\n"
             f"+ 拓展信息(管理): rg <拓展/ext>\n"
-            f"Tip: <人格信息> 是一段第三人称的人设说明(不超过200字, 不包含空格)\n"
+            f"Tip: <人格信息> 是一段第三人称的人设说明(建议不超过200字, 不包含空格)\n"
         ))
 
     elif (cmd.split(' ')[0] in ["设定", "set"]) and len(cmd.split(' ')) >= 2:
@@ -575,7 +574,7 @@ async def _(event: Event, arg: Message = CommandArg()):
                 target_preset_key = target_preset_key[0]
                 await identity.send(f"预设不存在! 已为您匹配最相似的预设: {target_preset_key} v(￣▽￣)v")
 
-        if len(cmd.split(' ')) >= 2 and cmd.split(' ')[2] == '-all':
+        if len(cmd.split(' ')) > 2 and cmd.split(' ')[2] == '-all':
             if str(event.user_id) not in config['ADMIN_USERID']:
                 await identity.finish("您没有权限执行此操作！")
             for chat_key in chat_dict.keys():

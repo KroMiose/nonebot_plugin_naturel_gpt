@@ -57,7 +57,7 @@ class CustomExtension(Extension):
             }
         else:
             return {
-                'text': f"[ext_emoticon] 未找到与'{keyword}'相关的表情"
+                # 'text': f"[ext_emoticon] 未找到与'{keyword}'相关的表情"
             }
 
     def __init__(self, custom_config: dict):

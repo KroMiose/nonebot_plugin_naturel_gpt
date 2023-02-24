@@ -32,7 +32,7 @@ class CustomExtension(Extension):
             os.mkdir(voice_path)
 
         # 获取参数
-        text = arg_dict.get('sentence', None)
+        text = arg_dict.get('sentence', None) + '喵' # 加上一个字符，避免合成语音丢失结尾
         text = urllib.parse.quote(text) # url编码
 
         url = f"http://127.0.0.1:23211/to_voice?text={text}"
