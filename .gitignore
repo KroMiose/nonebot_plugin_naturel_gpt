@@ -1,5 +1,7 @@
 __pycache__
 dist
+tests
 pyproject.toml
 
 extensions/ext_lolicon_pic.py
+extensions/ext_moe_tts.py

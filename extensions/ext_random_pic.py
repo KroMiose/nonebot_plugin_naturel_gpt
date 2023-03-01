@@ -13,11 +13,13 @@ ext_config:dict = {
     # 作者信息
     "author": "KroMiose",
     # 版本
-    "version": "v0.0.1"
+    "version": "0.0.1",
+    # 拓展简介
+    "intro": "发送随机二次元图片",
 }
 
 class CustomExtension(Extension):
-    async def run(self, arg_dict: dict) -> dict:
+    async def call(self, arg_dict: dict, ctx_data: dict) -> dict:
         """ 当拓展被调用时执行的函数 *由拓展自行实现*
         
         参数:

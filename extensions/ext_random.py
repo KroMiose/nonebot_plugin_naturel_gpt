@@ -22,7 +22,7 @@ ext_config:dict = {
 }
 
 class CustomExtension(Extension):
-    async def run(self, arg_dict: dict) -> dict:
+    async def call(self, arg_dict: dict, ctx_data: dict) -> dict:
         """ 当拓展被调用时执行的函数 *由拓展自行实现*
         
         参数:

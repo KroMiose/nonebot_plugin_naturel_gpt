@@ -1,8 +1,8 @@
 from nonebot import get_driver
-from nonebot import on_command, on_message
+from nonebot import on_command, on_message, on_notice
 from nonebot.log import logger
 from nonebot.params import CommandArg, Matcher, Event
-from nonebot.adapters.onebot.v11 import Message, PrivateMessageEvent, GroupMessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11 import Message, PrivateMessageEvent, GroupMessageEvent, MessageSegment, GroupIncreaseNoticeEvent
 
 import time
 import copy
@@ -62,7 +62,7 @@ class Chat:
         while len(self.chat_presets['chat_history']) > config['CHAT_MEMORY_MAX_LENGTH'] * 2:    # 保证对话历史不超过最大长度的两倍
             self.chat_presets['chat_history'].pop(0)
 
-        if len(self.chat_presets['chat_history']) > config['CHAT_MEMORY_MAX_LENGTH'] and require_summary: # 只有在需要时才进行总结 避免不必要的token消耗
+        if len(self.chat_presets['chat_history']) > config['CHAT_MEMORY_MAX_LENGTH'] and require_summary and config.get('CHAT_ENABLE_SUMMARY_CHAT'): # 只有在开启总结功能并且在bot回复后才进行总结 避免不必要的token消耗
             prev_summarized = f"Summary of last conversation:{self.chat_presets['chat_summarized']}\n\n" \
                 if self.chat_presets.get('chat_summarized') else ''
             history_str = '\n'.join(self.chat_presets['chat_history'])
@@ -135,7 +135,7 @@ class Chat:
             logger.error(f"尝试更新预设 {self.preset_key} 时发生错误，预设可能被删除。")
 
     # 对话 prompt 模板生成
-    def get_chat_prompt_template(self, userid: None) -> str:
+    def get_chat_prompt_template(self, userid:str = None)-> str:
         # 印象描述
         impression_text = f"[impression]{global_preset_userdata[self.preset_key][userid].get('chat_impression')}\n" \
             if global_preset_userdata[self.preset_key].get(userid, {}).get('chat_impression', None) else ''  # 用户印象描述
@@ -173,7 +173,6 @@ class Chat:
             f"{self.chat_presets['bot_self_introl']}"
             f"\n{summary}\n{impression_text}"
             f"{extension_text}"
-            # f"以下是与 \"{self.chat_presets['bot_name']}\" 的对话:"
             f"[Chat - current time: {time.strftime('%Y-%m-%d %H:%M:%S')}]\n"
             f"\n{chat_history}\n{self.chat_presets['bot_name']}{say_prompt}:"
         )
@@ -192,7 +191,7 @@ class Chat:
 
     # 获取当前会话描述
     def generate_description(self):
-        return f"[{'启用' if self.is_enable else '禁用'}] 会话: {self.chat_key} 预设: {self.get_chat_bot_name()}\n"
+        return f"[{'启用' if self.is_enable else '禁用'}] 会话: {self.chat_key[:-6]+('*'*6)} 预设: {self.get_chat_bot_name()}\n"
 
 """ ======== 读取历史记忆数据 ======== """
 # 检测历史数据pickle文件是否存在 不存在则初始化 存在则读取
@@ -234,16 +233,25 @@ last_save_data_time = time.time()
 api_keys = config['OPENAI_API_KEYS']
 logger.info(f"共读取到 {len(api_keys)} 个API Key")
 
+# 检查聊天摘要功能是否开启 未开启则清空所有聊天摘要
+if not config.get('CHAT_ENABLE_SUMMARY_CHAT'):
+    logger.warning("聊天摘要功能已关闭，将自动清理历史聊天摘要数据")
+    for chat in chat_dict.values():
+        chat.chat_presets['chat_summarized'] = ''
+
 # 初始化对话文本生成器
 tg: TextGenerator = TextGenerator(api_keys, {
-    'model': config['CHAT_MODEL'],
-    'max_tokens': config['REPLY_MAX_TOKENS'],
-    'temperature': config['CHAT_TEMPERATURE'],
-    'top_p': config['CHAT_TOP_P'],
-    'frequency_penalty': config['CHAT_FREQUENCY_PENALTY'],
-    'presence_penalty': config['CHAT_PRESENCE_PENALTY'],
-    'max_summary_tokens': config['CHAT_MAX_SUMMARY_TOKENS'],
-})
+        'model': config['CHAT_MODEL'],
+        'max_tokens': config['REPLY_MAX_TOKENS'],
+        'temperature': config['CHAT_TEMPERATURE'],
+        'top_p': config['CHAT_TOP_P'],
+        'frequency_penalty': config['CHAT_FREQUENCY_PENALTY'],
+        'presence_penalty': config['CHAT_PRESENCE_PENALTY'],
+        'max_summary_tokens': config['CHAT_MAX_SUMMARY_TOKENS'],
+    }, {    # 传入代理服务器配置
+        'https': 'https://' + config['OPENAI_PROXY_SERVER']
+    } if config.get('OPENAI_PROXY_SERVER') else None
+)
 
 """ ======== 加载拓展模块 ======== """
 # 加载拓展模块
@@ -289,7 +297,7 @@ if config.get('NG_ENABLE_EXT'):
 
                 ext = CustomExtension(tmpExt.get("EXT_CONFIG", {}))  # 加载拓展模块并实例化
                 global_extensions[ext.get_config().get('name').lower()] = ext  # 将拓展模块添加到全局拓展模块字典中
-                logger.info(f"加载拓展模块 {ext} 成功")
+                logger.info(f"加载拓展模块 {tmpExt.get('EXT_NAME')} 成功！")
             except Exception as e:
                 logger.error(f"加载拓展模块 \"{tmpExt.get('EXT_NAME')}\" 失败 | 原因: {e}")
 
@@ -304,7 +312,6 @@ async def handler(event: Event) -> None:
         logger.info(f"用户 {event.get_user_id()} 被屏蔽，拒绝处理消息")
         return
 
-    sta = time.time()
     sender_name = event.dict().get('sender', {}).get('nickname', '未知')
     resTmplate = (  # 测试用，获取消息的相关信息
         f"收到消息: {event.get_message()}"
@@ -322,7 +329,7 @@ async def handler(event: Event) -> None:
 
     # 如果是忽略前缀 或者 消息为空，则跳过处理
     if event.get_plaintext().startswith(config['IGNORE_PREFIX']) or not event.get_plaintext():   
-        logger.info("忽略前缀，跳过处理...")
+        logger.info("忽略前缀或消息为空，跳过处理...")
         return
 
     # 判断群聊/私聊
@@ -336,165 +343,57 @@ async def handler(event: Event) -> None:
         logger.info("未知消息来源: " + event.get_session_id())
         return
 
-    # 判断是否已经存在对话
-    if chat_key in chat_dict:
-        logger.info(f"已存在对话 {chat_key} - 继续对话")
-    else:
-        logger.info("不存在对话 - 创建新对话")
-        # 创建新对话
-        chat_dict[chat_key] = Chat(chat_key)
-    chat:Chat = chat_dict[chat_key]
+    # 进行消息响应
+    await do_msg_response(
+        event.get_user_id(),
+        event.get_plaintext(),
+        event.is_tome(),
+        matcher,
+        chat_type,
+        chat_key,
+        sender_name
+    )
 
-    # 判断对话是否被禁用
-    if not chat.is_enable:
-        logger.info("对话已被禁用，跳过处理...")
+
+""" ======== 注册通知响应器 ======== """
+# 欢迎新成员通知响应器
+welcome:Matcher = on_notice(priority=20, block=False)
+@welcome.handle()  # 监听 welcom
+async def _(event: GroupIncreaseNoticeEvent):  # event: GroupIncreaseNoticeEvent  群成员增加事件
+    if config.get('__DEBUG__'): logger.info(f"收到通知: {event}")
+
+    # at_cq = "[CQ:at,qq={}]".format(event.get_user_id())
+    # msg = at_cq + '欢迎新朋友！'
+    # msg = Message(msg)
+
+    if isinstance(event, GroupIncreaseNoticeEvent): # 群成员增加通知
+        chat_key = 'group_' + event.get_session_id().split("_")[1]
+        chat_type = 'group'
+    else:
+        if config.get('__DEBUG__'): logger.info(f"未知通知来源: {event.get_session_id()} 跳过处理...")
         return
 
-    wake_up = False
-    # 检测是否包含违禁词
-    for w in config['WORD_FOR_FORBIDDEN']:
-        if str(w) in event.get_plaintext():
-            logger.info(f"检测到违禁词 {w}，拒绝处理...")
-            return
+    resTmplate = (  # 测试用，获取消息的相关信息
+        f"会话: {chat_key}"
+        f"\n通知来源: {event.get_user_id()}"
+        f"\n是否to-me: {event.is_tome()}"
+        f"\nDict: {event.dict()}"
+        f"\nJSON: {event.json()}"
+    )
+    if config.get('__DEBUG__'): logger.info(resTmplate)
 
-    # 唤醒词检测
-    for w in config['WORD_FOR_WAKE_UP']:
-        if str(w) in event.get_plaintext():
-            wake_up = True
-            break
+    # 进行消息响应
+    await do_msg_response(
+        event.get_user_id(),
+        f'qq:{event.get_user_id()} has joined the group, welcome!',
+        event.is_tome(),
+        welcome,
+        chat_type,
+        chat_key,
+        '[System]',
+        True
+    )
 
-    # 随机回复判断
-    if random.random() < config['RANDOM_CHAT_PROBABILITY']:
-        wake_up = True
-
-    # 判断是否需要回复
-    if (    # 如果不是 bot 相关的信息，则直接返回
-        (config['REPLY_ON_NAME_MENTION'] and (chat.get_chat_bot_name() in event.get_plaintext())) or \
-        (config['REPLY_ON_AT'] and event.is_tome()) or wake_up\
-    ):
-        # 更新全局对话历史记录
-        # chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=True)
-        await chat.update_chat_history_row(sender=sender_name,
-                                    msg=f"@{chat.get_chat_bot_name()} {event.get_plaintext()}" if event.is_tome() and chat_type=='group' else event.get_plaintext(),
-                                    require_summary=False)
-        logger.info("符合 bot 发言条件，进行回复...")
-    else:
-        await chat.update_chat_history_row(sender=sender_name, msg=event.get_plaintext(), require_summary=False)
-        logger.info("不是 bot 相关的信息，记录但不进行回复")
-        return
-
-    # 记录对用户的对话信息
-    await chat.update_chat_history_row_for_user(sender=sender_name, msg=event.get_plaintext(), userid=event.get_user_id(), username=sender_name, require_summary=False)
-
-    # 潜在人格唤醒机制 *待实现
-    # 通过对话历史中的关键词进行检测，如果检测到潜在人格，进行累计，达到一定阈值后，抢占当前生效的人格
-
-    # 主动聊天参与逻辑 *待定方案
-    # 达到一定兴趣阈值后，开始进行一次启动发言准备 收集特定条数的对话历史作为发言参考
-    # 启动发言后，一段时间内兴趣值逐渐下降，如果随后被呼叫，则兴趣值提升
-    # 监测对话历史中是否有足够的话题参与度，如果有，则继续提高话题参与度，否则，降低话题参与度
-    # 兴趣值影响发言频率，兴趣值越高，发言频率越高
-    # 如果监测到对话记录中有不满情绪(如: 闭嘴、滚、不理你、安静等)，则大幅降低兴趣值并且降低发言频率，同时进入一段时间的沉默期(0-120分钟)
-    # 沉默期中降低响应"提及"的概率，沉默期中被直接at，则恢复一定兴趣值提升兴趣值并取消沉默期
-    # 兴趣值会影响回复的速度，兴趣值越高，回复速度越快
-    # 发言概率贡献比例 = (随机值: 10% + 话题参与度: 50% + 兴趣值: 40%) * 发言几率基数(0.01~1.0)
-
-    sta_time:float = time.time()
-
-    # 生成对话 prompt 模板
-    prompt_template = chat.get_chat_prompt_template(userid=event.get_user_id())
-    if config.get('__DEBUG__'): logger.info("对话 prompt 模板: \n" + prompt_template)
-
-    raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.get_chat_bot_name(), 'sender_name': sender_name})  # 生成对话结果
-    if not success:  # 如果生成对话结果失败，则直接返回
-        logger.info("生成对话结果失败，跳过处理...")
-        await matcher.finish(raw_res)
-
-    # 输出对话原始响应结果
-    if config.get('__DEBUG__'): logger.info(f"原始回应: {raw_res}")
-
-    # 用于存储最终回复顺序内容的列表
-    reply_list = []
-
-    # 按照拓展调用的格式，将所有非调用部分去除后再将剩余信息切分放入回复列表
-    pattern = '/#.*?#/'
-    reply_list = re.sub(pattern, '', raw_res).split()
-    # 对分割后的对话再次根据 '*;' 进行分割，表示对话结果中的分句，处理结果为列表，其中每个元素为一句话
-    if config.get('NG_ENABLE_MSG_SPLIT'):
-        reply_list = [reply.strip() for reply in re.split(r'\*;', ' '.join(reply_list)) if reply.strip()]
-
-    if config.get('__DEBUG__'): logger.info("分割对话结果: " + str(reply_list))
-
-    # 重置所有拓展调用次数
-    for ext_name in global_extensions.keys():
-        global_extensions[ext_name].reset_call_times()
-
-    # 分割对话结果提取出所有 "/#拓展名&参数1&参数2#/" 格式的拓展调用指令 参数之间用&分隔
-    ext_calls = re.findall(r"/#(.+?)#/", raw_res)
-    for ext_call_str in ext_calls:  # 遍历所有拓展调用指令
-        ext_name, *ext_args = ext_call_str.split('&')
-        if ext_name.lower() in global_extensions.keys():
-            # 提取出拓展调用指令中的参数为字典
-            ext_args_dict:dict = {}
-            # 按照参数顺序依次提取参数值
-            for arg_name in global_extensions[ext_name].get_config().get('arguments').keys():
-                if len(ext_args) > 0:
-                    ext_args_dict[arg_name] = ext_args.pop(0)
-                else:
-                    ext_args_dict[arg_name] = None
-
-            logger.info(f"检测到拓展调用指令: {ext_name} {ext_args_dict} | 正在调用拓展模块...")
-            try:    # 调用拓展的call方法
-                ext_res:dict = await global_extensions[ext_name].call(ext_args_dict)
-                if config.get('__DEBUG__'): logger.info(f"拓展 {ext_name} 返回结果: {ext_res}")
-                if ext_res is not None:
-                    # 将拓展返回的结果插入到回复列表的最后
-                    reply_list.append(ext_res)
-            except Exception as e:
-                logger.error(f"调用拓展 {ext_name} 时发生错误: {e}")
-                if config.get('__DEBUG__'): logger.error(f"[拓展 {ext_name}] 错误详情: {traceback.format_exc()}")
-                ext_res = None
-                # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
-                raw_res = raw_res.replace(f"/#{ext_call_str}#/", '')
-        else:
-            logger.error(f"未找到拓展 {ext_name}，跳过调用...")
-            # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
-            raw_res = raw_res.replace(f"/#{ext_call_str}#/", '')
-
-    if config.get('__DEBUG__'): logger.info(f"回复序列内容: {reply_list}")
-
-    res_times = config.get('NG_MAX_RESPONSE_PER_MSG', 3)  # 获取每条消息最大回复次数
-    # 根据回复内容列表逐条发送回复
-    for reply in reply_list:
-        # 判断回复内容是否为str
-        if isinstance(reply, str) and reply.strip():
-            await matcher.send(reply)
-        else:
-            for key in reply:   # 遍历回复内容类型字典
-                if key == 'text' and reply.get(key) and reply.get(key).strip():    # 如果回复内容为文本，则发送文本
-                    await matcher.send(reply.get(key))
-                elif key == 'image' and reply.get(key): # 如果回复内容为图片，则发送图片
-                    await matcher.send(MessageSegment.image(file=reply.get(key, '')))
-                elif key == 'voice' and reply.get(key): # 如果回复内容为语音，则发送语音
-                    logger.info(f"回复语音消息: {reply.get(key)}")
-                    await matcher.send(Message(MessageSegment.record(file=reply.get(key), cache=0)))
-
-                res_times -= 1
-                if res_times < 1:  # 如果回复次数超过限制，则跳出循环
-                    break
-        await asyncio.sleep(1.5)  # 每条回复之间间隔1.5秒
-
-    cost_token = tg.cal_token_count(prompt_template + raw_res)  # 计算对话结果的 token 数量
-
-    while time.time() - sta_time < 1.5:   # 限制对话响应时间
-        time.sleep(0.1)
-
-    logger.info(f"token消耗: {cost_token} | 对话响应: \"{raw_res}\"")
-    await chat.update_chat_history_row(sender=chat.get_chat_bot_name(), msg=raw_res, require_summary=True)  # 更新全局对话历史记录
-    # 更新对用户的对话信息
-    await chat.update_chat_history_row_for_user(sender=chat.get_chat_bot_name(), msg=raw_res, userid=event.get_user_id(), username=sender_name, require_summary=True)
-    save_data()  # 保存数据
-    if config.get('__DEBUG__'): logger.info(f"对话响应完成 | 耗时: {time.time() - sta_time}s")
 
 """ ======== 注册指令响应器 ======== """
 # 人格设定指令 用于设定人格的相关参数
@@ -663,9 +562,9 @@ async def _(event: Event, arg: Message = CommandArg()):
         # 查询所有拓展插件并生成汇报信息
         ext_info = ''
         for ext in global_extensions.values():
-            ext_info += f"  {ext.generate_description()}"
+            ext_info += f"  {ext.generate_short_description()}"
         await identity.finish((
-            f"当前已加载的拓展插件:\n{ext_info}"
+            f"当前已加载的拓展模块:\n{ext_info}"
         ))
 
     elif cmd in ["开启", "on"]:
@@ -758,3 +657,171 @@ def save_data():
         pickle.dump(global_data, f)
     last_save_data_time = time.time()
     logger.info("数据保存成功")
+
+
+""" ======== 消息响应方法 ======== """
+# 消息响应方法
+async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, matcher: Matcher, chat_type: str, chat_key: str, sender_name: str = None, wake_up: bool = False):
+    # 判断是否已经存在对话
+    if chat_key in chat_dict:
+        logger.info(f"已存在对话 {chat_key} - 继续对话")
+    else:
+        logger.info("不存在对话 - 创建新对话")
+        # 创建新对话
+        chat_dict[chat_key] = Chat(chat_key)
+    chat:Chat = chat_dict[chat_key]
+
+    # 判断对话是否被禁用
+    if not chat.is_enable:
+        logger.info("对话已被禁用，跳过处理...")
+        return
+
+    # 检测是否包含违禁词
+    for w in config['WORD_FOR_FORBIDDEN']:
+        if str(w) in trigger_text:
+            logger.info(f"检测到违禁词 {w}，拒绝处理...")
+            return
+
+    # 唤醒词检测
+    for w in config['WORD_FOR_WAKE_UP']:
+        if str(w) in trigger_text:
+            wake_up = True
+            break
+
+    # 随机回复判断
+    if random.random() < config['RANDOM_CHAT_PROBABILITY']:
+        wake_up = True
+
+    # 判断是否需要回复
+    if (    # 如果不是 bot 相关的信息，则直接返回
+        (config['REPLY_ON_NAME_MENTION'] and (chat.get_chat_bot_name() in trigger_text)) or \
+        (config['REPLY_ON_AT'] and is_tome) or wake_up\
+    ):
+        # 更新全局对话历史记录
+        # chat.update_chat_history_row(sender=sender_name, msg=trigger_text, require_summary=True)
+        await chat.update_chat_history_row(sender=sender_name,
+                                    msg=f"@{chat.get_chat_bot_name()} {trigger_text}" if is_tome and chat_type=='group' else trigger_text,
+                                    require_summary=False)
+        logger.info("符合 bot 发言条件，进行回复...")
+    else:
+        await chat.update_chat_history_row(sender=sender_name, msg=trigger_text, require_summary=False)
+        logger.info("不是 bot 相关的信息，记录但不进行回复")
+        return
+
+    # 记录对用户的对话信息
+    await chat.update_chat_history_row_for_user(sender=sender_name, msg=trigger_text, userid=trigger_userid, username=sender_name, require_summary=False)
+
+    # 潜在人格唤醒机制 *待实现
+    # 通过对话历史中的关键词进行检测，如果检测到潜在人格，进行累计，达到一定阈值后，抢占当前生效的人格
+
+    # 主动聊天参与逻辑 *待定方案
+    # 达到一定兴趣阈值后，开始进行一次启动发言准备 收集特定条数的对话历史作为发言参考
+    # 启动发言后，一段时间内兴趣值逐渐下降，如果随后被呼叫，则兴趣值提升
+    # 监测对话历史中是否有足够的话题参与度，如果有，则继续提高话题参与度，否则，降低话题参与度
+    # 兴趣值影响发言频率，兴趣值越高，发言频率越高
+    # 如果监测到对话记录中有不满情绪(如: 闭嘴、滚、不理你、安静等)，则大幅降低兴趣值并且降低发言频率，同时进入一段时间的沉默期(0-120分钟)
+    # 沉默期中降低响应"提及"的概率，沉默期中被直接at，则恢复一定兴趣值提升兴趣值并取消沉默期
+    # 兴趣值会影响回复的速度，兴趣值越高，回复速度越快
+    # 发言概率贡献比例 = (随机值: 10% + 话题参与度: 50% + 兴趣值: 40%) * 发言几率基数(0.01~1.0)
+
+    sta_time:float = time.time()
+
+    # 生成对话 prompt 模板
+    prompt_template = chat.get_chat_prompt_template(userid=trigger_userid)
+    if config.get('__DEBUG__'): logger.info("对话 prompt 模板: \n" + prompt_template)
+
+    raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.get_chat_bot_name(), 'sender_name': sender_name})  # 生成对话结果
+    if not success:  # 如果生成对话结果失败，则直接返回
+        logger.info("生成对话结果失败，跳过处理...")
+        await matcher.finish(raw_res)
+
+    # 输出对话原始响应结果
+    if config.get('__DEBUG__'): logger.info(f"原始回应: {raw_res}")
+
+    # 用于存储最终回复顺序内容的列表
+    reply_list = []
+
+    # 按照拓展调用的格式，将所有非调用部分去除后再将剩余信息切分放入回复列表
+    pattern = '/#.*?#/'
+    reply_list = re.sub(pattern, '', raw_res).split()
+    # 对分割后的对话再次根据 '*;' 进行分割，表示对话结果中的分句，处理结果为列表，其中每个元素为一句话
+    if config.get('NG_ENABLE_MSG_SPLIT'):
+        reply_list = [reply.strip() for reply in re.split(r'\*;', ' '.join(reply_list)) if reply.strip()]
+
+    if config.get('__DEBUG__'): logger.info("分割对话结果: " + str(reply_list))
+
+    # 重置所有拓展调用次数
+    for ext_name in global_extensions.keys():
+        global_extensions[ext_name].reset_call_times()
+
+    # 分割对话结果提取出所有 "/#拓展名&参数1&参数2#/" 格式的拓展调用指令 参数之间用&分隔
+    ext_calls = re.findall(r"/#(.+?)#/", raw_res)
+    for ext_call_str in ext_calls:  # 遍历所有拓展调用指令
+        ext_name, *ext_args = ext_call_str.split('&')
+        if ext_name.lower() in global_extensions.keys():
+            # 提取出拓展调用指令中的参数为字典
+            ext_args_dict:dict = {}
+            # 按照参数顺序依次提取参数值
+            for arg_name in global_extensions[ext_name].get_config().get('arguments').keys():
+                if len(ext_args) > 0:
+                    ext_args_dict[arg_name] = ext_args.pop(0)
+                else:
+                    ext_args_dict[arg_name] = None
+
+            logger.info(f"检测到拓展调用指令: {ext_name} {ext_args_dict} | 正在调用拓展模块...")
+            try:    # 调用拓展的call方法
+                ext_res:dict = await global_extensions[ext_name].call(ext_args_dict, {
+                    'bot_name': chat.get_chat_bot_name(),
+                    'user_send_raw_text': trigger_text,
+                    'bot_send_raw_text': raw_res
+                })
+                if config.get('__DEBUG__'): logger.info(f"拓展 {ext_name} 返回结果: {ext_res}")
+                if ext_res is not None:
+                    # 将拓展返回的结果插入到回复列表的最后
+                    reply_list.append(ext_res)
+            except Exception as e:
+                logger.error(f"调用拓展 {ext_name} 时发生错误: {e}")
+                if config.get('__DEBUG__'): logger.error(f"[拓展 {ext_name}] 错误详情: {traceback.format_exc()}")
+                ext_res = None
+                # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
+                raw_res = raw_res.replace(f"/#{ext_call_str}#/", '')
+        else:
+            logger.error(f"未找到拓展 {ext_name}，跳过调用...")
+            # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
+            raw_res = raw_res.replace(f"/#{ext_call_str}#/", '')
+
+    if config.get('__DEBUG__'): logger.info(f"回复序列内容: {reply_list}")
+
+    res_times = config.get('NG_MAX_RESPONSE_PER_MSG', 3)  # 获取每条消息最大回复次数
+    # 根据回复内容列表逐条发送回复
+    for idx, reply in enumerate(reply_list):
+        # 判断回复内容是否为str
+        if isinstance(reply, str) and reply.strip():
+            await matcher.send(reply)
+        else:
+            for key in reply:   # 遍历回复内容类型字典
+                if key == 'text' and reply.get(key) and reply.get(key).strip():    # 如果回复内容为文本，则发送文本
+                    await matcher.send(reply.get(key))
+                elif key == 'image' and reply.get(key): # 如果回复内容为图片，则发送图片
+                    await matcher.send(MessageSegment.image(file=reply.get(key, '')))
+                    logger.info(f"回复图片消息: {reply.get(key)}")
+                elif key == 'voice' and reply.get(key): # 如果回复内容为语音，则发送语音
+                    logger.info(f"回复语音消息: {reply.get(key)}")
+                    await matcher.send(Message(MessageSegment.record(file=reply.get(key), cache=0)))
+
+                res_times -= 1
+                if res_times < 1:  # 如果回复次数超过限制，则跳出循环
+                    break
+        await asyncio.sleep(1.5)  # 每条回复之间间隔1.5秒
+
+    cost_token = tg.cal_token_count(prompt_template + raw_res)  # 计算对话结果的 token 数量
+
+    while time.time() - sta_time < 1.5:   # 限制对话响应时间
+        time.sleep(0.1)
+
+    logger.info(f"token消耗: {cost_token} | 对话响应: \"{raw_res}\"")
+    await chat.update_chat_history_row(sender=chat.get_chat_bot_name(), msg=raw_res, require_summary=True)  # 更新全局对话历史记录
+    # 更新对用户的对话信息
+    await chat.update_chat_history_row_for_user(sender=chat.get_chat_bot_name(), msg=raw_res, userid=trigger_userid, username=sender_name, require_summary=True)
+    save_data()  # 保存数据
+    if config.get('__DEBUG__'): logger.info(f"对话响应完成 | 耗时: {time.time() - sta_time}s")

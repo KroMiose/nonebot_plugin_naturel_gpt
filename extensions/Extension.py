@@ -29,6 +29,10 @@ class Extension:
         args_desc:str = "; ".join([f"{k}: {v}" for k, v in self._ext_config.get('arguments', {}).items()])
         return f"- {self._ext_config['name']} > {args_desc} ({self._ext_config['description']})\n"
 
+    def generate_short_description(self) -> str:
+        """ 生成插件简短描述 """
+        return f"- [{self._ext_config.get('name', '未知拓展')} v{self._ext_config.get('version', '0')}] > {self._ext_config.get('intro', '暂无描述')} by: {self._ext_config.get('author', '未知')}\n"
+
     def get_config(self) -> dict:
         """ 获取插件配置 """
         return self._ext_config

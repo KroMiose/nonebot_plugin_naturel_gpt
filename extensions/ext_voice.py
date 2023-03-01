@@ -14,11 +14,13 @@ ext_config:dict = {
     # 作者信息
     "author": "KroMiose",
     # 版本
-    "version": "v0.0.1"
+    "version": "0.0.1",
+    # 拓展简介
+    "intro": "发送语音消息",
 }
 
 class CustomExtension(Extension):
-    async def run(self, arg_dict: dict) -> dict:
+    async def call(self, arg_dict: dict, ctx_data: dict) -> dict:
         """ 当拓展被调用时执行的函数 *由拓展自行实现*
         
         参数:
@@ -32,10 +34,17 @@ class CustomExtension(Extension):
             os.mkdir(voice_path)
 
         # 获取参数
+        raw_text = arg_dict.get('sentence', None)
+
         text = arg_dict.get('sentence', None) + '喵' # 加上一个字符，避免合成语音丢失结尾
         text = urllib.parse.quote(text) # url编码
 
-        url = f"http://127.0.0.1:23211/to_voice?text={text}"
+        # ! moegoe.azurewebsites.net 是一个公开的语音合成api，非本人搭建，请勿滥用 (tip by KroMiose)
+        # 该api只支持日语，如果传入其它语言，会导致合成结果不可预知
+        url = f"https://moegoe.azurewebsites.net/api/speak?text={text}&id=0"
+
+        # todo: 如果需要使用本地的语音合成api，请取消注释下面的代码，并自行改为您的api地址
+        # url = f"http://127.0.0.1:23211/to_voice?text={text}"
 
         # 下载语音文件
         r = requests.get(url)
@@ -47,7 +56,8 @@ class CustomExtension(Extension):
 
         if text is not None:
             return {
-                'voice': local_url,    # 语音url
+                'voice': local_url,             # 语音url
+                'text': f"[语音消息] {raw_text}",    # 文本
             }
         return {}
 

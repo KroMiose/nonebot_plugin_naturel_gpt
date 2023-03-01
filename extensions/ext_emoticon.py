@@ -15,11 +15,13 @@ ext_config:dict = {
     # 作者信息
     "author": "KroMiose",
     # 版本
-    "version": "v0.0.1"
+    "version": "0.0.1",
+    # 拓展简介
+    "intro": "发送表情包",
 }
 
 class CustomExtension(Extension):
-    async def run(self, arg_dict: dict) -> dict:
+    async def call(self, arg_dict: dict, ctx_data: dict) -> dict:
         """ 当拓展被调用时执行的函数 *由拓展自行实现*
     
         参数:
@@ -57,7 +59,7 @@ class CustomExtension(Extension):
             }
         else:
             return {
-                # 'text': f"[ext_emoticon] 未找到与'{keyword}'相关的表情"
+                'text': f"[ext_emoticon] 未找到与'{keyword}'相关的表情" if self.get_custom_config().get('debug', False) else None
             }
 
     def __init__(self, custom_config: dict):

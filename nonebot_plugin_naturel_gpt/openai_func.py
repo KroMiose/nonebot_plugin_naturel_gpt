@@ -11,10 +11,11 @@ restart_sequence = "\nHuman: "
 
 
 class TextGenerator:
-    def __init__(self, api_keys: list, config: dict):
+    def __init__(self, api_keys: list, config: dict, proxy = None):
         self.api_keys = api_keys
         self.key_index = 0
         self.config = config
+        openai.proxy = proxy
 
     # 获取文本生成
     async def get_response(self, prompt: str, type: str = 'chat', custom: dict = {}) -> str:
@@ -32,7 +33,7 @@ class TextGenerator:
             logger.warning(f"当前 Api Key({self.key_index}): [{self.api_keys[self.key_index][:4]}...{self.api_keys[self.key_index][-4:]}] 失效，尝试使用下一个...")
             logger.error(f"错误原因: {res}")
         logger.error("无法连接到 OpenAi 或者当前所有 Api Key 失效")
-        return "哎呀，OpenAi Api 好像挂了呢 (´；ω；`)", False
+        return "哎呀，OpenAi 好像挂了呢 (´；ω；`)", False
 
     # 对话文本生成
     async def get_chat_response(self, key:str, prompt:str, custom:dict = {}):
@@ -46,11 +47,11 @@ class TextGenerator:
                 top_p=self.config['top_p'],
                 frequency_penalty=self.config['frequency_penalty'],
                 presence_penalty=self.config['presence_penalty'],
-                stop=[f"\n{custom.get('bot_name', 'AI')}:", f"\n{custom.get('sender_name', 'Human')}:", "$#"]
+                stop=[f"\n{custom.get('bot_name', 'AI')}:", f"\n{custom.get('sender_name', 'Human')}:"]
             )
             res = response['choices'][0]['text'].strip()
-            if start_sequence[1:] in res:
-                res = res.split(start_sequence[1:])[1]
+            # if start_sequence[1:] in res:
+            #     res = res.split(start_sequence[1:])[1]
             return res, True
         except Exception as e:
             return f"请求 OpenAi Api 时发生错误: {e}", False
