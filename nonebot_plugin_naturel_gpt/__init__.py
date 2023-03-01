@@ -459,7 +459,7 @@ async def _(event: Event, arg: Message = CommandArg()):
             f"+ 停止会话(管理): rg <会话/chats>\n"
             f"+ 重置会话(管理): rg <重置/reset> <-all?>\n"
             f"+ 拓展信息(管理): rg <拓展/ext>\n"
-            f"Tip: <人格信息> 是一段第三人称的人设说明(建议不超过200字, 不包含空格)\n"
+            f"Tip: <人格信息> 是一段第三人称的人设说明(建议不超过200字)\n"
         ))
 
     elif (cmd.split(' ')[0] in ["设定", "set"]) and len(cmd.split(' ')) >= 2:
