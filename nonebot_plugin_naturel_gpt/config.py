@@ -48,18 +48,20 @@ CONFIG_TEMPLATE = {
         },
     },
     'IGNORE_PREFIX': '#',   # 忽略前缀 以该前缀开头的消息将不会被处理
-    'CHAT_MODEL': "text-davinci-003",
-    'CHAT_HISTORY_MAX_TOKENS': 2048,
+    'CHAT_MODEL': "gpt-3.5-turbo",
     'CHAT_TOP_P': 1,
     'CHAT_TEMPERATURE': 0.6,    # 温度越高越随机
     'CHAT_FREQUENCY_PENALTY': 0.6,  # 频率惩罚
     'CHAT_PRESENCE_PENALTY': 0.6,   # 出现惩罚
-    'REQ_MAX_TOKENS': 2048,  # 单次请求最大token数
-    'REPLY_MAX_TOKENS': 1024,   # 单次回复最大token数
+
+    'CHAT_HISTORY_MAX_TOKENS': 2048,    # 上下文聊天记录最大token数
     'CHAT_MAX_SUMMARY_TOKENS': 512,   # 单次总结最大token数
+    'REPLY_MAX_TOKENS': 1024,   # 单次回复最大token数
+    'REQ_MAX_TOKENS': 4096,  # 单次请求最大token数
 
     'REPLY_ON_NAME_MENTION': True,  # 是否在被提及时回复
     'REPLY_ON_AT': True,            # 是否在被at时回复
+    'REPLY_ON_WELCOME': True,       # 是否在新成员加入时回复
 
     'USER_MEMORY_SUMMARY_THRESHOLD': 12,  # 用户记忆阈值
 
@@ -71,8 +73,8 @@ CONFIG_TEMPLATE = {
     'NG_DATA_PATH': "./data/naturel_gpt/",  # 数据文件目录
     'NG_EXT_PATH': "./data/naturel_gpt/extensions/",  # 拓展目录
 
-    'ADMIN_USERID': ['填写管理员QQ号'],  # 管理员QQ号
-    'FORBIDDEN_USERS': ['123456'],   # 拒绝回应的QQ号
+    'ADMIN_USERID': ['替换成管理员QQ号_(用单引号包裹)'],  # 管理员QQ号
+    'FORBIDDEN_USERS': ['替换成屏蔽QQ号_(用单引号包裹)'],   # 拒绝回应的QQ号
 
     'WORD_FOR_WAKE_UP': [],  # 自定义触发词
     'WORD_FOR_FORBIDDEN': [],  # 自定义禁止触发词

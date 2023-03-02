@@ -18,7 +18,9 @@
     <a href="https://jq.qq.com/?_wv=1027&k=71t9iCT7">
         <img src="https://img.shields.io/badge/加入交流群-636925153-c42.svg" alt="python">
     </a>
-    <h2>🧩 [2023/2/18] v1.3 重要更新: 自定义拓展支持 🧩</h2>
+    <h2>✏️ [2023/3/2] v1.4 更新: 支持ChatGPT模型 ✏️</h2>
+    <p>本次更新后插件开始支持官方ChatGPT模型接口，token定价仅为GPT3的 1/10, 回复质量更高 响应速度更快</p>
+    <h2>🧩 [2023/2/18] v1.3 更新: 自定义拓展支持 🧩</h2>
     <p>本次更新后插件开始支持自定义拓展，您可以直接通过自然语言直接调用多种拓展功能，包括 文本/图片/语音</p>
     <p>默认提供了三个样例拓展（发送随机数、发送图片、发送表情包），支持仅使用少量的代码就能实现各种自定义功能</p>
     <p>! 详见下方 <strong>自定义拓展部分</strong> !</p>
@@ -43,11 +45,12 @@
 * [X] 异步支持：赋予TA更强大的消息处理能力！
 * [X] 可拓展功能: 厌倦了单调的问答AI？为TA解锁超能力吧！TA能够根据你的语言主动调用拓展模块 (如:发送图片、语音等) TA的上限取决于你的想象
 * [X] 多段回复能力: 厌倦了传统一问一答的问答式聊天？TA能够做得更好！
+* [X] 主动欢迎新群友: 24小时工作的全自动欢迎姬(?)
+* [X] TTS文字转语音: 让TA开口说话！(可通过拓展模块实现，需自行准备提供TTS的API)
 * [ ] 潜在人格唤醒机制: 一定条件下，潜在人格会被主动唤醒
 * [ ] 主动聊天参与逻辑: 尽力模仿人类的聊天参与逻辑，目标是让TA能够真正融入你的群组
 * [ ] 回忆录生成: 记录你们之间的点点滴滴，获取你与TA的专属回忆
 * [ ] 记忆编辑功能: 不小心让TA记住了奇怪的事情？要不还是忘了吧
-* [ ] TTS文字转语音: 让TA开口说话！(暂定使用Vits，但是仍存在一些技术问题，欢迎大佬参与合作指点)
 
 ## 📕 使用方式
 
@@ -67,21 +70,22 @@
 | ADMIN_USERID                  | array | 管理员id，以字符串列表方式填入             | ['']                           | 只有管理员可删除预设                                                                 |
 | OPENAI_API_KEYS               | array | OpenAi的 `Api_Key，以字符串列表方式填入    | ['sak-xxxx']                   | 请自行替换为你的Api_Key                                                              |
 | CHAT_ENABLE_SUMMARY_CHAT      | bool  | 是否开启会话聊天记忆总结                   | False                          | 开启后能够一定程度增强bot对话记忆能力，但也会增加token消耗                           |
-| CHAT_HISTORY_MAX_TOKENS       | int   | 聊天记录最大token数                        | 2048                           |                                                                                      |
+| CHAT_HISTORY_MAX_TOKENS       | int   | 上下文聊天记录最大token数                  | 2048                           |                                                                                      |
 | CHAT_MAX_SUMMARY_TOKENS       | int   | 聊天记录总结最大token数                    | 512                            |                                                                                      |
+| REPLY_MAX_TOKENS              | int   | 生成回复的最大token数                      | 1024                           |                                                                                      |
+| REQ_MAX_TOKENS                | int   | 发起请求的最大token数（即请求+回复）       | 4096                           |                                                                                      |
 | CHAT_MEMORY_MAX_LENGTH        | int   | 聊天记忆最大条数                           | 16                             | 超出此长度后会进行记忆总结并删除更早的记录                                           |
 | CHAT_MEMORY_SHORT_LENGTH      | int   | 短期聊天记忆参考条数                       | 8                              |                                                                                      |
-| CHAT_MODEL                    | str   | 聊天生成的语言模型                         | text-davinci-003               |                                                                                      |
+| CHAT_MODEL                    | str   | 聊天生成的语言模型                         | gpt-3.5-turbo                  |                                                                                      |
 | CHAT_FREQUENCY_PENALTY        | float | 聊天频率重复惩罚                           | 0.6                            |                                                                                      |
 | CHAT_PRESENCE_PENALTY         | float | 聊天主题重复惩罚                           | 0.6                            |                                                                                      |
 | CHAT_TEMPERATURE              | float | 聊天生成温度: 越高越随机                   | 0.6                            |                                                                                      |
 | CHAT_TOP_P                    | float | 聊天信息采样率                             | 1                              |                                                                                      |
 | IGNORE_PREFIX                 | str   | 忽略前置修饰：添加此修饰的聊天信息将被忽略 | #                              |                                                                                      |
-| REQ_MAX_TOKENS                | int   | 发起请求的最大token数（即请求+回复）       | 2048                           |                                                                                      |
-| REPLY_MAX_TOKENS              | int   | 生成回复的最大token数                      | 1024                           |                                                                                      |
 | USER_MEMORY_SUMMARY_THRESHOLD | int   | 用户聊天印象总结触发阈值                   | 16                             | 越小触发越频繁，推荐10-20                                                            |
 | REPLY_ON_AT                   | bool  | 在被 `@TA` 时回复                          | True                           |                                                                                      |
 | REPLY_ON_NAME_MENTION         | bool  | 在被 `提及` 时回复                         | True                           | `提及` 即用户发言中含有当前bot人格名                                                 |
+| REPLY_ON_WELCOME              | bool  | 在 `新成员加入` 时回复                     | True                           |                                                                                      |
 | RANDOM_CHAT_PROBABILITY       | float | 随机触发聊天概率，设为0禁用                | 0                              | 调整范围[0~1]，设置过高回复频繁，会大量消耗token                                     |
 | PRESETS                       | dict  | 人格预设集合                               | 略                             | 默认有四个预设，详见生成的配置文件                                                   |
 | NG_DATA_PATH                  | str   | 数据文件目录                               | ./data/naturel_gpt/            | 保存实现数据持久化                                                                   |
@@ -305,7 +309,16 @@ class CustomExtension(Extension):
 
 ## 🎢 更新日志
 
-## [2023/3/1] v1.3.7 勤俭持家、代理服务更新
+## [2023/3/2] v1.4.0 ChatGpt模型更新
+> 本次更新后需要更新 OpenAi SDK 至 0.27.0 版本或以上才能使用ChatGPT系列模型
+
+- 增加了ChatGPT系列模型的支持，并针对其特点优化了prompt设置
+- 增加自动欢迎新成员可关闭的配置项
+- 优化了聊天内容分段输出的逻辑
+- 修复了一个聊天单条消息过长导致卡死循环的bug
+- 修复代理服务器配置异常(感谢 @HMScygnet 提供的修复代码)
+
+## [2023/3/1] v1.3.7 勤俭持家 | 代理服务更新
 
 - 优化prompt生成，为总结聊天记忆功能增加了可选开关，关闭后可降低约30%的token消耗（经过反馈该功能在较多场景下适用性有限，总体上高成本低回报，故增加了可选关闭，用户印象总结仍然保留开启）
 - 增加了拓展模块传递信息，拓展模块可获得原始请求触发信息、回复信息、bot预设名，便于实现更复杂的拓展需求
@@ -316,7 +329,7 @@ class CustomExtension(Extension):
 
 - 修复了 `rg set` 指令出错的问题
 
-## [2023/2/24] v1.3.5 黑名单、指令更新
+## [2023/2/24] v1.3.5 黑名单 | 指令更新
 
 - 修复了因唤醒词设置类型不规范问题导致偶发错误的问题
 - 修复第一次启动自动创建数据文件夹目录失败的问题
@@ -326,7 +339,7 @@ class CustomExtension(Extension):
 - 增加了是否开启消息切分多条发送的配置项（默认开启）
 - 增加了黑名单功能，在黑名单中的用户消息不会被记录和响应
 
-## [2023/2/20] v1.3.3 拓展、多段发送更新
+## [2023/2/20] v1.3.3 拓展 | 多段发送更新
 
 - 优化了不启用拓展模块时bot的回复质量，减少虚空调用拓展的情况
 - 优化对话生成prompt，增强了bot发送多段聊天的能力
@@ -367,7 +380,7 @@ class CustomExtension(Extension):
 - 消息拦截响应、消息处理优先级支持自定义配置
 - 简化帮助命令输出，分离管理员命令的帮助信息到 `rg admin` 中
 
-### [2023/2/9] v1.1.5 唤醒词、屏蔽词更新
+### [2023/2/9] v1.1.5 唤醒词 | 屏蔽词功能更新
 
 - 修复未创建对话前调用bot指令报错的问题
 - 增加自定义触发词唤醒的功能

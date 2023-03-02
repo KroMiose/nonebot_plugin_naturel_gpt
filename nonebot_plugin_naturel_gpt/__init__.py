@@ -137,15 +137,17 @@ class Chat:
     # 对话 prompt 模板生成
     def get_chat_prompt_template(self, userid:str = None)-> str:
         # 印象描述
-        impression_text = f"[impression]{global_preset_userdata[self.preset_key][userid].get('chat_impression')}\n" \
+        impression_text = f"[impression]\n{global_preset_userdata[self.preset_key][userid].get('chat_impression')}\n\n" \
             if global_preset_userdata[self.preset_key].get(userid, {}).get('chat_impression', None) else ''  # 用户印象描述
 
         # 对话历史
         offset = 0
-        chat_history:str = '\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])  # 从对话历史中截取短期对话
+        chat_history:str = '\n\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])  # 从对话历史中截取短期对话
         while tg.cal_token_count(chat_history) > config['CHAT_HISTORY_MAX_TOKENS']:
             offset += 1 # 如果对话历史过长，则逐行删除对话历史
-            chat_history = '\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])
+            chat_history = '\n\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])
+            if offset > 10:
+                chat_history = self.chat_presets['chat_history'][-1]
 
         # 对话历史摘要
         summary = f"\n\n[Summary]: {self.chat_presets['chat_summarized']}" if self.chat_presets.get('chat_summarized', None) else ''  # 如果有对话历史摘要，则添加摘要
@@ -158,7 +160,8 @@ class Chat:
             'importrant: The speak option is available if and only if in the following strict format. Multiple options can be used in one reply.\n'
             # '- Random > min:a; max:b (send a random number between a and b)'
             f'{ext_descs}\n'
-            'Use format: /#extension_name&param1&param2#/ (parameters are separated by &)\n\n'
+            'Use format: /#extension_name&param1&param2#/ (parameters are separated by &)\n'
+            'ATTENTION: Do not use any commands in your reply that are not listed above!\n\n'
             # 'example use in reply: i will send 2 random number /#Random&0&5#/ /#Random&5&10#/\n\n'    # 拓展使用示例 /#拓展名&参数1&参数2#/，参数之间用&分隔
         ) if config.get('NG_ENABLE_EXT') and ext_descs else (
             '[Speak options]\n'
@@ -166,15 +169,27 @@ class Chat:
         )
 
         # 发言提示
-        say_prompt = "(Multiple segment replies are separated by '*;', single quotes are not included)" if config.get('NG_ENABLE_MSG_SPLIT') else ''
+        say_prompt = f"(Multiple segment replies are separated by '*;', single quotes are not included, please only give the details of {self.chat_presets['bot_name']} reply and do not give any irrelevant information)" if config.get('NG_ENABLE_MSG_SPLIT') else ''
+
+        res_rule_prompt = (
+            f"\n\n[Response rule: Please follow the following rules strictly]\n"
+            f"\n1. If you need to generate multiple replies, use '*; 'delimited, not contained in single quotes"
+            f"\n2. Please only give the reply content of {self.chat_presets['bot_name']} and do not carry any irrelevant information"
+            f"\n3. If the reply contains code blocks, use the markdown format below"
+            f"\n```python"
+            f"\nprint('hi')"
+            f"\n```"
+            f"\n4. The response information needs to follow the character's setting and habits"
+        )
 
         # 返回对话 prompt 模板
         return (    # 返回对话 prompt 模板
-            f"{self.chat_presets['bot_self_introl']}"
+            f"[Character setting]"
+            f"\n{self.chat_presets['bot_self_introl']}"
             f"\n{summary}\n{impression_text}"
             f"{extension_text}"
             f"[Chat - current time: {time.strftime('%Y-%m-%d %H:%M:%S')}]\n"
-            f"\n{chat_history}\n{self.chat_presets['bot_name']}{say_prompt}:"
+            f"\n{chat_history}\n{res_rule_prompt}\n{self.chat_presets['bot_name']}:"
         )
 
     # 获取当前对话bot的名称
@@ -248,9 +263,7 @@ tg: TextGenerator = TextGenerator(api_keys, {
         'frequency_penalty': config['CHAT_FREQUENCY_PENALTY'],
         'presence_penalty': config['CHAT_PRESENCE_PENALTY'],
         'max_summary_tokens': config['CHAT_MAX_SUMMARY_TOKENS'],
-    }, {    # 传入代理服务器配置
-        'https': 'https://' + config['OPENAI_PROXY_SERVER']
-    } if config.get('OPENAI_PROXY_SERVER') else None
+    }, config['OPENAI_PROXY_SERVER'] if config.get('OPENAI_PROXY_SERVER') else None # 代理服务器配置
 )
 
 """ ======== 加载拓展模块 ======== """
@@ -362,9 +375,8 @@ welcome:Matcher = on_notice(priority=20, block=False)
 async def _(event: GroupIncreaseNoticeEvent):  # event: GroupIncreaseNoticeEvent  群成员增加事件
     if config.get('__DEBUG__'): logger.info(f"收到通知: {event}")
 
-    # at_cq = "[CQ:at,qq={}]".format(event.get_user_id())
-    # msg = at_cq + '欢迎新朋友！'
-    # msg = Message(msg)
+    if not config.get('REPLY_ON_WELCOME', True):  # 如果不回复欢迎消息，则跳过处理
+        return
 
     if isinstance(event, GroupIncreaseNoticeEvent): # 群成员增加通知
         chat_key = 'group_' + event.get_session_id().split("_")[1]
@@ -456,7 +468,7 @@ async def _(event: Event, arg: Message = CommandArg()):
             f"+ 解锁预设(管理): rg 解锁 <预设名>\n"
             f"+ 开启会话(管理): rg <开启/on> <-all?>\n"
             f"+ 停止会话(管理): rg <关闭/off> <-all?>\n"
-            f"+ 停止会话(管理): rg <会话/chats>\n"
+            f"+ 查询会话(管理): rg <会话/chats>\n"
             f"+ 重置会话(管理): rg <重置/reset> <-all?>\n"
             f"+ 拓展信息(管理): rg <拓展/ext>\n"
             f"Tip: <人格信息> 是一段第三人称的人设说明(建议不超过200字)\n"
@@ -741,12 +753,19 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     # 用于存储最终回复顺序内容的列表
     reply_list = []
 
-    # 按照拓展调用的格式，将所有非调用部分去除后再将剩余信息切分放入回复列表
-    pattern = '/#.*?#/'
-    reply_list = re.sub(pattern, '', raw_res).split()
-    # 对分割后的对话再次根据 '*;' 进行分割，表示对话结果中的分句，处理结果为列表，其中每个元素为一句话
+    # 提取markdown格式的代码块
+    code_blocks = re.findall(r"```(.+?)```", raw_res, re.S)
+    # 提取后去除所有markdown格式的代码块，剩余部分为对话结果
+    talk_res = re.sub(r"```(.+?)```", '', raw_res)
+
+    # 分割对话结果提取出所有 "/#拓展名&参数1&参数2#/" 格式的拓展调用指令 参数之间用&分隔
+    ext_calls = re.findall(r"/#(.+?)#/", talk_res)
+    # 提取后去除所有拓展调用指令，剩余部分为对话结果
+    talk_res = re.sub(r"/#(.+?)#/", '', talk_res)
+
+    # 对分割后的对话根据 '*;' 进行分割，表示对话结果中的分句，处理结果为列表，其中每个元素为一句话
     if config.get('NG_ENABLE_MSG_SPLIT'):
-        reply_list = [reply.strip() for reply in re.split(r'\*;', ' '.join(reply_list)) if reply.strip()]
+        reply_list = talk_res.split('*;')
 
     if config.get('__DEBUG__'): logger.info("分割对话结果: " + str(reply_list))
 
@@ -754,9 +773,8 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     for ext_name in global_extensions.keys():
         global_extensions[ext_name].reset_call_times()
 
-    # 分割对话结果提取出所有 "/#拓展名&参数1&参数2#/" 格式的拓展调用指令 参数之间用&分隔
-    ext_calls = re.findall(r"/#(.+?)#/", raw_res)
-    for ext_call_str in ext_calls:  # 遍历所有拓展调用指令
+    # 遍历所有拓展调用指令
+    for ext_call_str in ext_calls:  
         ext_name, *ext_args = ext_call_str.split('&')
         if ext_name.lower() in global_extensions.keys():
             # 提取出拓展调用指令中的参数为字典
@@ -790,6 +808,10 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
             # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
             raw_res = raw_res.replace(f"/#{ext_call_str}#/", '')
 
+    # # 代码块插入到回复列表的最后
+    # for code_block in code_blocks:
+    #     reply_list.append({'code_block': code_block})
+
     if config.get('__DEBUG__'): logger.info(f"回复序列内容: {reply_list}")
 
     res_times = config.get('NG_MAX_RESPONSE_PER_MSG', 3)  # 获取每条消息最大回复次数
@@ -808,6 +830,8 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 elif key == 'voice' and reply.get(key): # 如果回复内容为语音，则发送语音
                     logger.info(f"回复语音消息: {reply.get(key)}")
                     await matcher.send(Message(MessageSegment.record(file=reply.get(key), cache=0)))
+                elif key == 'code_block' and reply.get(key):  # 如果回复内容为代码块，则发送代码块
+                    await matcher.send(Message(reply.get(key)))
 
                 res_times -= 1
                 if res_times < 1:  # 如果回复次数超过限制，则跳出循环
