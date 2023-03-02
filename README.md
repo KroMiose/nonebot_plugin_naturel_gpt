@@ -320,7 +320,6 @@ class CustomExtension(Extension):
 - 调整prompt，优化bot回复质量
 
 ## [2023/3/2] v1.4.1
-> 本次更新后需要更新 OpenAi SDK 至 0.27.0 版本或以上才能使用ChatGPT系列模型
 
 - 修复一个prompt描述错误
 - 修复一个对话过长死循环卡死的bug
