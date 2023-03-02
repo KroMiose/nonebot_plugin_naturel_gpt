@@ -7,8 +7,8 @@ from pathlib import Path
 
 class Config(BaseModel, extra=Extra.ignore):
     """Plugin Config Here"""
-    NG_CONFIG_PATH: str = "config/naturel_gpt_config.yml"
-    NG_DEV_MODE: bool = False
+    ng_config_path: str = "config/naturel_gpt_config.yml"
+    ng_dev_mode: bool = False
 
 
 driver = get_driver()
@@ -101,13 +101,13 @@ CONFIG_TEMPLATE = {
     '__DEBUG__': False,  # 是否启用debug模式
 }
 
-config_path = config.NG_CONFIG_PATH
+config_path = config.ng_config_path
 
 # 检查config文件夹是否存在 不存在则创建
 if not Path("config").exists():
     Path("config").mkdir()
 
-if config.NG_DEV_MODE:  # 开发模式下不读取原配置文件，直接使用模板覆盖原配置文件
+if config.ng_dev_mode:  # 开发模式下不读取原配置文件，直接使用模板覆盖原配置文件
     with open(config_path, 'w', encoding='utf-8') as f:
         yaml.dump(CONFIG_TEMPLATE, f, allow_unicode=True)
 
