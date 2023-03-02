@@ -311,6 +311,10 @@ class CustomExtension(Extension):
 
 ## 🎢 更新日志
 
+## [2023/3/3] v1.4.3
+
+- 禁用了huggingface 的 tokenizer的分支化，避免死锁问题
+
 ## [2023/3/3] v1.4.2
 
 - 修复ChatGPT模型请求时间过长不会timeout的问题，提供一个配置项，可自行指定超时时间

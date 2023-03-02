@@ -1,8 +1,11 @@
 from nonebot.log import logger
 
-import openai
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+import openai
 from transformers import GPT2TokenizerFast
+
 tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
 
 
@@ -13,7 +16,7 @@ try:
     if openai_version < '0.27.0':
         logger.warning(f"当前 openai 库版本为 {openai_version}，请更新至 0.27.0 版本以上，否则可能导致 gpt-3.5-turbo 模型无法使用")
 except:
-    logger.warning(f"无法获取 openai 库版本，请更新至 0.27.0 版本以上，否则可能导致 gpt-3.5-turbo 模型无法使用")
+    logger.warning(f"无法获取 openai 库版本，请更新至 0.27.0 版本以上，否则 gpt-3.5-turbo 模型将无法使用")
 
 class TextGenerator:
     def __init__(self, api_keys: list, config: dict, proxy = None):
@@ -34,7 +37,7 @@ class TextGenerator:
                 res, success = await self.get_impression_response(self.api_keys[self.key_index], prompt, custom)
             if success:
                 return res, True
-            if 'Rate limit' in res:
+            if "Rate limit" in res:
                 reason = res
                 res = '超过每分钟请求次数限制，喝杯茶休息一下吧 (´；ω；`)'
                 break
