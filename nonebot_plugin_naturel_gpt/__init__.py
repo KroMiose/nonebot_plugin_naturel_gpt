@@ -148,6 +148,7 @@ class Chat:
             chat_history = '\n\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])
             if offset > 10:
                 chat_history = self.chat_presets['chat_history'][-1]
+                break
 
         # 对话历史摘要
         summary = f"\n\n[Summary]: {self.chat_presets['chat_summarized']}" if self.chat_presets.get('chat_summarized', None) else ''  # 如果有对话历史摘要，则添加摘要
@@ -173,7 +174,7 @@ class Chat:
 
         res_rule_prompt = (
             f"\n\n[Response rule: Please follow the following rules strictly]\n"
-            f"\n1. If you need to generate multiple replies, use '*; 'delimited, not contained in single quotes"
+            f"\n1. If you need to generate multiple replies, use '*;' delimited, not contained in single quotes"
             f"\n2. Please only give the reply content of {self.chat_presets['bot_name']} and do not carry any irrelevant information"
             f"\n3. If the reply contains code blocks, use the markdown format below"
             f"\n```python"
