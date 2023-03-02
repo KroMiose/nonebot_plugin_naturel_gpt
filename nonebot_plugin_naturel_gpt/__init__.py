@@ -189,8 +189,9 @@ class Chat:
             f"\n{self.chat_presets['bot_self_introl']}"
             f"\n{summary}\n{impression_text}"
             f"{extension_text}"
+            f"{res_rule_prompt}"
             f"[Chat - current time: {time.strftime('%Y-%m-%d %H:%M:%S')}]\n"
-            f"\n{chat_history}\n{res_rule_prompt}\n{self.chat_presets['bot_name']}:"
+            f"\n{chat_history}\n{self.chat_presets['bot_name']}:"
         )
 
     # 获取当前对话bot的名称
@@ -264,6 +265,7 @@ tg: TextGenerator = TextGenerator(api_keys, {
         'frequency_penalty': config['CHAT_FREQUENCY_PENALTY'],
         'presence_penalty': config['CHAT_PRESENCE_PENALTY'],
         'max_summary_tokens': config['CHAT_MAX_SUMMARY_TOKENS'],
+        'timeout': config['OPENAI_TIMEOUT'],
     }, config['OPENAI_PROXY_SERVER'] if config.get('OPENAI_PROXY_SERVER') else None # 代理服务器配置
 )
 
@@ -717,8 +719,11 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                                     require_summary=False)
         logger.info("符合 bot 发言条件，进行回复...")
     else:
-        await chat.update_chat_history_row(sender=sender_name, msg=trigger_text, require_summary=False)
-        logger.info("不是 bot 相关的信息，记录但不进行回复")
+        if config.get('CHAT_ENABLE_RECORD_ORTHER', True):
+            await chat.update_chat_history_row(sender=sender_name, msg=trigger_text, require_summary=False)
+            logger.info("不是 bot 相关的信息，记录但不进行回复")
+        else:
+            logger.info("不是 bot 相关的信息，不进行回复")
         return
 
     # 记录对用户的对话信息
@@ -777,7 +782,8 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     # 遍历所有拓展调用指令
     for ext_call_str in ext_calls:  
         ext_name, *ext_args = ext_call_str.split('&')
-        if ext_name.lower() in global_extensions.keys():
+        ext_name = ext_name.strip().lower()
+        if ext_name in global_extensions.keys():
             # 提取出拓展调用指令中的参数为字典
             ext_args_dict:dict = {}
             # 按照参数顺序依次提取参数值
@@ -823,15 +829,15 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
             await matcher.send(reply)
         else:
             for key in reply:   # 遍历回复内容类型字典
-                if key == 'text' and reply.get(key) and reply.get(key).strip():    # 如果回复内容为文本，则发送文本
+                if key == 'text' and reply.get(key) and reply.get(key).strip(): # 发送文本
                     await matcher.send(reply.get(key))
-                elif key == 'image' and reply.get(key): # 如果回复内容为图片，则发送图片
+                elif key == 'image' and reply.get(key): # 发送图片
                     await matcher.send(MessageSegment.image(file=reply.get(key, '')))
                     logger.info(f"回复图片消息: {reply.get(key)}")
-                elif key == 'voice' and reply.get(key): # 如果回复内容为语音，则发送语音
+                elif key == 'voice' and reply.get(key): # 发送语音
                     logger.info(f"回复语音消息: {reply.get(key)}")
                     await matcher.send(Message(MessageSegment.record(file=reply.get(key), cache=0)))
-                elif key == 'code_block' and reply.get(key):  # 如果回复内容为代码块，则发送代码块
+                elif key == 'code_block' and reply.get(key):  # 发送代码块
                     await matcher.send(Message(reply.get(key)))
 
                 res_times -= 1

@@ -69,7 +69,9 @@
 | ----------------------------- | ----- | ------------------------------------------ | ------------------------------ | ------------------------------------------------------------------------------------ |
 | ADMIN_USERID                  | array | 管理员id，以字符串列表方式填入             | ['']                           | 只有管理员可删除预设                                                                 |
 | OPENAI_API_KEYS               | array | OpenAi的 `Api_Key，以字符串列表方式填入    | ['sak-xxxx']                   | 请自行替换为你的Api_Key                                                              |
+| OPENAI_TIMEOUT                | int   | 请求OpenAi的超时时间 / 秒                  | 30                             |                                                                                      |
 | CHAT_ENABLE_SUMMARY_CHAT      | bool  | 是否开启会话聊天记忆总结                   | False                          | 开启后能够一定程度增强bot对话记忆能力，但也会增加token消耗                           |
+| CHAT_ENABLE_RECORD_ORTHER     | bool  | 是否参考非bot相关的上下文对话              | True                           | 开启后bot回复会参考近几条非bot相关信息                                               |
 | CHAT_HISTORY_MAX_TOKENS       | int   | 上下文聊天记录最大token数                  | 2048                           |                                                                                      |
 | CHAT_MAX_SUMMARY_TOKENS       | int   | 聊天记录总结最大token数                    | 512                            |                                                                                      |
 | REPLY_MAX_TOKENS              | int   | 生成回复的最大token数                      | 1024                           |                                                                                      |
@@ -308,6 +310,14 @@ class CustomExtension(Extension):
 </code></pre> </details>
 
 ## 🎢 更新日志
+
+## [2023/3/3] v1.4.2
+
+- 修复ChatGPT模型请求时间过长不会timeout的问题，提供一个配置项，可自行指定超时时间
+- 增加了一个可控制是否记录参考非bot相关消息上下文的配置选项
+- 为几种常见报错增加了更直观的提示
+- 修复了一个拓展模块调用出错的问题
+- 调整prompt，优化bot回复质量
 
 ## [2023/3/2] v1.4.1
 > 本次更新后需要更新 OpenAi SDK 至 0.27.0 版本或以上才能使用ChatGPT系列模型

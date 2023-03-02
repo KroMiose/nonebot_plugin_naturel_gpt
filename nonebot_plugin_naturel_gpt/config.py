@@ -18,9 +18,10 @@ config = Config.parse_obj(global_config)
 # 配置文件模板
 CONFIG_TEMPLATE = {
     "OPENAI_API_KEYS": [    # OpenAI API Key 列表
-        'sak-xxxxxxxxxxxxx',
-        'sak-xxxxxxxxxxxxx',
+        'sk-xxxxxxxxxxxxx',
+        'sk-xxxxxxxxxxxxx',
     ],
+    "OPENAI_TIMEOUT": 30,   # OpenAI 请求超时时间
     "PRESETS": {
         "白羽": {
             'bot_name': '白羽',  # 人格名称
@@ -65,6 +66,7 @@ CONFIG_TEMPLATE = {
 
     'USER_MEMORY_SUMMARY_THRESHOLD': 12,  # 用户记忆阈值
 
+    'CHAT_ENABLE_RECORD_ORTHER': True,  # 是否记录其他人的对话
     'CHAT_ENABLE_SUMMARY_CHAT': False,   # 是否启用总结对话
     'CHAT_MEMORY_SHORT_LENGTH': 8,  # 短期对话记忆长度
     'CHAT_MEMORY_MAX_LENGTH': 16,   # 长期对话记忆长度

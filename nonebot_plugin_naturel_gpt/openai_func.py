@@ -25,7 +25,7 @@ class TextGenerator:
     # 获取文本生成
     async def get_response(self, prompt: str, type: str = 'chat', custom: dict = {}) -> str:
         # return 'testing...'
-        for i in range(len(self.api_keys)):
+        for _ in range(len(self.api_keys)):
             if type == 'chat':
                 res, success = await self.get_chat_response(self.api_keys[self.key_index], prompt, custom)
             elif type == 'summarize':
@@ -34,11 +34,22 @@ class TextGenerator:
                 res, success = await self.get_impression_response(self.api_keys[self.key_index], prompt, custom)
             if success:
                 return res, True
+            if 'Rate limit' in res:
+                reason = res
+                res = '超过每分钟请求次数限制，喝杯茶休息一下吧 (´；ω；`)'
+                break
+            elif "module 'openai' has no attribute 'ChatCompletion'" in res:
+                reason = res
+                res = '当前 openai 库版本过低，无法使用 gpt-3.5-turbo 模型 (´；ω；`)'
+                break
+            else:
+                reason = res
+                res = '哎呀，OpenAi 好像挂了呢 (´；ω；`)'
             self.key_index = (self.key_index + 1) % len(self.api_keys)
-            logger.warning(f"当前 Api Key({self.key_index}): [{self.api_keys[self.key_index][:4]}...{self.api_keys[self.key_index][-4:]}] 失效，尝试使用下一个...")
-            logger.error(f"错误原因: {res}")
-        logger.error("无法连接到 OpenAi 或者当前所有 Api Key 失效")
-        return "哎呀，OpenAi 好像挂了呢 (´；ω；`)", False
+            logger.warning(f"当前 Api Key({self.key_index}): [{self.api_keys[self.key_index][:4]}...{self.api_keys[self.key_index][-4:]}] 请求错误，尝试使用下一个...")
+            logger.error(f"错误原因: {res} => {reason}")
+        logger.error("请求 OpenAi 发生错误，请检查 Api Key 是否正确或者查看控制台相关日志")
+        return res, False
 
     # 对话文本生成
     async def get_chat_response(self, key:str, prompt:str, custom:dict = {}):
@@ -55,6 +66,7 @@ class TextGenerator:
                     top_p=self.config['top_p'],
                     frequency_penalty=self.config['frequency_penalty'],
                     presence_penalty=self.config['presence_penalty'],
+                    timeout=self.config.get('timeout', 30),
                 )
                 if self.config.get('__DEBUG__'): logger.info('openai 原始回应 ->',response)
                 res = ''
@@ -97,6 +109,7 @@ class TextGenerator:
                     top_p=1,
                     frequency_penalty=0,
                     presence_penalty=0,
+                    timeout=self.config.get('timeout', 30),
                 )
                 if self.config.get('__DEBUG__'): logger.info('openai 原始回应 ->',response)
                 res = ''
@@ -138,6 +151,7 @@ class TextGenerator:
                     top_p=1,
                     frequency_penalty=0,
                     presence_penalty=0,
+                    timeout=self.config.get('timeout', 30),
                 )
                 if self.config.get('__DEBUG__'): logger.info('openai 原始回应 ->',response)
                 res = ''

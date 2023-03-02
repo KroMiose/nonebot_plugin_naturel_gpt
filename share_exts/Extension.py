@@ -4,17 +4,17 @@ class Extension:
         self._ext_config = ext_config
         self._custom_config = custom_config
 
-    async def run(self, arg_dict) -> dict:
+    async def run(self, arg_dict: dict, ctx_data: dict) -> dict:
         """ 插件运行 """
         raise NotImplementedError
 
-    async def call(self, arg_dict) -> dict:
+    async def call(self, arg_dict, ctx_data) -> dict:
         """ 调用插件 """
         self._call_time -= 1
         if self._call_time < 0:
             return {}
         else:
-            return await self.run(arg_dict)
+            return await self.run(arg_dict, ctx_data)
 
     def generate_description(self, chat_history_text='') -> str:
         """ 生成插件描述 """
@@ -27,11 +27,12 @@ class Extension:
             else:
                 return ""
         args_desc:str = "; ".join([f"{k}: {v}" for k, v in self._ext_config.get('arguments', {}).items()])
-        return f"- {self._ext_config['name']} > {args_desc} ({self._ext_config['description']})\n"
+        args_desc = 'no args' if args_desc == '' else args_desc
+        return f"- Name: {self._ext_config['name']}: {args_desc} ({self._ext_config['description']})\n"
 
     def generate_short_description(self) -> str:
         """ 生成插件简短描述 """
-        return f"- [{self._ext_config.get('name', '未知拓展')} v{self._ext_config.get('version', '0')}] > {self._ext_config.get('intro', '暂无描述')} by: {self._ext_config.get('author', '未知')}\n"
+        return f"- [{self._ext_config.get('name', '未知拓展')} v{self._ext_config.get('version', '0')}]: {self._ext_config.get('intro', '暂无描述')} by: {self._ext_config.get('author', '未知')}\n"
 
     def get_config(self) -> dict:
         """ 获取插件配置 """
