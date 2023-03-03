@@ -583,7 +583,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         ))
 
     elif cmd in ["开启", "on"]:
-        if str(event.user_id) not in config['ADMIN_USERID']:
+        if event.sender.role == 'member' and str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
         chat.toggle_chat(enabled=True)
         await identity.finish("已开启会话! <(￣▽￣)>")
@@ -597,7 +597,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         await identity.finish("已开启所有会话! <(￣▽￣)>")
 
     elif cmd in ["关闭", "off"]:
-        if str(event.user_id) not in config['ADMIN_USERID']:
+        if event.sender.role == 'member' and str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
         chat.toggle_chat(enabled=False)
         await identity.finish("已停止会话! <(＿　＿)>")
@@ -611,7 +611,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         await identity.finish("已停止所有会话! <(＿　＿)>")
 
     elif (cmd.split(' ')[0] in ["重置", "reset"]) and len(cmd.split(' ')) == 2:
-        if str(event.user_id) not in config['ADMIN_USERID']:
+        if event.sender.role == 'member' and str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
         target_preset_key = cmd.split(' ')[1]
         tmp_preset_key = chat.get_chat_preset_key()
