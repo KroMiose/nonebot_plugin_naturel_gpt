@@ -311,6 +311,11 @@ class CustomExtension(Extension):
 
 ## 🎢 更新日志
 
+## [2023/3/3] v1.4.4
+
+- 修复了config配置文件异常的问题 (感谢)
+- 优化多段回复预处理
+
 ## [2023/3/3] v1.4.3
 
 - 禁用了huggingface 的 tokenizer的分支化，避免死锁问题

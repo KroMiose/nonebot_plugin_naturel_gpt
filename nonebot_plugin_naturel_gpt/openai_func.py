@@ -70,6 +70,7 @@ class TextGenerator:
                     frequency_penalty=self.config['frequency_penalty'],
                     presence_penalty=self.config['presence_penalty'],
                     timeout=self.config.get('timeout', 30),
+                    stop=[f"\n{custom.get('bot_name', 'AI')}:", f"\n{custom.get('sender_name', 'Human')}:"]
                 )
                 if self.config.get('__DEBUG__'): logger.info('openai 原始回应 ->',response)
                 res = ''
@@ -81,6 +82,8 @@ class TextGenerator:
                     res = res[1:-1]
                 if res.startswith("'") and res.endswith("'"):
                     res = res[1:-1]
+                # 替换多段回应中的回复起始标志
+                res = res.replace(f"\n\n{custom.get('bot_name', 'AI')}:", "*;")
             else:
                 response = openai.Completion.create(
                     model=self.config['model'],

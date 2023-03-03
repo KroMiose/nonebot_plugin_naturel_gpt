@@ -146,7 +146,7 @@ class Chat:
         while tg.cal_token_count(chat_history) > config['CHAT_HISTORY_MAX_TOKENS']:
             offset += 1 # 如果对话历史过长，则逐行删除对话历史
             chat_history = '\n\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])
-            if offset > 10:
+            if offset > 99: # 如果对话历史删除执行出现问题，为了避免死循环，则只保留最后一条对话
                 chat_history = self.chat_presets['chat_history'][-1]
                 break
 
@@ -162,25 +162,25 @@ class Chat:
             # '- Random > min:a; max:b (send a random number between a and b)'
             f'{ext_descs}\n'
             'Use format: /#extension_name&param1&param2#/ (parameters are separated by &)\n'
-            'ATTENTION: Do not use any commands in your reply that are not listed above!\n\n'
+            'ATTENTION: Do not use any commands in your reply that are not listed above!\n'
             # 'example use in reply: i will send 2 random number /#Random&0&5#/ /#Random&5&10#/\n\n'    # 拓展使用示例 /#拓展名&参数1&参数2#/，参数之间用&分隔
         ) if config.get('NG_ENABLE_EXT') and ext_descs else (
             '[Speak options]\n'
-            'No extension is currently available. Do not use the extension function like /#extension_name&param1&param2#/.\n\n'
+            'No extension is currently available. Do not use the extension function like /#extension_name&param1&param2#/.\n'
         )
 
         # 发言提示
         say_prompt = f"(Multiple segment replies are separated by '*;', single quotes are not included, please only give the details of {self.chat_presets['bot_name']} reply and do not give any irrelevant information)" if config.get('NG_ENABLE_MSG_SPLIT') else ''
 
         res_rule_prompt = (
-            f"\n\n[Response rule: Please follow the following rules strictly]\n"
+            f"\n[Response rule: Please follow the following rules strictly]\n"
             f"\n1. If you need to generate multiple replies, use '*;' delimited, not contained in single quotes"
-            f"\n2. Please only give the reply content of {self.chat_presets['bot_name']} and do not carry any irrelevant information"
+            f"\n2. Please only give the reply content of {self.chat_presets['bot_name']} and do not carry any irrelevant information or the speeches of other members"
             f"\n3. If the reply contains code blocks, use the markdown format below"
             f"\n```python"
             f"\nprint('hi')"
             f"\n```"
-            f"\n4. The response information needs to follow the character's setting and habits"
+            f"\n4. Response information needs to follow the character's setting and habits\n"
         )
 
         # 返回对话 prompt 模板
@@ -190,7 +190,7 @@ class Chat:
             f"\n{summary}\n{impression_text}"
             f"{extension_text}"
             f"{res_rule_prompt}"
-            f"[Chat - current time: {time.strftime('%Y-%m-%d %H:%M:%S')}]\n"
+            f"\n[Chat - current time: {time.strftime('%Y-%m-%d %H:%M:%S')}]\n"
             f"\n{chat_history}\n{self.chat_presets['bot_name']}:"
         )
 
@@ -765,9 +765,9 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     talk_res = re.sub(r"```(.+?)```", '', raw_res)
 
     # 分割对话结果提取出所有 "/#拓展名&参数1&参数2#/" 格式的拓展调用指令 参数之间用&分隔
-    ext_calls = re.findall(r"/#(.+?)#/", talk_res)
+    ext_calls = re.findall(r"/.?#(.+?)#.?/", talk_res)
     # 提取后去除所有拓展调用指令，剩余部分为对话结果
-    talk_res = re.sub(r"/#(.+?)#/", '', talk_res)
+    talk_res = re.sub(r"/.?#(.+?)#.?/", '', talk_res)
 
     # 对分割后的对话根据 '*;' 进行分割，表示对话结果中的分句，处理结果为列表，其中每个元素为一句话
     if config.get('NG_ENABLE_MSG_SPLIT'):
