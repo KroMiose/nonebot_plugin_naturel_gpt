@@ -1,4 +1,5 @@
 from nonebot.log import logger
+from nonebot.utils import run_sync
 
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -26,15 +27,16 @@ class TextGenerator:
         openai.proxy = proxy
 
     # 获取文本生成
-    async def get_response(self, prompt: str, type: str = 'chat', custom: dict = {}) -> str:
+    @run_sync
+    def get_response(self, prompt: str, type: str = 'chat', custom: dict = {}) -> str:
         # return 'testing...'
         for _ in range(len(self.api_keys)):
             if type == 'chat':
-                res, success = await self.get_chat_response(self.api_keys[self.key_index], prompt, custom)
+                res, success = self.get_chat_response(self.api_keys[self.key_index], prompt, custom)
             elif type == 'summarize':
-                res, success = await self.get_summarize_response(self.api_keys[self.key_index], prompt, custom)
+                res, success = self.get_summarize_response(self.api_keys[self.key_index], prompt, custom)
             elif type == 'impression':
-                res, success = await self.get_impression_response(self.api_keys[self.key_index], prompt, custom)
+                res, success = self.get_impression_response(self.api_keys[self.key_index], prompt, custom)
             if success:
                 return res, True
             if "Rate limit" in res:
@@ -55,7 +57,7 @@ class TextGenerator:
         return res, False
 
     # 对话文本生成
-    async def get_chat_response(self, key:str, prompt:str, custom:dict = {}):
+    def get_chat_response(self, key:str, prompt:str, custom:dict = {}):
         openai.api_key = key
         try:
             if self.config['model'].startswith('gpt-3.5-turbo'):
@@ -98,7 +100,7 @@ class TextGenerator:
             return f"请求 OpenAi Api 时发生错误: {e}", False
 
     # 总结文本生成
-    async def get_summarize_response(self, key:str, prompt:str, custom:dict = {}):
+    def get_summarize_response(self, key:str, prompt:str, custom:dict = {}):
         openai.api_key = key
         try:
             if self.config['model'].startswith('gpt-3.5-turbo'):
@@ -140,7 +142,7 @@ class TextGenerator:
             return f"请求 OpenAi Api 时发生错误: {e}", False
 
     # 印象文本生成
-    async def get_impression_response(self, key:str, prompt:str, custom:dict = {}):
+    def get_impression_response(self, key:str, prompt:str, custom:dict = {}):
         openai.api_key = key
         try:
             if self.config['model'].startswith('gpt-3.5-turbo'):
