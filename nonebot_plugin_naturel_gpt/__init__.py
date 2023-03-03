@@ -157,30 +157,32 @@ class Chat:
         ext_descs = ''.join([global_extensions[ek].generate_description(chat_history) for ek in global_extensions.keys()])
         # 拓展使用示例
         extension_text = (
-            '[Speak options]\n'
-            'importrant: The speak option is available if and only if in the following strict format. Multiple options can be used in one reply.\n'
+            '[Extension options]\n'
+            # 'Including the above content in a chat message will call the extension module for processing.\n'
+            # 'importrant: The extension option is available if and only if in the following strict format. Multiple options can be used in one response.\n'
             # '- Random > min:a; max:b (send a random number between a and b)'
+            'Following the following format in the response will invoke the extension module for the corresponding implementation. The extension module can be invoked multiple times in a single response.\n'
             f'{ext_descs}\n'
-            'Use format: /#extension_name&param1&param2#/ (parameters are separated by &)\n'
-            'ATTENTION: Do not use any commands in your reply that are not listed above!\n'
-            # 'example use in reply: i will send 2 random number /#Random&0&5#/ /#Random&5&10#/\n\n'    # 拓展使用示例 /#拓展名&参数1&参数2#/，参数之间用&分隔
+            'Usage format in response: /#extension_name&param1&param2#/ (parameters are separated by &)\n'
+            'ATTENTION: Do not use any extensions in response that are not listed above!\n'
+            # 'example use in response: i will send 2 random number /#Random&0&5#/ /#Random&5&10#/\n\n'    # 拓展使用示例 /#拓展名&参数1&参数2#/，参数之间用&分隔
         ) if config.get('NG_ENABLE_EXT') and ext_descs else (
-            '[Speak options]\n'
+            '[Extension options]\n'
             'No extension is currently available. Do not use the extension function like /#extension_name&param1&param2#/.\n'
         )
 
         # 发言提示
-        say_prompt = f"(Multiple segment replies are separated by '*;', single quotes are not included, please only give the details of {self.chat_presets['bot_name']} reply and do not give any irrelevant information)" if config.get('NG_ENABLE_MSG_SPLIT') else ''
+        say_prompt = f"(Multiple segment replies are separated by '*;', single quotes are not included, please only give the details of {self.chat_presets['bot_name']} response and do not give any irrelevant information)" if config.get('NG_ENABLE_MSG_SPLIT') else ''
 
         res_rule_prompt = (
             f"\n[Response rule: Please follow the following rules strictly]\n"
-            f"\n1. If you need to generate multiple replies, use '*;' delimited, not contained in single quotes"
-            f"\n2. Please only give the reply content of {self.chat_presets['bot_name']} and do not carry any irrelevant information or the speeches of other members"
-            f"\n3. If the reply contains code blocks, use the markdown format below"
+            f"\n1. If you need to generate multiple replies, use '*;' delimited(single quotes are not included)"
+            # f"\n2. Only give the response content of {self.chat_presets['bot_name']} and do not carry any irrelevant information or the speeches of other members"
+            f"\n2. Please play the {self.chat_presets['bot_name']} role and only give the reply content of the {self.chat_presets['bot_name']} role, response needs to follow the role's setting and habits"
+            f"\n3. If the response contains code blocks, use the markdown format below"
             f"\n```python"
             f"\nprint('hi')"
             f"\n```"
-            f"\n4. Response information needs to follow the character's setting and habits\n"
         )
 
         # 返回对话 prompt 模板
@@ -256,7 +258,7 @@ if not config.get('CHAT_ENABLE_SUMMARY_CHAT'):
     for chat in chat_dict.values():
         chat.chat_presets['chat_summarized'] = ''
 
-# 初始化对话文本生成器
+""" ======== 初始化对话文本生成器 ======== """
 tg: TextGenerator = TextGenerator(api_keys, {
         'model': config['CHAT_MODEL'],
         'max_tokens': config['REPLY_MAX_TOKENS'],

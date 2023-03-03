@@ -17,7 +17,7 @@ class Extension:
             return await self.run(arg_dict, ctx_data)
 
     def generate_description(self, chat_history_text='') -> str:
-        """ 生成拓展描述 """
+        """ 生成拓展描述prompt(供bot参考用) """
         print(chat_history_text)
         # 判断参考词
         if self._ext_config["refer_word"] and chat_history_text:
@@ -26,9 +26,9 @@ class Extension:
                     break
             else:
                 return ""
-        args_desc:str = "; ".join([f"{k}: {v}" for k, v in self._ext_config.get('arguments', {}).items()])
+        args_desc:str = "; ".join([f"{k}:{v}" for k, v in self._ext_config.get('arguments', {}).items()])
         args_desc = 'no args' if args_desc == '' else args_desc
-        return f"- Name: {self._ext_config['name']}: {args_desc} ({self._ext_config['description']})\n"
+        return f"- {self._ext_config['name']}: {args_desc} ({self._ext_config['description']})\n"
 
     def generate_short_description(self) -> str:
         """ 生成拓展简短描述 """

@@ -9,9 +9,7 @@ from transformers import GPT2TokenizerFast
 
 tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
 
-
-# 检查openai版本是否高于0.27.0
-try:
+try:    # 检查openai版本是否高于0.27.0
     import pkg_resources
     openai_version = pkg_resources.get_distribution("openai").version
     if openai_version < '0.27.0':
@@ -24,6 +22,9 @@ class TextGenerator:
         self.api_keys = api_keys
         self.key_index = 0
         self.config = config
+        if proxy:
+            if not proxy.startswith('http'):
+                proxy = 'http://' + proxy
         openai.proxy = proxy
 
     # 获取文本生成
@@ -39,6 +40,8 @@ class TextGenerator:
                 res, success = self.get_impression_response(self.api_keys[self.key_index], prompt, custom)
             if success:
                 return res, True
+
+            # 请求错误处理
             if "Rate limit" in res:
                 reason = res
                 res = '超过每分钟请求次数限制，喝杯茶休息一下吧 (´；ω；`)'

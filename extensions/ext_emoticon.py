@@ -7,7 +7,7 @@ ext_config:dict = {
     "arguments": {
         "keyword": "str",   # 关键字
     },
-    "description": "Send a emoticon related to the keyword(in chinese). eg: /#emoticon&开心#/",
+    "description": "Send a emoticon related to the keyword(in chinese). usage in reply: /#emoticon&开心#/",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
     # 每次消息回复中最大调用次数，不填则默认为99

@@ -10,7 +10,7 @@ ext_config:dict = {
     },
     # 拓展的描述信息，用于提示ai理解拓展的功能 *必填* 尽量简短 使用英文更节省token
     # 如果bot无法理解拓展的功能，可适当添加使用示例 格式: /#拓展名&参数1&...&参数n#/
-    "description": "send a random number beteen the range.",
+    "description": "send a random number beteen the range. (usage in reply: /#Random&0&20#/))",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
     # 每次消息回复中最大调用次数，不填则默认为99

@@ -8,7 +8,7 @@ ext_config:dict = {
         'sentence': 'str',  # 需要转换的文本
     },
     # 拓展的描述信息，用于提示ai理解拓展的功能 *必填* 尽量简短 使用英文更节省token
-    "description": "Send a voice sentence. (use eg: /#voice&你好#/)",
+    "description": "Send a voice sentence. (usage in reply: /#voice&你好#/)",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
     # 作者信息
