@@ -28,7 +28,7 @@ class Extension:
                 return ""
         args_desc:str = "; ".join([f"{k}:{v}" for k, v in self._ext_config.get('arguments', {}).items()])
         args_desc = 'no args' if args_desc == '' else args_desc
-        return f"- {self._ext_config['name']}: {args_desc} ({self._ext_config['description']})\n"
+        return f"+ {self._ext_config['name']} - {args_desc} ({self._ext_config['description']})\n"
 
     def generate_short_description(self) -> str:
         """ 生成拓展简短描述 """

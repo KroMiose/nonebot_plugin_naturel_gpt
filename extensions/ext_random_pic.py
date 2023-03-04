@@ -5,7 +5,7 @@ import requests
 ext_config:dict = {
     "name": "AnimePic",   # 拓展名称，用于标识拓展
     "arguments": {},
-    "description": "send 1 random anime picture. (not parameters! usage in reply: /#AnimePic#/)",
+    "description": "send 1 random anime picture. (not parameters! usage in response: /#AnimePic#/)",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": ["图", "pic", "Pic", "再", "还", "涩", "色"],
     # 每次消息回复中最大调用次数，不填则默认为99

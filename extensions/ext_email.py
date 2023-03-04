@@ -13,9 +13,9 @@ ext_config:dict = {
         'title': 'str',     # 邮件标题
         'content': 'str',   # 邮件内容
     },
-    "description": "Send an email to the specified mailbox. (usage in reply: /#email&receiver@mail.com&title&hello#/ , accessories are not supported)",
+    "description": "Send an email to the specified mailbox. (usage in response: /#email&receiver@mail.com&title&hello#/ , accessories are not supported)",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
-    "refer_word": ["邮", "mail"],
+    "refer_word": [],
     # 每次消息回复中最大调用次数，不填则默认为99
     "max_call_times_per_msg": 5,
     # 作者信息
@@ -53,7 +53,7 @@ class CustomExtension(Extension):
         
         miose_bot_opt = MioseBotOpt(SMTP_CODE, SENDER_ADDR, SENDER_NAME)
         if miose_bot_opt.send_mail(receiver, title, content):
-            return {'text': f'发送到 {receiver}\n\n标题: {title}\n内容: {content}\n[成功]'}
+            return {'text': f'[ext_mail] 发送邮件({title})\n到{receiver}[成功]'}
         else:
             return {'text': '[ext_mail] 邮件发送失败',}
 

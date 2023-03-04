@@ -87,6 +87,9 @@ CONFIG_TEMPLATE = {
     'NG_BLOCK_OTHERS': False,    # 是否阻止其他插件响应
     'NG_ENABLE_EXT': False,      # 是否启用拓展
 
+    'MEMORY_ACTIVE': True,  # 是否启用记忆功能
+    'MEMORY_MAX_LENGTH': 16,  # 记忆最大条数
+
     'NG_MAX_RESPONSE_PER_MSG': 5,  # 每条消息最大响应次数
     'NG_ENABLE_MSG_SPLIT': True,   # 是否启用消息分割
 

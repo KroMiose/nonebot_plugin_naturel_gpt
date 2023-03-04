@@ -30,7 +30,7 @@ global_extensions = {}  # 用于存储所有扩展的字典
 
 
 """ ======== 定义会话类 ======== """
-# 对话类
+# 会话类
 class Chat:
     preset_key = ''  # 预设标识
     chat_presets = None         # 当前对话预设
@@ -42,7 +42,7 @@ class Chat:
 
     def __init__(self, chat_key:str, preset_key:str = ''):
         self.chat_presets = {}   # 当前对话预设
-        self.chat_preset_dicts = {}   # 预设字典
+        self.chat_preset_dicts = {} # 预设字典
         self.chat_key = chat_key    # 对话标识
         self.is_enable = True       # 启用会话
         if not preset_key:  # 如果没有预设，选择默认预设
@@ -110,6 +110,20 @@ class Chat:
             logger.info(f"印象生成消耗token数: {tg.cal_token_count(prompt + global_preset_userdata[self.preset_key][userid]['chat_impression'])}")
             global_preset_userdata[self.preset_key][userid]['chat_history'] = global_preset_userdata[self.preset_key][userid]['chat_history'][-config['CHAT_MEMORY_SHORT_LENGTH']:]
 
+    # 为当前预设设置记忆
+    def set_memory(self, mem_key:str, mem_value:str = '') -> None:
+        if 'chat_memory' not in self.chat_presets:
+            self.chat_presets['chat_memory'] = {}
+
+        # 如果没有指定mem_value，则删除该记忆
+        if not mem_value:
+            if mem_key in self.chat_presets['chat_memory']:
+                del self.chat_presets['chat_memory'][mem_key]
+            else:
+                logger.warning(f"尝试删除不存在的记忆 {mem_key}")
+        else:   # 否则设置该记忆
+            self.chat_presets['chat_memory'][mem_key] = mem_value
+
     # 修改对话预设
     def change_presettings(self, preset_key:str) -> None:
         if preset_key not in self.chat_preset_dicts:    # 如果聊天预设字典中没有该预设，则从全局预设字典中拷贝一个
@@ -140,6 +154,43 @@ class Chat:
         impression_text = f"[impression]\n{global_preset_userdata[self.preset_key][userid].get('chat_impression')}\n\n" \
             if global_preset_userdata[self.preset_key].get(userid, {}).get('chat_impression', None) else ''  # 用户印象描述
 
+        # 记忆模块
+        memory_text = ''
+        memory = ''
+        if 'chat_memory' not in self.chat_presets:
+            self.chat_presets['chat_memory'] = {}
+        if self.chat_presets.get('chat_memory', {}):  # 删除空记忆
+            self.chat_presets['chat_memory'] = {k: v for k, v in self.chat_presets['chat_memory'].items() if v}
+        if self.chat_presets.get('chat_memory', {}):    # 如果有记忆，则生成记忆模板
+            idx = 0 # 记忆序号
+            for k, v in self.chat_presets['chat_memory'].items():
+                idx += 1
+                memory_text += f"{idx}. {k}: {v}\n"
+
+        # 删除多余的记忆
+        if len(self.chat_presets.get('chat_memory', {})) > config.get('MEMORY_MAX_LENGTH', 16):
+            self.chat_presets['chat_memory'] = {k: v for k, v in sorted(self.chat_presets['chat_memory'].items(), key=lambda item: item[1])}
+            self.chat_presets['chat_memory'] = {k: v for k, v in list(self.chat_presets['chat_memory'].items())[:config.get('MEMORY_MAX_LENGTH', 16)]}
+            logger.info(f"删除多余记忆: {self.chat_presets['chat_memory']}")
+
+        if config.get('MEMORY_ACTIVE'):  # 如果记忆功能开启
+            if global_extensions.get('memory'): # 如果记忆功能已加载
+                memory = (  # 如果有记忆，则生成记忆模板
+                    f"[history memory (max length: {config.get('MEMORY_MAX_LENGTH', 16)} - Please delete the unimportant memory in time when exceed it)]\n"
+                    f"{memory_text}\n"
+                    f"ATTENTION: The earlier chat history may not be provided again in the next request, please use /#memory&key&value#/ to remember required information as much as possible\n\n"
+                ) if memory_text else ( # 如果没有记忆，则生成空记忆模板
+                    f"[memory (max length: {config.get('MEMORY_MAX_LENGTH', 16)} - Please delete the unimportant memory in time when exceed it)]\n"
+                    f"There are currently no saved memories, use /#memory&key&value#/ to remember something."
+                    f"ATTENTION: The earlier chat history may not be provided again in the next request, please use /#memory&key&value#/ to remember required information as much as possible\n\n"
+                )
+            else:   # 如果没有加载 memory 拓展，则使用固定记忆
+                logger.warning("未加载主动记忆 memory 拓展，仅启用固定记忆！")
+                memory = (
+                    f"[history memory]\n"
+                    f"{memory_text}\n"
+                ) if memory_text else ''
+
         # 对话历史
         offset = 0
         chat_history:str = '\n\n'.join(self.chat_presets['chat_history'][-(config['CHAT_MEMORY_SHORT_LENGTH'] + offset):])  # 从对话历史中截取短期对话
@@ -157,14 +208,14 @@ class Chat:
         ext_descs = ''.join([global_extensions[ek].generate_description(chat_history) for ek in global_extensions.keys()])
         # 拓展使用示例
         extension_text = (
-            '[Extension options]\n'
+            f"[Extension options (Only {self.chat_presets['bot_name']} can use)]\n"
             # 'Including the above content in a chat message will call the extension module for processing.\n'
             # 'importrant: The extension option is available if and only if in the following strict format. Multiple options can be used in one response.\n'
             # '- Random > min:a; max:b (send a random number between a and b)'
             'Following the following format in the response will invoke the extension module for the corresponding implementation. The extension module can be invoked multiple times in a single response.\n'
             f'{ext_descs}\n'
-            'Usage format in response: /#extension_name&param1&param2#/ (parameters are separated by &)\n'
-            'ATTENTION: Do not use any extensions in response that are not listed above!\n'
+            "Usage format in response: /#extension_name&param1&param2#/ (parameters are separated by '&')\n"
+            'ATTENTION: Do not use any extensions in response that are not listed above! If the response contains content in this format, the extension will be called directly for execution. Do not respond any content in this format if you do not want to call the extension\n'
             # 'example use in response: i will send 2 random number /#Random&0&5#/ /#Random&5&10#/\n\n'    # 拓展使用示例 /#拓展名&参数1&参数2#/，参数之间用&分隔
         ) if config.get('NG_ENABLE_EXT') and ext_descs else (
             '[Extension options]\n'
@@ -172,11 +223,11 @@ class Chat:
         )
 
         # 发言提示
-        say_prompt = f"(Multiple segment replies are separated by '*;', single quotes are not included, please only give the details of {self.chat_presets['bot_name']} response and do not give any irrelevant information)" if config.get('NG_ENABLE_MSG_SPLIT') else ''
+        # say_prompt = f"(Multiple segment replies are separated by '*;', single quotes are not included, please only give the details of {self.chat_presets['bot_name']} response and do not give any irrelevant information)" if config.get('NG_ENABLE_MSG_SPLIT') else ''
 
         res_rule_prompt = (
             f"\n[Response rule: Please follow the following rules strictly]\n"
-            f"\n1. If you need to generate multiple replies, use '*;' delimited(single quotes are not included)"
+            f"\n1. If the content of a reply is too long, please segment it in the appropriate place, use '*;' delimited(single quotes are not included)"
             # f"\n2. Only give the response content of {self.chat_presets['bot_name']} and do not carry any irrelevant information or the speeches of other members"
             f"\n2. Please play the {self.chat_presets['bot_name']} role and only give the reply content of the {self.chat_presets['bot_name']} role, response needs to follow the role's setting and habits"
             f"\n3. If the response contains code blocks, use the markdown format below"
@@ -189,10 +240,10 @@ class Chat:
         return (    # 返回对话 prompt 模板
             f"[Character setting]"
             f"\n{self.chat_presets['bot_self_introl']}"
-            f"\n{summary}\n{impression_text}"
+            f"\n{summary}\n{impression_text}\n{memory}"
             f"{extension_text}"
             f"{res_rule_prompt}"
-            f"\n[Chat - current time: {time.strftime('%Y-%m-%d %H:%M:%S')}]\n"
+            f"\n[Chat History (current time: {time.strftime('%Y-%m-%d %H:%M:%S')})]\n"
             f"\n{chat_history}\n{self.chat_presets['bot_name']}:"
         )
 
@@ -644,6 +695,62 @@ async def _(event: Event, arg: Message = CommandArg()):
             chat_info += f"+ {chat.generate_description()}"
         await identity.finish((f"当前已加载的会话:\n{chat_info}"))
 
+    elif cmd in ["记忆", "memory"] and len(cmd.split(' ')) == 1:
+        # 检查主动记忆拓展模块和主动记忆功能是否启用
+        if not ('memory' in global_extensions and config['MEMORY_ACTIVE']):
+            logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
+        # 检查权限
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        # 生成记忆信息
+        memory_info = ''
+        for k, v in chat_dict[chat_key].chat_presets.get('chat_memory', {}).items():
+            memory_info += f"+ {k}: {v}\n"
+        if memory_info == '':
+            memory_info = "当前的记忆是空的呢 >﹏<"
+        await identity.finish((f"当前人格记忆:\n{memory_info}"))
+
+    elif cmd in ["记忆", "memory"] and len(cmd.split(' ')) == 2:
+        # 检查主动记忆拓展模块和主动记忆功能是否启用
+        if not ('memory' in global_extensions and config['MEMORY_ACTIVE']):
+            logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
+        # 检查权限
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+
+    elif cmd.split(' ')[0] in ["记忆", "memory"] and len(cmd.split(' ')) == 3:
+        # 检查主动记忆拓展模块和主动记忆功能是否启用
+        if not ('memory' in global_extensions and config['MEMORY_ACTIVE']):
+            logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
+        # 检查权限
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        # 检查是否存在记忆
+        if 'chat_memory' not in chat_dict[chat_key].chat_presets:
+            chat_dict[chat_key].chat_presets['chat_memory'] = {}
+        # 检查记忆是否存在
+        if cmd.split(' ')[1] not in chat_dict[chat_key].chat_presets['chat_memory']:
+            await identity.finish("当前人格没有此记忆！")
+        # 检查操作
+        if cmd.split(' ')[2] in ["删除", "del", "delete"]:
+            chat_dict[chat_key].set_memory(cmd.split(' ')[1], None)
+            await identity.finish(f"已删除记忆: {cmd.split(' ')[1]}")
+
+    elif cmd.split(' ')[0] in ["记忆", "memory"] and len(cmd.split(' ')) == 4:
+        # 检查主动记忆拓展模块和主动记忆功能是否启用
+        if not ('memory' in global_extensions and config['MEMORY_ACTIVE']):
+            logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
+        # 检查权限
+        if str(event.user_id) not in config['ADMIN_USERID']:
+            await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
+        # 检查是否存在记忆
+        if 'chat_memory' not in chat_dict[chat_key].chat_presets:
+            chat_dict[chat_key].chat_presets['chat_memory'] = {}
+        # 检查操作
+        if cmd.split(' ')[1] in ["编辑", "edit"]:
+            chat_dict[chat_key].set_memory(cmd.split(' ')[2], cmd.split(' ')[3])
+            await identity.finish(f"编辑记忆: {cmd.split(' ')[2]} 成功! (￣▽￣)")
+
     else:
         await identity.finish("输入的命令好像有点问题呢... 请检查下再试试吧！ ╮(>_<)╭")
 
@@ -832,7 +939,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         else:
             for key in reply:   # 遍历回复内容类型字典
                 if key == 'text' and reply.get(key) and reply.get(key).strip(): # 发送文本
-                    await matcher.send(reply.get(key))
+                    await matcher.send(reply.get(key).strip())
                 elif key == 'image' and reply.get(key): # 发送图片
                     await matcher.send(MessageSegment.image(file=reply.get(key, '')))
                     logger.info(f"回复图片消息: {reply.get(key)}")
@@ -841,6 +948,14 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                     await matcher.send(Message(MessageSegment.record(file=reply.get(key), cache=0)))
                 elif key == 'code_block' and reply.get(key):  # 发送代码块
                     await matcher.send(Message(reply.get(key)))
+                elif key == 'memory' and reply.get(key):  # 记忆存储
+                    logger.info(f"存储记忆: {reply.get(key)}")
+                    chat.set_memory(reply.get(key).get('key'), reply.get(key).get('value'))
+                    if config.get('__DEBUG__'):
+                        if reply.get(key).get('value') is None:
+                            await matcher.send(f"[DEBUG] 忘记了: {reply.get(key).get('key')}")
+                        else:
+                            await matcher.send(f"[DEBUG] 记住了: {reply.get(key).get('key')} = {reply.get(key).get('value')}")
 
                 res_times -= 1
                 if res_times < 1:  # 如果回复次数超过限制，则跳出循环
