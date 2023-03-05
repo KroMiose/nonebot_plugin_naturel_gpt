@@ -47,7 +47,7 @@
 * [X] 多段回复能力: 厌倦了传统一问一答的问答式聊天？TA能够做得更好！
 * [X] 主动欢迎新群友: 24小时工作的全自动欢迎姬(?)
 * [X] TTS文字转语音: 让TA开口说话！(可通过拓展模块实现，需自行准备提供TTS的API)
-* [X] 主动记忆和记忆管理功能: 让TA主动记住点什么吧，如果不小心记住了什么奇怪的东西也是可以修改的哟！(主动记忆需要拓展支持)
+* [X] 主动记忆和记忆管理功能: 让TA主动记住点什么吧！hmm让我康康你记住了什么 (主动记忆需要拓展支持)
 * [ ] 潜在人格唤醒机制: 一定条件下，潜在人格会被主动唤醒
 * [ ] 主动聊天参与逻辑: 尽力模仿人类的聊天参与逻辑，目标是让TA能够真正融入你的群组
 * [ ] 回忆录生成: 记录你们之间的点点滴滴，获取你与TA的专属回忆
@@ -74,15 +74,16 @@
 | CHAT_ENABLE_RECORD_ORTHER     | bool  | 是否参考非bot相关的上下文对话              | True                           | 开启后bot回复会参考近几条非bot相关信息                                               |
 | MEMORY_ACTIVE                 | bool  | 是否开启主动记忆（需要同时启用记忆拓展）   | False                          | 开启后bot会自行管理记忆                                                              |
 | MEMORY_MAX_LENGTH             | int   | 主动记忆最大条数                           | False                          | 主动记忆最大条数                                                                     |
+| MEMORY_ENHANCE_THRESHOLD      | float | 记忆强化阈值                               | 0.8                            | 响应内容与记忆信息匹配达到阈值(0-1)时会强化记忆                                      |
 | CHAT_HISTORY_MAX_TOKENS       | int   | 上下文聊天记录最大token数                  | 2048                           |                                                                                      |
 | CHAT_MAX_SUMMARY_TOKENS       | int   | 聊天记录总结最大token数                    | 512                            |                                                                                      |
 | REPLY_MAX_TOKENS              | int   | 生成回复的最大token数                      | 1024                           |                                                                                      |
 | REQ_MAX_TOKENS                | int   | 发起请求的最大token数（即请求+回复）       | 4096                           |                                                                                      |
 | CHAT_MEMORY_MAX_LENGTH        | int   | 聊天记忆最大条数                           | 16                             | 超出此长度后会进行记忆总结并删除更早的记录                                           |
 | CHAT_MEMORY_SHORT_LENGTH      | int   | 短期聊天记忆参考条数                       | 8                              |                                                                                      |
-| CHAT_MODEL                    | str   | 聊天生成的语言模型                         | gpt-3.5-turbo                  |                                                                                      |
-| CHAT_FREQUENCY_PENALTY        | float | 聊天频率重复惩罚                           | 0.6                            |                                                                                      |
-| CHAT_PRESENCE_PENALTY         | float | 聊天主题重复惩罚                           | 0.6                            |                                                                                      |
+| CHAT_MODEL                    | str   | 聊天生成的语言模型                         | gpt-3.5-turbo                  | 默认使用GPT3.5的模型(推荐)                                                           |
+| CHAT_FREQUENCY_PENALTY        | float | 回复内容复读惩罚                           | 0.6                            | 范围(-2~2) 越高产生的回复内容越多样化                                                |
+| CHAT_PRESENCE_PENALTY         | float | 回复主题重复惩罚                           | 0.6                            | 范围(-2~2) 越高越倾向于产生新的话题                                                  |
 | CHAT_TEMPERATURE              | float | 聊天生成温度: 越高越随机                   | 0.6                            |                                                                                      |
 | CHAT_TOP_P                    | float | 聊天信息采样率                             | 1                              |                                                                                      |
 | IGNORE_PREFIX                 | str   | 忽略前置修饰：添加此修饰的聊天信息将被忽略 | #                              |                                                                                      |
@@ -280,8 +281,8 @@ A: 由于用户数据信息与人格预设信息高度绑定，如果已经生�
 
 #### > 主动记忆能力拓展模块
 
-- 拓展文件: ext_memory.py
-- 说明: 赋予bot主动管理记忆的能力
+- 拓展文件: ext_remember.py & ext_forget.py
+- 说明: 赋予bot主动管理记忆的能力，使用时请同时启用 记忆|遗忘 拓展
 
 ### 编写自定义拓展
 
@@ -342,12 +343,11 @@ class CustomExtension(Extension):
 
 ## 🎢 更新日志
 
-## [2023/3/3] v1.4.5
+## [2023/3/5] v1.5.0
 
-- 优化对话提示prompt，提高回复质量
-- 增加bot记忆能力支持和记忆管理相关指令
-- 新增了一个主动记忆拓展
-- 新增了一个发送邮件拓展
+- 增加了bot记忆管理能力支持和记忆管理相关指令，允许bot主动 记忆/遗忘 信息，并且能自动对记忆信息进行增强以尽可能延长记忆有效时间
+- 新增了两个主动记忆管理拓展(记忆和忘却模块，推荐组合使用)
+- 根据GPT3.5对话模型的特点重写了prompt提示，提高bot对拓展指令识别率
 
 ## [2023/3/3] v1.4.4
 
@@ -358,6 +358,7 @@ class CustomExtension(Extension):
 - 调整指令生成匹配正则，略微放宽bot调用拓展的规范程度
 - 更新代理服务器时将自动补充http协议头
 - 优化对话提示prompt，提高回复质量
+- 新增了一个发送邮件拓展
 
 ## [2023/3/3] v1.4.3
 

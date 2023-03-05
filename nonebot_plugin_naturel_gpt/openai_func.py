@@ -29,7 +29,7 @@ class TextGenerator:
 
     # 获取文本生成
     @run_sync
-    def get_response(self, prompt: str, type: str = 'chat', custom: dict = {}) -> str:
+    def get_response(self, prompt, type: str = 'chat', custom: dict = {}) -> str:
         # return 'testing...'
         for _ in range(len(self.api_keys)):
             if type == 'chat':
@@ -50,9 +50,12 @@ class TextGenerator:
                 reason = res
                 res = '当前 openai 库版本过低，无法使用 gpt-3.5-turbo 模型 (´；ω；`)'
                 break
+            elif "Error communicating with OpenAI" in res:
+                reason = res
+                res = '与 OpenAi 通信时发生错误 (´；ω；`)'
             else:
                 reason = res
-                res = '哎呀，OpenAi 好像挂了呢 (´；ω；`)'
+                res = '哎呀，发生了未知错误 (´；ω；`)'
             self.key_index = (self.key_index + 1) % len(self.api_keys)
             logger.warning(f"当前 Api Key({self.key_index}): [{self.api_keys[self.key_index][:4]}...{self.api_keys[self.key_index][-4:]}] 请求错误，尝试使用下一个...")
             logger.error(f"错误原因: {res} => {reason}")
@@ -60,14 +63,15 @@ class TextGenerator:
         return res, False
 
     # 对话文本生成
-    def get_chat_response(self, key:str, prompt:str, custom:dict = {}):
+    def get_chat_response(self, key:str, prompt, custom:dict = {}):
         openai.api_key = key
         try:
             if self.config['model'].startswith('gpt-3.5-turbo'):
                 response = openai.ChatCompletion.create(
                     model=self.config['model'],
-                    messages=[
-                        {'role': 'system', 'content': prompt},
+                    messages=prompt if isinstance(prompt, list) else [  # 如果是列表则直接使用，否则按照以下格式转换
+                        {'role': 'system', 'content': f"You must strictly follow the user's instructions to give {custom.get('bot_name', 'bot')}'s response."},
+                        {'role': 'user', 'content': prompt},
                     ],
                     temperature=self.config['temperature'],
                     max_tokens=self.config['max_tokens'],
@@ -113,7 +117,7 @@ class TextGenerator:
                 response = openai.ChatCompletion.create(
                     model=self.config['model'],
                     messages=[
-                        {'role': 'system', 'content': prompt},
+                        {'role': 'user', 'content': prompt},
                     ],
                     temperature=0.6,
                     max_tokens=self.config.get('max_summary_tokens', 512),
@@ -155,7 +159,7 @@ class TextGenerator:
                 response = openai.ChatCompletion.create(
                     model=self.config['model'],
                     messages=[
-                        {'role': 'system', 'content': prompt},
+                        {'role': 'user', 'content': prompt},
                     ],
                     temperature=0.6,
                     max_tokens=self.config.get('max_summary_tokens', 512),

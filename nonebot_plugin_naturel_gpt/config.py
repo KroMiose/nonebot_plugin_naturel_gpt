@@ -51,14 +51,14 @@ CONFIG_TEMPLATE = {
     'IGNORE_PREFIX': '#',   # 忽略前缀 以该前缀开头的消息将不会被处理
     'CHAT_MODEL': "gpt-3.5-turbo",
     'CHAT_TOP_P': 1,
-    'CHAT_TEMPERATURE': 0.6,    # 温度越高越随机
-    'CHAT_FREQUENCY_PENALTY': 0.6,  # 频率惩罚
-    'CHAT_PRESENCE_PENALTY': 0.6,   # 出现惩罚
+    'CHAT_TEMPERATURE': 0.3,    # 温度越高越随机
+    'CHAT_PRESENCE_PENALTY': 0.3,   # 主题重复惩罚
+    'CHAT_FREQUENCY_PENALTY': 0.3,  # 复读惩罚
 
     'CHAT_HISTORY_MAX_TOKENS': 2048,    # 上下文聊天记录最大token数
     'CHAT_MAX_SUMMARY_TOKENS': 512,   # 单次总结最大token数
     'REPLY_MAX_TOKENS': 1024,   # 单次回复最大token数
-    'REQ_MAX_TOKENS': 4096,  # 单次请求最大token数
+    'REQ_MAX_TOKENS': 3072,  # 单次请求最大token数
 
     'REPLY_ON_NAME_MENTION': True,  # 是否在被提及时回复
     'REPLY_ON_AT': True,            # 是否在被at时回复
@@ -89,6 +89,7 @@ CONFIG_TEMPLATE = {
 
     'MEMORY_ACTIVE': True,  # 是否启用记忆功能
     'MEMORY_MAX_LENGTH': 16,  # 记忆最大条数
+    'MEMORY_ENHANCE_THRESHOLD': 0.6,  # 记忆强化阈值
 
     'NG_MAX_RESPONSE_PER_MSG': 5,  # 每条消息最大响应次数
     'NG_ENABLE_MSG_SPLIT': True,   # 是否启用消息分割

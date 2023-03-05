@@ -3,12 +3,12 @@ from .Extension import Extension
 
 # 拓展的配置信息，用于ai理解拓展的功能 *必填*
 ext_config:dict = {
-    "name": "memory",   # 拓展名称，用于标识拓展
+    "name": "remember",   # 拓展名称，用于标识拓展
     "arguments": {
         'key': 'str',   # 记忆的键
         'value': 'str', # 记忆的值
     },
-    "description": "Set the memory according to the key and value. If the value is empty, delete the memory. (usage in response: /#memory&topic&we are talkin about ...#/)))",
+    "description": "Set the memory according to the key and value. (usage in response: /#remember&topic&we are talking about ...#/)))",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
     # 每次消息回复中最大调用次数，不填则默认为99
@@ -18,7 +18,7 @@ ext_config:dict = {
     # 版本
     "version": "0.0.1",
     # 拓展简介
-    "intro": "主动记忆管理模块",
+    "intro": "主动记忆模块",
 }
 
 class CustomExtension(Extension):
