@@ -271,7 +271,7 @@ class Chat:
         return [
             {'role': 'system', 'content': ( # 系统消息
                 # f"You must strictly follow the user's instructions to give {self.chat_presets['bot_name']}'s response."
-                f"You must play the specified role according to the instructions of the user and give the response information in accordance with the changed role. When necessary, you can generate a reply in a specified format to invoke extension functions"
+                f"You must follow the user's instructions to play the specified role in the first person and give the response information according to the changed role. If necessary, you can generate a reply in the specified format to call the extension function."
                 f"\n{extension_text}"
                 f"\n{res_rule_prompt}"
             )},
@@ -282,9 +282,9 @@ class Chat:
                 "\n1. Developer's email: developer@mail.com\n"
                 "\n[Chat History (current time: 2023-03-05 16:29:45)]\n"
                 "\nDeveloper: my email is developer@mail.com, remember it!\n"
-                "\nAI: ok, I will remember it /#remember&Developer's email&developer@mail.com#/\n"
+                "\nAlice: ok, I will remember it /#remember&Developer's email&developer@mail.com#/\n"
                 "\nDeveloper: Send an email to me for testing\n"
-                "\nAI:(waiting for response...)"
+                "\nAlice:(Please give the response content of Alice)"
             )},
             {'role': 'assistant', 'content': (  # 助手消息(演示输出)
                 "ok, I will send an email, please wait a moment /#email&example@mail.com&test title&hello this is a test#/ *; I have sent an e-mail. Did you get it?"
@@ -293,7 +293,7 @@ class Chat:
                 f"[Character setting]\n{self.chat_presets['bot_self_introl']}\n\n"
                 f"{memory}{impression_text}{summary}"
                 f"\n[Chat History (current time: {time.strftime('%Y-%m-%d %H:%M:%S')})]\n"
-                f"\n{chat_history}\n{self.chat_presets['bot_name']}:(waiting for response...)"
+                f"\n{chat_history}\n{self.chat_presets['bot_name']}:(Please give the response content of {self.chat_presets['bot_name']})"
             )},
         ]
 
