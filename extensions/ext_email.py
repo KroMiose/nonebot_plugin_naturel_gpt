@@ -43,7 +43,7 @@ class CustomExtension(Extension):
         # 从custom_config中获取配置信息
         SMTP_CODE = custom_config.get('SMTP_CODE', None)    # 邮箱SMTP授权码
         SENDER_ADDR = custom_config.get('SENDER_ADDR', None)    # 发件人邮箱地址
-        SENDER_NAME = arg_dict.get('bot_name', 'MioseBot')   # 发件人名称
+        SENDER_NAME = ctx_data.get('bot_name', 'MioseBot')   # 发件人名称
 
         if not (SMTP_CODE and SENDER_ADDR and SENDER_NAME):
             return {'text': '[ext_mail] 请先配置邮箱信息',}
