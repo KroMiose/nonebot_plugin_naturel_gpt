@@ -20,8 +20,12 @@ from nonebot import get_driver
 from aiohttp import request
 from loguru import logger
 from nonebot.exception import ActionFailed
-from ujson import loads as loadJsonS
 import asyncio
+
+try:
+    from ujson import loads as loadJsonS
+except:
+    from json import loads as loadJsonS
 
 # 拓展的配置信息，用于ai理解拓展的功能 *必填* 
 ext_config:dict = {

@@ -22,7 +22,7 @@ global_config = get_driver().config
 
 from .openai_func import TextGenerator
 from .Extension import Extension
-from .text_func import cos_sim
+from .text_func import compare_text
 
 global_data = {}  # 用于存储所有数据的字典
 global_data_path = f"{config['NG_DATA_PATH']}naturel_gpt.pkl"
@@ -139,9 +139,11 @@ class Chat:
         if 'chat_memory' not in self.chat_presets:
             return
         for mem_key, mem_value in self.chat_presets['chat_memory'].items():#模糊匹配
-            if cos_sim(response, mem_value) > config['CHAT_MEMORY_ENHANCE_THRESHOLD']:
+            compare_score = compare_text(response, mem_value)
+            if config.get('__DEBUG__'): logger.info(f"增强记忆比较: {response} vs {mem_value} = {compare_score}")
+            if compare_score > config['CHAT_MEMORY_ENHANCE_THRESHOLD']:
                 self.set_memory(mem_key, mem_value)
-                if config.get('__DEBUG__'): logger.info(f"增强记忆 {mem_key}")
+                if config.get('__DEBUG__'): logger.info(f"记忆 {mem_key} 相似度 {compare_score} 超过阈值 {config['CHAT_MEMORY_ENHANCE_THRESHOLD']}, 增强记忆")
                 return True
         return False
 
@@ -284,7 +286,7 @@ class Chat:
                 "\nDeveloper: my email is developer@mail.com, remember it!\n"
                 "\nAlice: ok, I will remember it /#remember&Developer's email&developer@mail.com#/\n"
                 "\nDeveloper: Send an email to me for testing\n"
-                "\nAlice:(Please give the response content of Alice)"
+                "\nAlice:(Please give the response content of Alice, excluding 'Alice:')"
             )},
             {'role': 'assistant', 'content': (  # 助手消息(演示输出)
                 "ok, I will send an email, please wait a moment /#email&example@mail.com&test title&hello this is a test#/ *; I have sent an e-mail. Did you get it?"
@@ -293,7 +295,7 @@ class Chat:
                 f"[Character setting]\n{self.chat_presets['bot_self_introl']}\n\n"
                 f"{memory}{impression_text}{summary}"
                 f"\n[Chat History (current time: {time.strftime('%Y-%m-%d %H:%M:%S')})]\n"
-                f"\n{chat_history}\n{self.chat_presets['bot_name']}:(Please give the response content of {self.chat_presets['bot_name']})"
+                f"\n{chat_history}\n{self.chat_presets['bot_name']}:(Please give the response content of {self.chat_presets['bot_name']}, excluding '{self.chat_presets['bot_name']}:')"
             )},
         ]
 
@@ -576,6 +578,7 @@ async def _(event: Event, arg: Message = CommandArg()):
             f"+ 停止会话(管理): rg <关闭/off> <-all?>\n"
             f"+ 查询会话(管理): rg <会话/chats>\n"
             f"+ 重置会话(管理): rg <重置/reset> <-all?>\n"
+            f"+ 查询记忆(管理): rg <记忆/memory>\n"
             f"+ 拓展信息(管理): rg <拓展/ext>\n"
             f"Tip: <人格信息> 是一段第三人称的人设说明(建议不超过200字)\n"
         ))
@@ -620,7 +623,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         is_progress = True
         await identity.finish(f"预设: {target_preset_key} | 人设信息:\n    {presets_dict[target_preset_key]['bot_self_introl']}")
 
-    elif (cmd.split(' ')[0] in ["更新", "update"]) and len(cmd.split(' ')) >= 3:
+    elif (cmd.split(' ')[0] in ["更新", "update", "edit"]) and len(cmd.split(' ')) >= 3:
         target_preset_key = cmd.split(' ')[1]
         if target_preset_key not in presets_dict:
             await identity.finish("找不到匹配的人格预设! 是不是手滑了呢？(；′⌒`)")
@@ -644,7 +647,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         is_progress = True
         await identity.send(f"添加预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif (cmd.split(' ')[0] in ["删除", "del"]) and len(cmd.split(' ')) == 2:
+    elif (cmd.split(' ')[0] in ["删除", "del", "delete"]) and len(cmd.split(' ')) == 2:
         target_preset_key = cmd.split(' ')[1]
         if str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
@@ -758,7 +761,11 @@ async def _(event: Event, arg: Message = CommandArg()):
             memory_info += f"+ {k}: {v}\n"
         if memory_info == '':
             memory_info = "当前的记忆是空的呢 >﹏<"
-        await identity.finish((f"当前人格记忆:\n{memory_info}"))
+        command_instructions = (
+            f"=======================\n"
+            f"+ 编辑记忆: rg <记忆/memory> <edit> <记忆键> <记忆值>\n"
+        )
+        await identity.finish((f"当前人格记忆:\n{memory_info.split()}\n\n{command_instructions}"))
 
     elif cmd in ["记忆", "memory"] and len(cmd.split(' ')) == 2:
         # 检查主动记忆拓展模块和主动记忆功能是否启用
@@ -778,13 +785,13 @@ async def _(event: Event, arg: Message = CommandArg()):
         # 检查是否存在记忆
         if 'chat_memory' not in chat_dict[chat_key].chat_presets:
             chat_dict[chat_key].chat_presets['chat_memory'] = {}
-        # 检查记忆是否存在
-        if cmd.split(' ')[1] not in chat_dict[chat_key].chat_presets['chat_memory']:
-            await identity.finish("当前人格没有此记忆！")
         # 检查操作
-        if cmd.split(' ')[2] in ["删除", "del", "delete"]:
-            chat_dict[chat_key].set_memory(cmd.split(' ')[1], None)
-            await identity.finish(f"已删除记忆: {cmd.split(' ')[1]}")
+        if cmd.split(' ')[1] in ["删除", "del", "delete"]:
+            # 检查是否存在记忆
+            if cmd.split(' ')[2] not in chat_dict[chat_key].chat_presets['chat_memory']:
+                await identity.finish(f"找不到记忆: {cmd.split(' ')[2]}")
+            chat_dict[chat_key].set_memory(cmd.split(' ')[2], None)
+            await identity.finish(f"已删除记忆: {cmd.split(' ')[2]}")
 
     elif cmd.split(' ')[0] in ["记忆", "memory"] and len(cmd.split(' ')) == 4:
         # 检查主动记忆拓展模块和主动记忆功能是否启用
@@ -797,7 +804,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         if 'chat_memory' not in chat_dict[chat_key].chat_presets:
             chat_dict[chat_key].chat_presets['chat_memory'] = {}
         # 检查操作
-        if cmd.split(' ')[1] in ["编辑", "edit"]:
+        if cmd.split(' ')[1] in ["编辑", "edit", "update", "set"]:
             chat_dict[chat_key].set_memory(cmd.split(' ')[2], cmd.split(' ')[3])
             await identity.finish(f"编辑记忆: {cmd.split(' ')[2]} 成功! (￣▽￣)")
 
@@ -927,12 +934,15 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
     # 分割对话结果提取出所有 "/#拓展名&参数1&参数2#/" 格式的拓展调用指令 参数之间用&分隔 多行匹配
     ext_calls = re.findall(r"/.?#(.+?)#.?/", talk_res, re.S)
-    # 提取后去除所有拓展调用指令，剩余部分为对话结果 多行匹配
-    talk_res = re.sub(r"/.?#(.+?)#.?/", '', talk_res)
 
     # 对分割后的对话根据 '*;' 进行分割，表示对话结果中的分句，处理结果为列表，其中每个元素为一句话
     if config.get('NG_ENABLE_MSG_SPLIT'):
+        # 提取后去除所有拓展调用指令并切分信息，剩余部分为对话结果 多行匹配
+        talk_res = re.sub(r"/.?#(.+?)#.?/", '*;', talk_res)
         reply_list = talk_res.split('*;')
+    else:
+        # 提取后去除所有拓展调用指令，剩余部分为对话结果 多行匹配
+        talk_res = re.sub(r"/.?#(.+?)#.?/", '', talk_res)
 
     if config.get('__DEBUG__'): logger.info("分割对话结果: " + str(reply_list))
 
@@ -970,11 +980,11 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 if config.get('__DEBUG__'): logger.error(f"[拓展 {ext_name}] 错误详情: {traceback.format_exc()}")
                 ext_res = None
                 # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
-                raw_res = raw_res.replace(f"/#{ext_call_str}#/", '')
+                raw_res = re.sub(r"/.?#(.+?)#.?/", '', raw_res)
         else:
             logger.error(f"未找到拓展 {ext_name}，跳过调用...")
             # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
-            raw_res = raw_res.replace(f"/#{ext_call_str}#/", '')
+            raw_res = re.sub(r"/.?#(.+?)#.?/", '', raw_res)
 
     # # 代码块插入到回复列表的最后
     # for code_block in code_blocks:
