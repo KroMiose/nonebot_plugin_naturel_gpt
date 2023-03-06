@@ -69,7 +69,7 @@
 | ----------------------------- | ----- | ------------------------------------------ | ------------------------------ | ------------------------------------------------------------------------------------ |
 | ADMIN_USERID                  | array | 管理员id，以字符串列表方式填入             | ['']                           | 只有管理员可删除预设                                                                 |
 | OPENAI_API_KEYS               | array | OpenAi的 `Api_Key，以字符串列表方式填入    | ['sak-xxxx']                   | 请自行替换为你的Api_Key                                                              |
-| OPENAI_TIMEOUT                | int   | 请求OpenAi的超时时间 / 秒                  | 30                             |                                                                                      |
+| OPENAI_TIMEOUT                | int   | 请求OpenAi的超时时间 / 秒                  | 30                             | 该选项修改不生效，原因未知                                                           |
 | CHAT_ENABLE_SUMMARY_CHAT      | bool  | 是否开启会话聊天记忆总结                   | False                          | 开启后能够一定程度增强bot对话记忆能力，但也会增加token消耗                           |
 | CHAT_ENABLE_RECORD_ORTHER     | bool  | 是否参考非bot相关的上下文对话              | True                           | 开启后bot回复会参考近几条非bot相关信息                                               |
 | MEMORY_ACTIVE                 | bool  | 是否开启主动记忆（需要同时启用记忆拓展）   | False                          | 开启后bot会自行管理记忆                                                              |
@@ -103,7 +103,9 @@
 | NG_BLOCK_OTHERS               | bool  | 是否拦截其它插件的响应                     | False                          | 开启后可能导致优先级低于本插件的其他插件不响应                                       |
 | NG_MAX_RESPONSE_PER_MSG       | int   | 每条消息最大回复次数                       | 5                              | 限制bot针对每条信息最大回复次数，避免封禁                                            |
 | NG_ENABLE_MSG_SPLIT           | bool  | 是否允许消息分割发送                       | True                           | 如果允许，bot有可能会在一次回复中发送多条消息                                        |
+| NG_ENABLE_AWAKE_IDENTITIES    | bool  | 是否允许自动唤醒其它人格                   | True                           | 如果允许，bot在检测到未启用人格呼叫时会自动唤醒并切换人格                            |
 | FORBIDDEN_USERS               | array | 黑名单用户id，以字符串列表方式填入         | ['']                           | 黑名单中的用户消息不会被记录和响应设                                                 |
+| UNLOCK_CONTENT_LIMIT          | bool  | 是否解锁内容限制                           | False                          |                                                                                      |
 | OPENAI_PROXY_SERVER           | str   | 请求OpenAI的代理服务器                     | ''                             | 填写示例 '127.0.0.1:1234' 或 'username:password@127.0.0.1:1234'                      |
 | \_\_DEBUG\_\_                 | bool  | 是否开启DEBUG输出                          | False                          | 开启可查看prompt模板输出                                                             |
 
@@ -342,6 +344,12 @@ class CustomExtension(Extension):
 </code></pre> </details>
 
 ## 🎢 更新日志
+
+## [2023/3/6] v1.5.2
+
+- 为bot增加了星期几的时间感知能力
+- 增加了一个可选的内容解锁限制开关
+- 增加了在 `提及` 时自动切换人格的配置开关
 
 ## [2023/3/6] v1.5.1
 
