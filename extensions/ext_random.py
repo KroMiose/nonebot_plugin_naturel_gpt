@@ -18,7 +18,7 @@ ext_config:dict = {
     # 作者信息
     "author": "KroMiose",
     # 版本
-    "version": "v0.0.1"
+    "version": "0.0.1"
 }
 
 class CustomExtension(Extension):

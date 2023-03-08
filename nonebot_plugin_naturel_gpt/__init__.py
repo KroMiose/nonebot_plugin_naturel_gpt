@@ -843,7 +843,7 @@ def save_data():
 
 """ ======== 消息响应方法 ======== """
 # 消息响应方法
-async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, matcher: Matcher, chat_type: str, chat_key: str, sender_name: str = None, wake_up: bool = False):
+async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, matcher: Matcher, chat_type: str, chat_key: str, sender_name: str = None, wake_up: bool = False, loop_times=0, loop_data={}):
     # 判断是否已经存在对话
     if chat_key in chat_dict:
         logger.info(f"已存在对话 {chat_key} - 继续对话")
@@ -902,6 +902,8 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         else:
             logger.info("不是 bot 相关的信息，不进行回复")
         return
+
+    wake_up = False # 进入对话流程，重置唤醒状态
 
     # 记录对用户的对话信息
     await chat.update_chat_history_row_for_user(sender=sender_name, msg=trigger_text, userid=trigger_userid, username=sender_name, require_summary=False)
@@ -1026,6 +1028,14 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                             await matcher.send(f"[debug]: 记住了 {reply.get(key).get('key')} = {reply.get(key).get('value')}")
                         elif reply.get(key).get('key') and reply.get(key).get('value') is None:
                             await matcher.send(f"[debug]: 忘记了 {reply.get(key).get('key')}")
+                elif key == 'notify' and reply.get(key):  # 通知消息
+                    if 'sender' in reply.get(key) and 'msg' in reply.get(key):
+                        loop_data['notify'] = reply.get(key)
+                    else:
+                        logger.warning(f"通知消息格式错误: {reply.get(key)}")
+                elif key == 'call_again' and reply.get(key):  # 重新调用对话
+                    logger.info(f"重新调用对话: {reply.get(key)}")
+                    wake_up = reply.get(key).get('wake_up', False)
 
                 res_times -= 1
                 if res_times < 1:  # 如果回复次数超过限制，则跳出循环
@@ -1043,3 +1053,15 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     await chat.update_chat_history_row_for_user(sender=chat.get_chat_bot_name(), msg=raw_res, userid=trigger_userid, username=sender_name, require_summary=True)
     save_data()  # 保存数据
     if config.get('__DEBUG__'): logger.info(f"对话响应完成 | 耗时: {time.time() - sta_time}s")
+
+    # 检查是否再次触发对话
+    if wake_up and loop_times < 3:
+        if 'notify' in loop_data:   # 如果存在通知消息，将其作为触发消息再次调用对话
+            do_msg_response(
+                matcher=matcher,
+                trigger_text=loop_data.get('notify', {}).get('msg', ''),
+                trigger_userid=trigger_userid,
+                sender_name=loop_data.get('notify', {}).get('sender', '[system]'),
+                wake_up=wake_up,
+                loop_times=loop_times + 1
+            )

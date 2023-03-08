@@ -8,7 +8,7 @@ ng_voice_tar : 'ja'
 '''
 
 from .Extension import Extension
-import urllib, requests, uuid, os
+import urllib, requests, uuid, os, base64
 from aiohttp import request
 from binascii import b2a_base64
 from hashlib import sha1
@@ -40,9 +40,9 @@ ext_config:dict = {
     # 作者信息
     "author": "KroMiose",
     # 版本
-    "version": "0.0.1",
+    "version": "0.0.2",
     # 拓展简介
-    "intro": "发送语音消息",
+    "intro": "发送语音消息(支持翻译)",
 }
 
 
@@ -56,11 +56,12 @@ class CustomExtension(Extension):
         """
         custom_config:dict = self.get_custom_config()  # 获取yaml中的配置信息
         
-        ng_voice_translate_on = custom_config.get('ng_voice_translate_on', True)
-        tencentcloud_common_region = custom_config.get('tencentcloud_common_region', "ap-shanghai")
-        tencentcloud_common_secretid = custom_config.get('tencentcloud_common_secretid',"xxxxx")
-        tencentcloud_common_secretkey = custom_config.get('tencentcloud_common_secretkey', "xxxxx")
-        ng_voice_tar = custom_config.get('g_voice_tar', 'ja')
+        ng_voice_translate_on = custom_config.get('ng_voice_translate_on', False)    # 是否启用翻译
+        tencentcloud_common_region = custom_config.get('tencentcloud_common_region', "ap-shanghai") # 腾讯翻译-地区
+        tencentcloud_common_secretid = custom_config.get('tencentcloud_common_secretid',"xxxxx")    # 腾讯翻译-密钥id
+        tencentcloud_common_secretkey = custom_config.get('tencentcloud_common_secretkey', "xxxxx") # 腾讯翻译-密钥
+        ng_voice_tar = custom_config.get('g_voice_tar', 'ja')   # 翻译目标语言
+        is_base64 = custom_config.get('is_base64', False)   # 是否使用base64编码
 
         voice_path = 'voice_cache/'
         # 创建缓存文件夹
@@ -140,14 +141,19 @@ class CustomExtension(Extension):
         # 如果你开启了翻译就没事了
         url = f"https://moegoe.azurewebsites.net/api/speak?text={text}&id=0"
 
-        # todo: 如果需要使用本地的语音合成api，请取消注释下面的代码，并自行改为您的api地址
+        # todo: 如果需要使用本地的语音合成api，请取消注释下面的代码，并自行改为您的api地址，将填入合成文本的地方改为{text}
         # url = f"http://127.0.0.1:23211/to_voice?text={text}"
 
         # 下载语音文件
         r = requests.get(url)
         file_name = f"{voice_path}{uuid.uuid1()}.ogg"
+        if is_base64:
+            audio_data = base64.b64decode(r.content)
+        else:
+            audio_data = r.content
+
         with open(file_name, "wb") as f:
-            f.write(r.content)
+            f.write(audio_data)
 
         local_url = f"file:///{os.path.abspath(file_name)}"
 
