@@ -1,6 +1,7 @@
-import importlib
+﻿import importlib
 import time
 import os
+import sys
 import shutil
 from typing import Any, Dict
 
@@ -86,6 +87,8 @@ def load_extensions(config:Any) -> None:
         f.write(ext_file)
     with open(f'ext_cache/Extension.py', 'w', encoding='utf-8') as f:
         f.write(ext_file)
+
+    sys.path.append(os.getcwd()) # 不加这一行在 docker 下会找不到 ext_cache
 
     for tmpExt in config['NG_EXT_LOAD_LIST']:   # 遍历拓展模块列表
         if tmpExt.get('IS_ACTIVE') and tmpExt.get('EXT_NAME'):

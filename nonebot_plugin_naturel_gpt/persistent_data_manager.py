@@ -108,7 +108,6 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
             self._datas[chat_key] = chat_data
             return chat_data.preset_datas
         
-    @overload
     def add_preset(self, chat_key:str, bot_name:str, bot_self_introl: str) -> bool:
         """给指定用户添加新人格"""
         presets = self.get_presets(chat_key)
@@ -118,8 +117,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         presets[bot_name] = PresetData(bot_name=bot_name, bot_self_introl=bot_self_introl)
         return True
     
-    @overload
-    def add_preset(self, chat_key:str, bot_name:str, config_data: object) -> bool:
+    def add_preset_from_config(self, chat_key:str, bot_name:str, config_data: object) -> bool:
         """给指定用户添加新人格, config_data为config中的全局配置"""
         presets = self.get_presets(chat_key)
         if bot_name in presets:
