@@ -18,7 +18,9 @@ ext_config:dict = {
     # 作者信息
     "author": "KroMiose",
     # 版本
-    "version": "0.0.1"
+    "version": "0.0.1",
+    # 拓展简介
+    "intro": "随机数生成模块",
 }
 
 class CustomExtension(Extension):

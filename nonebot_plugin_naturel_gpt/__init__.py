@@ -764,7 +764,7 @@ async def _(event: Event, arg: Message = CommandArg()):
             memory_info = "当前的记忆是空的呢 >﹏<"
         command_instructions = (
             f"=======================\n"
-            f"+ 编辑记忆: rg <记忆/memory> <edit> <记忆键> <记忆值>\n"
+            f"+ 编辑记忆: rg <记忆/memory> <edit> '<记忆键>' '<记忆值>'\n"
         )
         await identity.finish((f"当前人格记忆:\n{memory_info.split()}\n\n{command_instructions}"))
 
@@ -776,7 +776,7 @@ async def _(event: Event, arg: Message = CommandArg()):
         if str(event.user_id) not in config['ADMIN_USERID']:
             await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
 
-    elif cmd.split(' ')[0] in ["记忆", "memory"] and len(cmd.split(' ')) == 3:
+    elif cmd.split(' ')[0] in ["记忆", "memory"] and len(cmd.split(' ')) >= 3:
         # 检查主动记忆拓展模块和主动记忆功能是否启用
         if not (global_extensions.get('remember') and global_extensions.get('forget') and config.get('MEMORY_ACTIVE')):
             logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
@@ -789,10 +789,10 @@ async def _(event: Event, arg: Message = CommandArg()):
         # 检查操作
         if cmd.split(' ')[1] in ["删除", "del", "delete"]:
             # 检查是否存在记忆
-            if cmd.split(' ')[2] not in chat_dict[chat_key].chat_presets['chat_memory']:
-                await identity.finish(f"找不到记忆: {cmd.split(' ')[2]}")
-            chat_dict[chat_key].set_memory(cmd.split(' ')[2], None)
-            await identity.finish(f"已删除记忆: {cmd.split(' ')[2]}")
+            if cmd.split(' ', 2)[2] not in chat_dict[chat_key].chat_presets['chat_memory']:
+                await identity.finish(f"找不到记忆: {cmd.split(' ', 2)[2]}")
+            chat_dict[chat_key].set_memory(cmd.split(' ', 2)[2], None)
+            await identity.finish(f"已删除记忆: {cmd.split(' ', 2)[2]}")
 
     elif cmd.split(' ')[0] in ["记忆", "memory"] and len(cmd.split(' ')) == 4:
         # 检查主动记忆拓展模块和主动记忆功能是否启用
@@ -1011,6 +1011,10 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         else:
             for key in reply:   # 遍历回复内容类型字典
                 if key == 'text' and reply.get(key) and reply.get(key).strip(): # 发送文本
+                    # 判断文本内容是否为纯符号(包括空格，换行、英文标点、中文标点)
+                    if re.match(r'^[\s\w\W]+$', reply.get(key).strip()) and len(reply.get(key).strip()) < 3:
+                        if config.get('__DEBUG__'): logger.info(f"检测到纯符号文本: {reply.get(key).strip()}，跳过发送...")
+                        continue
                     await matcher.send(reply.get(key).strip())
                 elif key == 'image' and reply.get(key): # 发送图片
                     await matcher.send(MessageSegment.image(file=reply.get(key, '')))
@@ -1033,9 +1037,12 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                         loop_data['notify'] = reply.get(key)
                     else:
                         logger.warning(f"通知消息格式错误: {reply.get(key)}")
-                elif key == 'call_again' and reply.get(key):  # 重新调用对话
+                elif key == 'wake_up' and reply.get(key):  # 重新调用对话
                     logger.info(f"重新调用对话: {reply.get(key)}")
-                    wake_up = reply.get(key).get('wake_up', False)
+                    wake_up = reply.get(key)
+                elif key == 'timer' and reply.get(key):  # 定时器
+                    logger.info(f"设置定时器: {reply.get(key)}")
+                    loop_data['timer'] = reply.get(key)
 
                 res_times -= 1
                 if res_times < 1:  # 如果回复次数超过限制，则跳出循环
@@ -1056,12 +1063,32 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
     # 检查是否再次触发对话
     if wake_up and loop_times < 3:
-        if 'notify' in loop_data:   # 如果存在通知消息，将其作为触发消息再次调用对话
-            do_msg_response(
+        if 'timer' in loop_data and 'notify' in loop_data:  # 如果存在定时器和通知消息，将其作为触发消息再次调用对话
+            time_diff = loop_data['timer']
+            if time_diff > 0:
+                if config.get('__DEBUG__'): logger.info(f"等待 {time_diff}s 后再次调用对话...")
+                await asyncio.sleep(time_diff)
+            if config.get('__DEBUG__'): logger.info(f"再次调用对话...")
+            await do_msg_response(
                 matcher=matcher,
                 trigger_text=loop_data.get('notify', {}).get('msg', ''),
                 trigger_userid=trigger_userid,
                 sender_name=loop_data.get('notify', {}).get('sender', '[system]'),
                 wake_up=wake_up,
-                loop_times=loop_times + 1
+                loop_times=loop_times + 1,
+                chat_type=chat_type,
+                is_tome=is_tome,
+                chat_key=chat_key
+            )
+        elif 'notify' in loop_data:   # 如果存在通知消息，将其作为触发消息再次调用对话
+            await do_msg_response(
+                matcher=matcher,
+                trigger_text=loop_data.get('notify', {}).get('msg', ''),
+                trigger_userid=trigger_userid,
+                sender_name=loop_data.get('notify', {}).get('sender', '[system]'),
+                wake_up=wake_up,
+                loop_times=loop_times + 1,
+                chat_type=chat_type,
+                is_tome=is_tome,
+                chat_key=chat_key
             )

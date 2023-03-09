@@ -62,7 +62,7 @@ class CustomExtension(Extension):
                 'sender': '[baidu]',
                 'msg': f"[ext_baidu] 百度百科搜索 {keyword} 结果:\n{abstract}\n{refer_url}"
             },
-            'call_again': True,  # 是否再次响应
+            'wake_up': True,  # 是否再次响应
         }
 
     def __init__(self, custom_config: dict):
