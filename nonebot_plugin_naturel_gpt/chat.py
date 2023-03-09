@@ -7,7 +7,7 @@ from . import Extension
 from .text_func import compare_text
 from .config import *
 from .openai_func import TextGenerator
-from .persistent_data_manager import ImpressionData, PersistentDataManager, PresetData
+from .persistent_data_manager import ImpressionData, PersistentDataManager, ChatData, PresetData
 from .Extension import Extension, global_extensions
 
 # presets_dict # 全局预设？可以改为 config["PRESETS"][preset_key]
@@ -19,6 +19,7 @@ class Chat:
     """ ======== 定义会话类 ======== """
     _chat_key:str
     _preset_key = ''  # 预设标识
+    _chat_data:ChatData # 此chat_key聊天数据
     _chat_preset:PresetData = None                       # 当前对话预设
     _chat_preset_dicts:Dict[str, PresetData] = None      # 预设字典
     is_insilence = False        # 是否处于沉默状态
@@ -27,9 +28,11 @@ class Chat:
     is_enable = None            # 是否启用
 
     def __init__(self, chat_key:str, preset_key:str = ''):
-        self._chat_preset_dicts = PersistentDataManager.instance.get_presets(chat_key=chat_key) # 当前对话预设
+        self._chat_data = PersistentDataManager.instance.get_chat_data(chat_key=chat_key) # 当前对话预设
+        self._chat_preset_dicts = self._chat_data.preset_datas
         self._chat_key = chat_key    # 对话标识
         self.is_enable = True       # 启用会话
+        preset_key = preset_key or self._chat_data.active_preset # 参数没有设置时尝试查找上次使用的preset
         if not preset_key:  # 如果没有预设，选择默认预设
             for (pk, preset) in self._chat_preset_dicts.items():
                 if preset.is_default:
@@ -134,6 +137,7 @@ class Chat:
         if preset_key not in self._chat_preset_dicts:    # 如果聊天预设字典中没有该预设，则从全局预设字典中拷贝一个
             PersistentDataManager.instance.add_preset(self._chat_key, preset_key, config["PRESETS"][preset_key])
             logger.info(f"从全局预设中拷贝预设 {preset_key} 到聊天预设字典")
+        self._chat_data.active_preset = preset_key
         self._chat_preset = self._chat_preset_dicts[preset_key]
         self._preset_key = preset_key
 
