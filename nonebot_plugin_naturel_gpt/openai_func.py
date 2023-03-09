@@ -6,6 +6,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import openai
 from transformers import GPT2TokenizerFast
+from .singleton import Singleton
 
 tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
 
@@ -17,8 +18,8 @@ try:    # 检查openai版本是否高于0.27.0
 except:
     logger.warning(f"无法获取 openai 库版本，请更新至 0.27.0 版本以上，否则 gpt-3.5-turbo 模型将无法使用")
 
-class TextGenerator:
-    def __init__(self, api_keys: list, config: dict, proxy = None):
+class TextGenerator(Singleton["TextGenerator"]):
+    def init(self, api_keys: list, config: dict, proxy = None):
         self.api_keys = api_keys
         self.key_index = 0
         self.config = config
@@ -26,7 +27,7 @@ class TextGenerator:
             if not proxy.startswith('http'):
                 proxy = 'http://' + proxy
         openai.proxy = proxy
-
+    
     # 获取文本生成
     @run_sync
     def get_response(self, prompt, type: str = 'chat', custom: dict = {}) -> str:

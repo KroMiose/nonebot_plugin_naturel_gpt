@@ -1,3 +1,11 @@
+import importlib
+import time
+import os
+import shutil
+from typing import Any, Dict
+
+from nonebot import logger
+
 # 拓展插件基类
 class Extension:
     def __init__(self, ext_config, custom_config):
@@ -45,6 +53,61 @@ class Extension:
     def reset_call_times(self):
         """ 重置调用次数 """
         self._call_time = self._ext_config.get('max_call_times_per_msg', 99)
+
+def load_extensions(config:Any) -> None:
+    """加载扩展模块"""
+    global global_extensions
+    global_extensions.clear()
+    if not config.get('NG_ENABLE_EXT'):
+        return
+    
+    ext_path = config['NG_EXT_PATH']
+    abs_ext_path = os.path.abspath(ext_path)
+
+    # 在当前文件夹下建立一个ext_cache文件夹 用于暂存拓展模块的.py文件以便于动态导入
+    if not os.path.exists('ext_cache'):
+        os.makedirs('ext_cache', exist_ok=True)
+    # 删除ext_cache文件夹下的所有文件和文件夹
+    for file in os.listdir('ext_cache'):
+        file_path = os.path.join('ext_cache', file)
+        if os.path.isdir(file_path):
+            shutil.rmtree(file_path)
+        else:
+            os.remove(file_path)
+    # 在ext_cache文件夹下建立一个__init__.py文件 用于标记该文件夹为一个python包
+    if not os.path.exists('ext_cache/__init__.py'):
+        with open('ext_cache/__init__.py', 'w', encoding='utf-8') as f:
+            f.write('')
+
+    # 根据 Extension 文件 生成 Extension.py 并覆盖到拓展模块路径和 ext_cache 文件夹下
+    with open(os.path.join(os.path.dirname(__file__), 'Extension.py'), 'r', encoding='utf-8') as f:
+        ext_file = f.read()
+    with open(f'{ext_path}Extension.py', 'w', encoding='utf-8') as f:
+        f.write(ext_file)
+    with open(f'ext_cache/Extension.py', 'w', encoding='utf-8') as f:
+        f.write(ext_file)
+
+    for tmpExt in config['NG_EXT_LOAD_LIST']:   # 遍历拓展模块列表
+        if tmpExt.get('IS_ACTIVE') and tmpExt.get('EXT_NAME'):
+            logger.info(f"正在从加载拓展模块 \"{tmpExt.get('EXT_NAME')}\" ...")
+            try:
+                file_name = tmpExt.get("EXT_NAME") + '.py'  # 拓展模块文件名
+
+                # 复制拓展模块文件到ext_cache文件夹下
+                shutil.copyfile(f'{ext_path}{file_name}', f'ext_cache/{file_name}')
+                time.sleep(0.3)  # 等待文件复制完成
+                # 从 ext_cache 文件夹下导入拓展模块
+                CustomExtension:Extension = getattr(importlib.import_module(f'ext_cache.{tmpExt.get("EXT_NAME")}'), 'CustomExtension')
+                time.sleep(0.3)  # 等待文件导入完成
+
+                ext = CustomExtension(tmpExt.get("EXT_CONFIG", {}))  # 加载拓展模块并实例化
+                global_extensions[ext.get_config().get('name').lower()] = ext  # 将拓展模块添加到全局拓展模块字典中
+                logger.info(f"加载拓展模块 {tmpExt.get('EXT_NAME')} 成功！")
+            except Exception as e:
+                logger.error(f"加载拓展模块 \"{tmpExt.get('EXT_NAME')}\" 失败 | 原因: {e}")
+
+
+global_extensions:Dict[str, Extension] = {}  # 用于存储所有扩展的字典
 
 if __name__ == '__main__':
     import os, shutil
