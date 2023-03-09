@@ -1,6 +1,6 @@
 ﻿import copy
 import time
-from typing import Dict
+from typing import Dict, List
 from nonebot import logger
 from . import Extension
 
@@ -80,7 +80,7 @@ class Chat:
         logger.info(f"添加对话历史行: {messageunit}  |  当前对话历史行数: {len(impression_data.chat_history)}")
         # 保证对话历史不超过最大长度
         if len(impression_data.chat_history) > config['USER_MEMORY_SUMMARY_THRESHOLD'] and require_summary:
-            prev_summarized = f"Last impression:{impression_data.chat_summarized}\n\n"
+            prev_summarized = f"Last impression:{impression_data.chat_impression}\n\n"
             history_str = '\n'.join(impression_data.chat_history)
             prompt = (   # 以机器人的视角总结对话
                 f"{prev_summarized}[Chat]\n"
@@ -283,6 +283,16 @@ class Chat:
     def generate_description(self):
         """获取当前会话描述"""
         return f"[{'启用' if self.is_enable else '禁用'}] 会话: {self._chat_key[:-6]+('*'*6)} 预设: {self.get_chat_bot_name()}\n"
+    
+    @property
+    def chat_preset(self)->PresetData:
+        """获取当前chat_preset"""
+        return self._chat_preset
+    
+    @property
+    def chat_preset_dict_keys(self)->List[str]:
+        """获取当前会话的所有预设名称列表"""
+        return self._chat_preset_dicts.keys()
     
     def reset_chat_preset(self, bot_name:str):
         """重置指定预设，将丢失性格或历史数据"""
