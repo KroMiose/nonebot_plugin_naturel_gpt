@@ -436,13 +436,13 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
     # 检测是否包含违禁词
     for w in config['WORD_FOR_FORBIDDEN']:
-        if str(w) in trigger_text:
+        if str(w).lower() in trigger_text.lower():
             logger.info(f"检测到违禁词 {w}，拒绝处理...")
             return
 
     # 唤醒词检测
     for w in config['WORD_FOR_WAKE_UP']:
-        if str(w) in trigger_text:
+        if str(w).lower() in trigger_text.lower():
             wake_up = True
             break
 
@@ -451,10 +451,10 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         wake_up = True
 
     # 其它人格唤醒判断
-    if chat.get_chat_bot_name() not in trigger_text and config['NG_ENABLE_AWAKE_IDENTITIES']:
+    if chat.get_chat_bot_name().lower() not in trigger_text.lower() and config['NG_ENABLE_AWAKE_IDENTITIES']:
         presets_dict = PersistentDataManager.instance.get_presets(chat_key)
         for preset_key in presets_dict:
-            if preset_key in trigger_text:
+            if preset_key.lower() in trigger_text.lower():
                 chat.change_presettings(preset_key)
                 logger.info(f"检测到 {preset_key} 的唤醒词，切换到 {preset_key} 的人格")
                 if config.get('__DEBUG__'): await matcher.send(f'[DEBUG] 已切换到 {preset_key} (￣▽￣)-ok !')
