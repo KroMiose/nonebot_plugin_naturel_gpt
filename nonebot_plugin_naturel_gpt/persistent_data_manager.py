@@ -55,6 +55,7 @@ class PresetData:
 class ChatData:
     """用户聊天数据(群，私聊)"""
     chat_key:str  # group_123456, private_123456
+    active_preset:str = '' # 当前 preset_name
     preset_datas:Dict[str, PresetData] = field(default_factory=lambda:{}) # [preset_name/bot_name, data]
 
 class PersistentDataManager(Singleton["PersistentDataManager"]):
@@ -94,11 +95,12 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         """获取指定用户的人格名称列表"""
         return self._datas[chat_key].preset_datas.keys() if chat_key in self._datas else {}
 
-    def get_presets(self, chat_key:str) -> Dict[str, PresetData]:
-        """获取指定用户的人格数据集合, 不存在时从配置模板的预设列表自动创建"""
+
+    def get_chat_data(self, chat_key:str) -> ChatData:
+        """获取指定用户的聊天数据, 不存在时从配置模板的预设列表自动创建"""
 
         if chat_key in self._datas:
-            return self._datas[chat_key].preset_datas
+            return self._datas[chat_key]
         else:
             chat_data = ChatData(chat_key=chat_key)
             for v in config["PRESETS"].values():
@@ -106,9 +108,21 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
                 chat_data.preset_datas[preset_data.bot_name] = preset_data
             
             self._datas[chat_key] = chat_data
-            return chat_data.preset_datas
+            return chat_data
+    
+    def get_presets(self, chat_key:str) -> Dict[str, PresetData]:
+        """获取指定用户的人格数据集合, 不存在时从配置模板的预设列表自动创建"""
+
+        chat_data = self.get_chat_data(chat_key=chat_key)
+        return chat_data.preset_datas if chat_data else None
         
-    @overload
+    def get_active_preset_name(self, chat_key:str) ->str:
+        """获取指定chat_key当前preset_name"""
+        if chat_key in self._datas:
+            return self._datas[chat_key].active_preset
+        else:
+            return None
+        
     def add_preset(self, chat_key:str, bot_name:str, bot_self_introl: str) -> bool:
         """给指定用户添加新人格"""
         presets = self.get_presets(chat_key)
@@ -118,8 +132,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         presets[bot_name] = PresetData(bot_name=bot_name, bot_self_introl=bot_self_introl)
         return True
     
-    @overload
-    def add_preset(self, chat_key:str, bot_name:str, config_data: object) -> bool:
+    def add_preset_from_config(self, chat_key:str, bot_name:str, config_data: object) -> bool:
         """给指定用户添加新人格, config_data为config中的全局配置"""
         presets = self.get_presets(chat_key)
         if bot_name in presets:

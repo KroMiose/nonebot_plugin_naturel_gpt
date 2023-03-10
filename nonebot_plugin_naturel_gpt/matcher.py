@@ -463,7 +463,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
     # 判断是否需要回复
     if (    # 如果不是 bot 相关的信息，则直接返回
-        (config['REPLY_ON_NAME_MENTION'] and (chat.get_chat_bot_name() in trigger_text)) or \
+        (config['REPLY_ON_NAME_MENTION'] and (chat.get_chat_bot_name().lower() in trigger_text.lower())) or \
         (config['REPLY_ON_AT'] and is_tome) or wake_up\
     ):
         # 更新全局对话历史记录
