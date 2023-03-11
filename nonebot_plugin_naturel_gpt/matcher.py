@@ -3,6 +3,7 @@ import difflib
 import random
 import re
 import time
+import os
 import traceback
 from typing import List, Dict, Callable, Tuple
 from nonebot import get_driver
@@ -501,7 +502,12 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     prompt_template = chat.get_chat_prompt_template(userid=trigger_userid)
     # 生成 log 输出用的 prompt 模板
     log_prompt_template = '\n'.join([f"[{m['role']}]\n{m['content']}\n" for m in prompt_template]) if isinstance(prompt_template, list) else prompt_template
-    if config.DEBUG_LEVEL > 0: logger.info("对话 prompt 模板: \n" + str(log_prompt_template))
+    if config.DEBUG_LEVEL > 0:
+        # logger.info("对话 prompt 模板: \n" + str(log_prompt_template))
+        # 保存 prompt 模板到日志文件
+        with open(os.path.join(config.NG_LOG_PATH, f"{chat_key}.{time.strftime('%Y-%m-%d %H-%M-%S')}.prompt.log"), 'a', encoding='utf-8') as f:
+            f.write(f"prompt 模板: \n{log_prompt_template}\n")
+        logger.info(f"对话 prompt 模板已保存到日志文件: {chat_key}.{time.strftime('%Y-%m-%d %H-%M-%S')}.prompt.log")
 
     tg = TextGenerator.instance
     raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.get_chat_bot_name(), 'sender_name': sender_name})  # 生成对话结果

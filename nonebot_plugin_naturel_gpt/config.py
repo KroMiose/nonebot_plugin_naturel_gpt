@@ -54,6 +54,7 @@ class Config(BaseModel, extra=Extra.ignore):
 
     NG_DATA_PATH: str  # 数据文件目录
     NG_EXT_PATH: str  # 拓展目录
+    NG_LOG_PATH: str  # 日志文件目录
 
     ADMIN_USERID: List[str]  # 管理员QQ号
     FORBIDDEN_USERS: List[str]   # 拒绝回应的QQ号
@@ -142,6 +143,7 @@ CONFIG_TEMPLATE = {
 
     'NG_DATA_PATH': "./data/naturel_gpt/",  # 数据文件目录
     'NG_EXT_PATH': "./data/naturel_gpt/extensions/",  # 拓展目录
+    'NG_LOG_PATH': "./data/naturel_gpt/logs/",  # 拓展目录
 
     'ADMIN_USERID': ['替换成管理员QQ号_(用单引号包裹)'],  # 管理员QQ号
     'FORBIDDEN_USERS': ['替换成屏蔽QQ号_(用单引号包裹)'],   # 拒绝回应的QQ号
@@ -199,7 +201,11 @@ else:
 
 # 读取配置文件
 with open(config_path, 'r', encoding='utf-8') as f:
-    config_obj_from_file:Dict = yaml.load(f, Loader=yaml.FullLoader)
+    try:
+        config_obj_from_file:Dict = yaml.load(f, Loader=yaml.FullLoader)
+    except Exception as e:
+        logger.error(f"Naturel GPT 配置文件读取失败，请检查配置文件填写是否符合yml文件格式规范，错误信息：{e}")
+        raise e
     
     for k, v in vars(config).items():
         if not k in config_obj_from_file.keys():
@@ -210,11 +216,13 @@ with open(config_path, 'r', encoding='utf-8') as f:
         if hasattr(config, k):
             setattr(config, k, v)
 
-# 检查数据文件夹目录和拓展目录是否存在 不存在则创建
+# 检查数据文件夹目录、拓展目录、日志目录是否存在 不存在则创建
 if not Path(config.NG_DATA_PATH[:-1]).exists():
     Path(config.NG_DATA_PATH[:-1]).mkdir(parents=True)
 if not Path(config.NG_EXT_PATH[:-1]).exists():
     Path(config.NG_EXT_PATH[:-1]).mkdir(parents=True)
+if not Path(config.NG_LOG_PATH[:-1]).exists():
+    Path(config.NG_LOG_PATH[:-1]).mkdir(parents=True)
 
 # 保存配置文件
 with open(config_path, 'w', encoding='utf-8') as f:
