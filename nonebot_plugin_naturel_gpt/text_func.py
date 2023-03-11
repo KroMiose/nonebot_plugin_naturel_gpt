@@ -14,6 +14,9 @@ def compare_text(text1: str, text2: str) -> float:
     long_text = text1 if len(text1) > len(text2) else text2
     short_text = text1 if len(text1) < len(text2) else text2
 
+    if len(short_text.strip()) <= 3:    # 过滤掉过短的文本
+        return 0
+
     # 滑动窗口截取较长的文本与短文本比较计算相似度取最大值
     max_sim = 0
     for i in range(len(long_text) - len(short_text) + 1):
