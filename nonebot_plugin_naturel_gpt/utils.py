@@ -2,8 +2,20 @@
 
 from nonebot.params import Matcher
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent
+from nonebot.rule import Rule
 
 from .config import *
+
+def to_me():
+    if config['NG_TO_ME']:
+        from nonebot.rule import to_me
+
+        return to_me()
+
+    async def _to_me() -> bool:
+        return True
+
+    return Rule(_to_me)
 
 async def identity_mofify_check(matcher:Matcher, event: MessageEvent, bot:Bot, cmd:str, type:str = 'cmd') -> Tuple[bool, str]:
     """默认权限检查函数"""
