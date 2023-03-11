@@ -161,7 +161,7 @@ class Chat:
             memory_text += f"{idx}. {k}: {v}\n"
 
         # 删除多余的记忆
-        if len(self._chat_preset.chat_memory) > config.get.MEMORY_MAX_LENGTH:
+        if len(self._chat_preset.chat_memory) > config.MEMORY_MAX_LENGTH:
             self._chat_preset.chat_memory = {k: v for k, v in sorted(self._chat_preset.chat_memory.items(), key=lambda item: item[1])}
             self._chat_preset.chat_memory = {k: v for k, v in list(self._chat_preset.chat_memory.items())[:config.MEMORY_MAX_LENGTH]}
             logger.info(f"删除多余记忆: {self._chat_preset.chat_memory}")

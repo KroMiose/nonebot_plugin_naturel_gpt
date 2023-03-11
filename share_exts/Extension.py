@@ -59,7 +59,7 @@ def load_extensions(config:Dict[str, Any]) -> None:
     """加载扩展模块"""
     global global_extensions
     global_extensions.clear()
-    if not config.get('NG_ENABLE_EXT'):
+    if not config.NG_ENABLE_EXT:
         return
     
     ext_path = config['NG_EXT_PATH']

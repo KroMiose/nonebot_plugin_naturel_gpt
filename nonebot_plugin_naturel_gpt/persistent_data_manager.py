@@ -103,7 +103,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
             return self._datas[chat_key]
         else:
             chat_data = ChatData(chat_key=chat_key)
-            for v in config["PRESETS"].values():
+            for v in config.PRESETS.values():
                 preset_data = PresetData(**v)
                 chat_data.preset_datas[preset_data.bot_name] = preset_data
             
@@ -164,7 +164,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
     
     def reset_preset(self, chat_key:str, bot_name:str):
         """重置指定chat_key系统预设的人格设定, 如果是系统预设名将还原默认人格设定"""
-        config_data = config["PRESETS"][bot_name] if bot_name in config["PRESETS"] else None
+        config_data = config.PRESETS[bot_name] if bot_name in config.PRESETS else None
         
         presets = self.get_presets(chat_key)
         if bot_name not in presets:
@@ -175,7 +175,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
 
     def reset_all_system_preset(self, chat_key:str):
         """重置指定chat_key的所有系统预设的人格设定"""
-        for k in config["PRESETS"].keys():
+        for k in config.PRESETS.keys():
             self.reset_preset(chat_key=chat_key, bot_name=k)
 
     def update_all_system_identity_presets():

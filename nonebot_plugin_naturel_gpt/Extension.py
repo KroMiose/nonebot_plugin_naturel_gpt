@@ -40,7 +40,7 @@ class Extension:
         return f"- {self._ext_config['name']}: {args_desc} ({self._ext_config['description']})\n"
 
     def generate_short_description(self) -> str:
-        """ 生成拓展简短描述 """
+        """ 生成拓展简短描述(供生成拓展简报用) """
         return f"- [{self._ext_config.get('name', '未知拓展')} v{self._ext_config.get('version', '0')}]: {self._ext_config.get('intro', '暂无描述')} by: {self._ext_config.get('author', '未知')}\n"
 
     def get_config(self) -> dict:
