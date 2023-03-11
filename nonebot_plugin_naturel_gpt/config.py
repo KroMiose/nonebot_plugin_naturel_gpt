@@ -1,21 +1,89 @@
+﻿from typing import Any, Dict, List
+import nonebot
 from pydantic import BaseModel, Extra
 from nonebot import get_driver
 from nonebot.log import logger
 import yaml
 from pathlib import Path
 
-
-class Config(BaseModel, extra=Extra.ignore):
+class GlobalConfig(nonebot.Config, extra=Extra.ignore):
     """Plugin Config Here"""
     ng_config_path: str = "config/naturel_gpt_config.yml"
     ng_dev_mode: bool = False
 
+class PresetConfig(BaseModel, extra=Extra.ignore):
+    """人格预设配置项"""
+    bot_name:str
+    is_locked:bool = False
+    is_default:bool = False
+    bot_self_introl:str = ''
 
-driver = get_driver()
-global_config = driver.config
-config = Config.parse_obj(global_config)
+class ExtConfig(BaseModel, extra=Extra.ignore):
+    """扩展配置项"""
+    EXT_NAME:str
+    IS_ACTIVE:bool
+    EXT_CONFIG:Any
 
-# 配置文件模板
+class Config(BaseModel, extra=Extra.ignore):
+    OPENAI_API_KEYS:List[str] # OpenAI API Key 列表
+    OPENAI_TIMEOUT:int       # OpenAI 请求超时时间
+    PRESETS:Dict[str, PresetConfig]
+    IGNORE_PREFIX:str   # 忽略前缀 以该前缀开头的消息将不会被处理
+    CHAT_MODEL:str
+    CHAT_TOP_P:int
+    CHAT_TEMPERATURE:float   # 温度越高越随机
+    CHAT_PRESENCE_PENALTY:float   # 主题重复惩罚
+    CHAT_FREQUENCY_PENALTY:float # 复读惩罚
+
+    CHAT_HISTORY_MAX_TOKENS:int    # 上下文聊天记录最大token数
+    CHAT_MAX_SUMMARY_TOKENS:int  # 单次总结最大token数
+    REPLY_MAX_TOKENS:int   # 单次回复最大token数
+    REQ_MAX_TOKENS: int  # 单次请求最大token数
+
+    REPLY_ON_NAME_MENTION:bool  # 是否在被提及时回复
+    REPLY_ON_AT:bool            # 是否在被at时回复
+    REPLY_ON_WELCOME:bool       # 是否在新成员加入时回复
+
+    USER_MEMORY_SUMMARY_THRESHOLD:int  # 用户记忆阈值
+
+    CHAT_ENABLE_RECORD_ORTHER:bool  # 是否记录其他人的对话
+    CHAT_ENABLE_SUMMARY_CHAT:bool   # 是否启用总结对话
+    CHAT_MEMORY_SHORT_LENGTH:int  # 短期对话记忆长度
+    CHAT_MEMORY_MAX_LENGTH:int   # 长期对话记忆长度
+    CHAT_SUMMARY_INTERVAL: int  # 长期对话记忆间隔
+
+    NG_DATA_PATH: str  # 数据文件目录
+    NG_EXT_PATH: str  # 拓展目录
+
+    ADMIN_USERID: List[str]  # 管理员QQ号
+    FORBIDDEN_USERS: List[str]   # 拒绝回应的QQ号
+
+    WORD_FOR_WAKE_UP: List[str]  # 自定义触发词
+    WORD_FOR_FORBIDDEN: List[str]  # 自定义禁止触发词
+
+    RANDOM_CHAT_PROBABILITY: float   # 随机聊天概率
+
+    NG_MSG_PRIORITY: int       # 消息响应优先级
+    NG_BLOCK_OTHERS: bool    # 是否阻止其他插件响应
+    NG_ENABLE_EXT: bool      # 是否启用拓展
+    NG_TO_ME: bool           # 响应命令是否需要@bot
+
+    MEMORY_ACTIVE: bool  # 是否启用记忆功能
+    MEMORY_MAX_LENGTH: int  # 记忆最大条数
+    MEMORY_ENHANCE_THRESHOLD: float  # 记忆强化阈值
+
+    NG_MAX_RESPONSE_PER_MSG: int  # 每条消息最大响应次数
+    NG_ENABLE_MSG_SPLIT: bool   # 是否启用消息分割
+    NG_ENABLE_AWAKE_IDENTITIES: bool # 是否允许自动唤醒其它人格
+
+    OPENAI_PROXY_SERVER: str  # 请求OpenAI的代理服务器
+    UNLOCK_CONTENT_LIMIT: bool  # 解锁内容限制
+
+    NG_EXT_LOAD_LIST: List[ExtConfig]     # 加载的拓展列表
+
+    DEBUG_LEVEL: int  # debug level, [0, 1, 2], 0 为关闭，等级越高debug信息越详细
+
+# 配置文件模板(把全部默认值写到Config定义里比较乱，因此保留此默认值对象,作为真实的默认值)
 CONFIG_TEMPLATE = {
     "OPENAI_API_KEYS": [    # OpenAI API Key 列表
         'sk-xxxxxxxxxxxxx',
@@ -105,19 +173,23 @@ CONFIG_TEMPLATE = {
         'EXT_CONFIG': {},
     }],     # 加载的拓展列表
 
-    '__DEBUG__': False,  # 是否启用debug模式
+    'DEBUG_LEVEL': 0  # debug level, [0, 1, 2], 0 为关闭，等级越高debug信息越详细
 }
 
-config_path = config.ng_config_path
+driver = get_driver()
+global_config = GlobalConfig.parse_obj(driver.config)
+config_path = global_config.ng_config_path
 
 # 检查config文件夹是否存在 不存在则创建
 if not Path("config").exists():
     Path("config").mkdir()
 
-if config.ng_dev_mode:  # 开发模式下不读取原配置文件，直接使用模板覆盖原配置文件
+# 无论如何先用模板文件初始化config对象，防止配置文件里缺少某些配置项
+config = Config.parse_obj(CONFIG_TEMPLATE)
+
+if global_config.ng_dev_mode:  # 开发模式下不读取原配置文件，直接使用模板覆盖原配置文件
     with open(config_path, 'w', encoding='utf-8') as f:
         yaml.dump(CONFIG_TEMPLATE, f, allow_unicode=True)
-
 else:
     # 检查配置文件是否存在 不存在则创建
     if not Path(config_path).exists():
@@ -127,23 +199,24 @@ else:
 
 # 读取配置文件
 with open(config_path, 'r', encoding='utf-8') as f:
-    config = yaml.load(f, Loader=yaml.FullLoader)
-    # 对比配置模板和配置文件
-    for k, v in CONFIG_TEMPLATE.items():
-        if k not in config:
-            config[k] = v
-            logger.info(f'Naturel GPT 配置文件缺少 {k} 项，已自动补充')
-    # 将配置文件内容写入config
-    for k, v in config.items():
-        setattr(Config, k, v)
+    config_obj_from_file:Dict = yaml.load(f, Loader=yaml.FullLoader)
+    
+    for k, v in vars(config).items():
+        if not k in config_obj_from_file.keys():
+            logger.info(f"Naturel GPT 配置文件缺少 {k} 项，将使用默认值")
+
+    # 将文件中的数据覆盖到config变量中
+    for k, v in config_obj_from_file.items():
+        if hasattr(config, k):
+            setattr(config, k, v)
 
 # 检查数据文件夹目录和拓展目录是否存在 不存在则创建
-if not Path(config['NG_DATA_PATH'][:-1]).exists():
-    Path(config['NG_DATA_PATH'][:-1]).mkdir(parents=True)
-if not Path(config['NG_EXT_PATH'][:-1]).exists():
-    Path(config['NG_EXT_PATH'][:-1]).mkdir(parents=True)
+if not Path(config.NG_DATA_PATH[:-1]).exists():
+    Path(config.NG_DATA_PATH[:-1]).mkdir(parents=True)
+if not Path(config.NG_EXT_PATH[:-1]).exists():
+    Path(config.NG_EXT_PATH[:-1]).mkdir(parents=True)
 
 # 保存配置文件
 with open(config_path, 'w', encoding='utf-8') as f:
-    yaml.dump(config, f, allow_unicode=True)
+    yaml.dump(dict(config), f, allow_unicode=True)
 logger.info('Naturel GPT 配置文件加载成功')

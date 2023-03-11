@@ -55,7 +55,7 @@ class Extension:
         """ 重置调用次数 """
         self._call_time = self._ext_config.get('max_call_times_per_msg', 99)
 
-def load_extensions(config:Any) -> None:
+def load_extensions(config:Dict[str, Any]) -> None:
     """加载扩展模块"""
     global global_extensions
     global_extensions.clear()

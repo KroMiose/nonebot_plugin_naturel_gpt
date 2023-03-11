@@ -75,7 +75,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
                 logger.info("读取历史数据成功")
         else:   # 如果不存在历史数据json文件，则初始化
             # 检测目录是否存在 不存在则创建
-            if not os.path.exists(config['NG_DATA_PATH']):
+            if not os.path.exists(config.NG_DATA_PATH):
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
             logger.info("找不到历史数据，初始化成功")

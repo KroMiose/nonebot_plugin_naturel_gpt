@@ -7,7 +7,7 @@ from nonebot.rule import Rule
 from .config import *
 
 def to_me():
-    if config['NG_TO_ME']:
+    if config.NG_TO_ME:
         from nonebot.rule import to_me
 
         return to_me()
@@ -32,7 +32,7 @@ async def identity_mofify_check(matcher:Matcher, event: MessageEvent, bot:Bot, c
         if args[0] in ['admin', '设定','set', '更新','update','edit','添加','new', '删除','del','delete',
                        '锁定','lock','解锁','unlock','开启','on', '关闭','off','重置','reset','debug','会话','chats',
                        '记忆','memory']:
-            success = str(event.user_id) in config['ADMIN_USERID']
+            success = str(event.user_id) in config.ADMIN_USERID
             return (success, None if success else '只有超级管理员才允许使用此指令')
         return (True, None)
     else:
