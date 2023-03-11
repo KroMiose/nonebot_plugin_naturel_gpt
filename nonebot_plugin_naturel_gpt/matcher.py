@@ -53,7 +53,7 @@ async def handler(matcher_:Matcher, event: MessageEvent, bot:Bot) -> None:
         f"\n是否to-me: {event.is_tome()}"
         # f"\nJSON: {event.json()}"
     )
-    if config.DEBUG_LEVEL > 0: logger.info(resTmplate)
+    if config.DEBUG_LEVEL > 1: logger.info(resTmplate)
 
     # 如果是忽略前缀 或者 消息为空，则跳过处理
     if event.get_plaintext().startswith(config.IGNORE_PREFIX) or not event.get_plaintext():   

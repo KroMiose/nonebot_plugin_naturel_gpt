@@ -59,7 +59,7 @@ class Chat:
                 f"{history_str}"
                 f"\n\n{self._chat_preset.bot_self_introl}\nSummarize the chat in one paragraph from the perspective of '{self._chat_preset.bot_name}' and record as much important information as possible from the conversation:"
             )
-            if config.DEBUG_LEVEL > 0: logger.info(f"生成对话历史摘要prompt: {prompt}")
+            # if config.DEBUG_LEVEL > 0: logger.info(f"生成对话历史摘要prompt: {prompt}")
             res, success = await tg.get_response(prompt, type='summarize')  # 生成新的对话历史摘要
             if success:
                 self._chat_preset.chat_summarized = res.strip()
@@ -90,7 +90,7 @@ class Chat:
                 f"{history_str}"
                 f"\n\n{self._chat_preset.bot_self_introl}\nUpdate {username} impressions from the perspective of {self._chat_preset.bot_name}:"
             )
-            if config.DEBUG_LEVEL > 0: logger.info(f"生成对话历史摘要prompt: {prompt}")
+            # if config.DEBUG_LEVEL > 0: logger.info(f"生成对话历史摘要prompt: {prompt}")
             res, success = await tg.get_response(prompt, type='summarize')  # 生成新的对话历史摘要
             if success:
                 impression_data.chat_impression = res.strip()
@@ -147,7 +147,7 @@ class Chat:
     # 对话 prompt 模板生成
     def get_chat_prompt_template(self, userid:str = None)-> str:
         # 印象描述
-        impression_text = f"[impression]\n{self._chat_preset.chat_impressions[userid]}\n\n" \
+        impression_text = f"[impression]\n{self._chat_preset.chat_impressions[userid].chat_impression}\n\n" \
             if userid in self._chat_preset.chat_impressions else ''  # 用户印象描述
 
         # 记忆模块

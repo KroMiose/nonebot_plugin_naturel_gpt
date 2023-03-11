@@ -132,7 +132,6 @@ class TextGenerator(Singleton["TextGenerator"]):
                     presence_penalty=0,
                     timeout=self.config.get('timeout', 30),
                 )
-                if self.config.get('__DEBUG__'): logger.info('openai 原始回应 ->',response)
                 res = ''
                 for choice in response.choices:
                     res += choice.message.content

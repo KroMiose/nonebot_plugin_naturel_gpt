@@ -27,7 +27,7 @@ class Extension:
 
     def generate_description(self, chat_history_text='') -> str:
         """ 生成拓展描述prompt(供bot参考用) """
-        print(chat_history_text)
+        # print(chat_history_text)
         # 判断参考词
         if self._ext_config["refer_word"] and chat_history_text:
             for refer_word in self._ext_config["refer_word"]:
@@ -40,7 +40,7 @@ class Extension:
         return f"- {self._ext_config['name']}: {args_desc} ({self._ext_config['description']})\n"
 
     def generate_short_description(self) -> str:
-        """ 生成拓展简短描述 """
+        """ 生成拓展简短描述(供生成拓展简报用) """
         return f"- [{self._ext_config.get('name', '未知拓展')} v{self._ext_config.get('version', '0')}]: {self._ext_config.get('intro', '暂无描述')} by: {self._ext_config.get('author', '未知')}\n"
 
     def get_config(self) -> dict:
@@ -59,7 +59,7 @@ def load_extensions(config:Dict[str, Any]) -> None:
     """加载扩展模块"""
     global global_extensions
     global_extensions.clear()
-    if not config.NG_ENABLE_EXT:
+    if not config.get('NG_ENABLE_EXT'):
         return
     
     ext_path = config['NG_EXT_PATH']

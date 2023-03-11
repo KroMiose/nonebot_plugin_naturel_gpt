@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 from nonebot import logger
 from .singleton import Singleton
-from .config import config
+from .config import config, PresetConfig
 
 @dataclass
 class ImpressionData:
@@ -30,18 +30,18 @@ class PresetData:
     chat_impressions:Dict[str, ImpressionData]  = field(default_factory=lambda:{}) # 对(群聊中)特定用户的印象
     chat_memory:Dict[str, str]                  = field(default_factory=lambda:{})
 
-    def reset_to_default(self, config_data:Dict):
+    def reset_to_default(self, config_data:PresetConfig):
         """清空数据，并将人格设定为config_data中的值(如果存在的话)"""
         if config_data is not None:
             if config_data["bot_name"] != self.bot_name:
                 raise Exception(f"wrong bot_name, expect `{self.bot_name}` but get `{config_data['bot_name']}`")
             
-            self.bot_self_introl    = config_data.get("bot_self_introl", "")
+            # self.bot_self_introl    = config_data.get("bot_self_introl", "")
             self.is_locked          = config_data.get("is_locked", False)
             self.is_default         = config_data.get("is_default", False)
             self.is_enable          = config_data.get("is_enable", True)
         else:
-            self.bot_self_introl    = ''
+            # self.bot_self_introl    = ''
             self.is_locked          = False
             self.is_default         = False
             self.is_enable          = True
@@ -104,7 +104,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         else:
             chat_data = ChatData(chat_key=chat_key)
             for v in config.PRESETS.values():
-                preset_data = PresetData(**v)
+                preset_data = PresetData(**dict(v))
                 chat_data.preset_datas[preset_data.bot_name] = preset_data
             
             self._datas[chat_key] = chat_data
@@ -132,7 +132,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         presets[bot_name] = PresetData(bot_name=bot_name, bot_self_introl=bot_self_introl)
         return True
     
-    def add_preset_from_config(self, chat_key:str, bot_name:str, config_preset: Dict) -> bool:
+    def add_preset_from_config(self, chat_key:str, bot_name:str, config_preset: PresetConfig) -> bool:
         """给指定chat_key添加新人格, config_preset为config中的全局配置"""
         presets = self.get_presets(chat_key)
         if bot_name in presets:
@@ -169,7 +169,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         presets = self.get_presets(chat_key)
         if bot_name not in presets:
             presets[bot_name] = PresetData(bot_name=bot_name,
-                                           bot_self_introl=config_data["bot_self_introl"] if config_data else '')
+                                           bot_self_introl=config_data.bot_self_introl if config_data else '')
         else:
             presets[bot_name].reset_to_default(config_data)
 

@@ -27,7 +27,7 @@ class Extension:
 
     def generate_description(self, chat_history_text='') -> str:
         """ 生成拓展描述prompt(供bot参考用) """
-        print(chat_history_text)
+        # print(chat_history_text)
         # 判断参考词
         if self._ext_config["refer_word"] and chat_history_text:
             for refer_word in self._ext_config["refer_word"]:

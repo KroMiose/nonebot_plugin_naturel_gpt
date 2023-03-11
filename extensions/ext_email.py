@@ -92,9 +92,8 @@ class MioseBotOpt:
             smtp.sendmail(from_mail, recv_mail, msg.as_string())
             smtp.quit()
         except Exception as e:
-            print('[ERROR]:', e)
-            return False
-        return True
+            return False, e
+        return True, None
 
     @staticmethod
     def _format_addr(s):
