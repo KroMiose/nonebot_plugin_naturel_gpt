@@ -22,7 +22,8 @@ class PresetData:
     bot_self_introl:str
     is_locked:bool  = False
     is_default:bool = False
-    is_enable:bool  = True
+    is_only_private:bool = False
+    """此预设是否仅限私聊"""
 
     # 以下为对话产生的数据
     chat_history:List[str]  = field(default_factory=lambda:[])
@@ -39,12 +40,12 @@ class PresetData:
             # self.bot_self_introl    = config_data.bot_self_introl
             self.is_locked          = preset_config.is_locked
             self.is_default         = preset_config.is_default
-            self.is_enable          = preset_config.is_enable
+            self.is_only_private    = preset_config.is_only_private
         else:
             # self.bot_self_introl    = ''
             self.is_locked          = False
             self.is_default         = False
-            self.is_enable          = True
+            self.is_only_private    = False
         
         self.chat_history.clear()
         self.chat_summarized=''
@@ -55,6 +56,7 @@ class PresetData:
 class ChatData:
     """用户聊天数据(群，私聊)"""
     chat_key:str  # group_123456, private_123456
+    is_enable:bool
     active_preset:str = '' # 当前 preset_name
     preset_datas:Dict[str, PresetData] = field(default_factory=lambda:{}) # [preset_name/bot_name, data]
 
