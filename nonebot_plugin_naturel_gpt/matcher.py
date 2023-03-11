@@ -10,9 +10,9 @@ from nonebot import on_command, on_message, on_notice
 from nonebot.log import logger
 from nonebot.params import CommandArg, Matcher, Event
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, PrivateMessageEvent, GroupMessageEvent, MessageSegment, GroupIncreaseNoticeEvent
-from nonebot.rule import to_me
 
 from .config import *
+from .utils import *
 from .chat import Chat, global_chat_dict
 from .persistent_data_manager import PersistentDataManager
 from .Extension import Extension, global_extensions

@@ -86,6 +86,7 @@ CONFIG_TEMPLATE = {
     'NG_MSG_PRIORITY': 99,       # 消息响应优先级
     'NG_BLOCK_OTHERS': False,    # 是否阻止其他插件响应
     'NG_ENABLE_EXT': True,      # 是否启用拓展
+    'NG_TO_ME':False,           # 响应命令是否需要@bot
 
     'MEMORY_ACTIVE': True,  # 是否启用记忆功能
     'MEMORY_MAX_LENGTH': 16,  # 记忆最大条数
