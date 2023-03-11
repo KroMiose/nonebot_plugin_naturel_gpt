@@ -30,16 +30,16 @@ class PresetData:
     chat_impressions:Dict[str, ImpressionData]  = field(default_factory=lambda:{}) # 对(群聊中)特定用户的印象
     chat_memory:Dict[str, str]                  = field(default_factory=lambda:{})
 
-    def reset_to_default(self, config_data:PresetConfig):
+    def reset_to_default(self, preset_config:PresetConfig):
         """清空数据，并将人格设定为config_data中的值(如果存在的话)"""
-        if config_data is not None:
-            if config_data["bot_name"] != self.bot_name:
-                raise Exception(f"wrong bot_name, expect `{self.bot_name}` but get `{config_data['bot_name']}`")
+        if preset_config is not None:
+            if preset_config.bot_name != self.bot_name:
+                raise Exception(f"wrong bot_name, expect `{self.bot_name}` but get `{preset_config.bot_name}`")
             
-            # self.bot_self_introl    = config_data.get("bot_self_introl", "")
-            self.is_locked          = config_data.get("is_locked", False)
-            self.is_default         = config_data.get("is_default", False)
-            self.is_enable          = config_data.get("is_enable", True)
+            # self.bot_self_introl    = config_data.bot_self_introl
+            self.is_locked          = preset_config.is_locked
+            self.is_default         = preset_config.is_default
+            self.is_enable          = preset_config.is_enable
         else:
             # self.bot_self_introl    = ''
             self.is_locked          = False
@@ -138,9 +138,9 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         if bot_name in presets:
             return False
 
-        presets[bot_name] = PresetData(**config_preset)
+        presets[bot_name] = PresetData(**dict(config_preset))
         # 更新默认值
-        if config_preset["is_default"]:
+        if config_preset.is_default:
             for v in presets.values():
                 v.is_default = v.bot_name == bot_name
         return True
