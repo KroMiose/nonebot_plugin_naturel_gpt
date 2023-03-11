@@ -95,6 +95,9 @@ class TextGenerator(Singleton["TextGenerator"]):
                 # 去掉可能存在的开头起始标志
                 if res.startswith(f"{custom.get('bot_name', 'AI')}:"):
                     res = res[len(f"{custom.get('bot_name', 'AI')}:"):]
+                # 去掉可能存在的开头起始标志 (中文)
+                if res.startswith(f"{custom.get('bot_name', 'AI')}："):
+                    res = res[len(f"{custom.get('bot_name', 'AI')}："):]
                 # 替换多段回应中的回复起始标志
                 res = res.replace(f"\n\n{custom.get('bot_name', 'AI')}:", "*;")
             else:
