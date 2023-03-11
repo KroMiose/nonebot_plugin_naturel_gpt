@@ -25,63 +25,106 @@ class ExtConfig(BaseModel, extra=Extra.ignore):
     EXT_CONFIG:Any
 
 class Config(BaseModel, extra=Extra.ignore):
-    OPENAI_API_KEYS:List[str] # OpenAI API Key 列表
-    OPENAI_TIMEOUT:int       # OpenAI 请求超时时间
-    PRESETS:Dict[str, PresetConfig]
-    IGNORE_PREFIX:str   # 忽略前缀 以该前缀开头的消息将不会被处理
-    CHAT_MODEL:str
-    CHAT_TOP_P:int
-    CHAT_TEMPERATURE:float   # 温度越高越随机
-    CHAT_PRESENCE_PENALTY:float   # 主题重复惩罚
-    CHAT_FREQUENCY_PENALTY:float # 复读惩罚
+    """ng 配置数据，默认保存为 naturel_gpt_config.yml"""
+    OPENAI_API_KEYS: List[str]
+    """OpenAI API Key 列表"""
+    OPENAI_TIMEOUT: int
+    """OpenAI 请求超时时间"""
+    PRESETS: Dict[str, PresetConfig]
+    """默认人格预设"""
+    IGNORE_PREFIX: str
+    """忽略前缀 以该前缀开头的消息将不会被处理"""
+    CHAT_MODEL: str
+    """OpenAI 模型"""
+    CHAT_TOP_P: int
+    CHAT_TEMPERATURE: float
+    """温度越高越随机"""
+    CHAT_PRESENCE_PENALTY: float
+    """主题重复惩罚"""
+    CHAT_FREQUENCY_PENALTY: float
+    """复读惩罚"""
 
-    CHAT_HISTORY_MAX_TOKENS:int    # 上下文聊天记录最大token数
-    CHAT_MAX_SUMMARY_TOKENS:int  # 单次总结最大token数
-    REPLY_MAX_TOKENS:int   # 单次回复最大token数
-    REQ_MAX_TOKENS: int  # 单次请求最大token数
+    CHAT_HISTORY_MAX_TOKENS: int
+    """上下文聊天记录最大token数"""
+    CHAT_MAX_SUMMARY_TOKENS: int
+    """单次总结最大token数"""
+    REPLY_MAX_TOKENS: int
+    """单次回复最大token数"""
+    REQ_MAX_TOKENS: int
+    """单次请求最大token数"""
 
-    REPLY_ON_NAME_MENTION:bool  # 是否在被提及时回复
-    REPLY_ON_AT:bool            # 是否在被at时回复
-    REPLY_ON_WELCOME:bool       # 是否在新成员加入时回复
+    REPLY_ON_NAME_MENTION: bool
+    """是否在被提及时回复"""
+    REPLY_ON_AT: bool
+    """是否在被at时回复"""
+    REPLY_ON_WELCOME: bool
+    """是否在新成员加入时回复"""
 
-    USER_MEMORY_SUMMARY_THRESHOLD:int  # 用户记忆阈值
+    USER_MEMORY_SUMMARY_THRESHOLD: int
+    """用户记忆阈值"""
 
-    CHAT_ENABLE_RECORD_ORTHER:bool  # 是否记录其他人的对话
-    CHAT_ENABLE_SUMMARY_CHAT:bool   # 是否启用总结对话
-    CHAT_MEMORY_SHORT_LENGTH:int  # 短期对话记忆长度
-    CHAT_MEMORY_MAX_LENGTH:int   # 长期对话记忆长度
-    CHAT_SUMMARY_INTERVAL: int  # 长期对话记忆间隔
+    CHAT_ENABLE_RECORD_ORTHER: bool
+    """是否记录其他人的对话"""
+    CHAT_ENABLE_SUMMARY_CHAT: bool
+    """是否启用总结对话"""
+    CHAT_MEMORY_SHORT_LENGTH: int
+    """短期对话记忆长度"""
+    CHAT_MEMORY_MAX_LENGTH: int
+    """长期对话记忆长度"""
+    CHAT_SUMMARY_INTERVAL: int
+    """长期对话记忆间隔"""
 
-    NG_DATA_PATH: str  # 数据文件目录
-    NG_EXT_PATH: str  # 拓展目录
+    NG_DATA_PATH: str
+    """数据文件目录"""
+    NG_EXT_PATH: str
+    """拓展目录"""
 
-    ADMIN_USERID: List[str]  # 管理员QQ号
-    FORBIDDEN_USERS: List[str]   # 拒绝回应的QQ号
+    ADMIN_USERID: List[str]
+    """管理员QQ号"""
+    FORBIDDEN_USERS: List[str]
+    """拒绝回应的QQ号"""
 
-    WORD_FOR_WAKE_UP: List[str]  # 自定义触发词
-    WORD_FOR_FORBIDDEN: List[str]  # 自定义禁止触发词
+    WORD_FOR_WAKE_UP: List[str]
+    """自定义触发词"""
+    WORD_FOR_FORBIDDEN: List[str]
+    """自定义禁止触发词"""
 
-    RANDOM_CHAT_PROBABILITY: float   # 随机聊天概率
+    RANDOM_CHAT_PROBABILITY: float
+    """随机聊天概率"""
 
-    NG_MSG_PRIORITY: int       # 消息响应优先级
-    NG_BLOCK_OTHERS: bool    # 是否阻止其他插件响应
-    NG_ENABLE_EXT: bool      # 是否启用拓展
-    NG_TO_ME: bool           # 响应命令是否需要@bot
+    NG_MSG_PRIORITY: int
+    """消息响应优先级"""
+    NG_BLOCK_OTHERS: bool
+    """是否阻止其他插件响应"""
+    NG_ENABLE_EXT: bool
+    """是否启用拓展"""
+    NG_TO_ME: bool
+    """响应命令是否需要@bot"""
 
-    MEMORY_ACTIVE: bool  # 是否启用记忆功能
-    MEMORY_MAX_LENGTH: int  # 记忆最大条数
-    MEMORY_ENHANCE_THRESHOLD: float  # 记忆强化阈值
+    MEMORY_ACTIVE: bool
+    """是否启用记忆功能"""
+    MEMORY_MAX_LENGTH: int
+    """记忆最大条数"""
+    MEMORY_ENHANCE_THRESHOLD: float
+    """记忆强化阈值"""
 
-    NG_MAX_RESPONSE_PER_MSG: int  # 每条消息最大响应次数
-    NG_ENABLE_MSG_SPLIT: bool   # 是否启用消息分割
-    NG_ENABLE_AWAKE_IDENTITIES: bool # 是否允许自动唤醒其它人格
+    NG_MAX_RESPONSE_PER_MSG: int
+    """每条消息最大响应次数"""
+    NG_ENABLE_MSG_SPLIT: bool
+    """是否启用消息分割"""
+    NG_ENABLE_AWAKE_IDENTITIES: bool
+    """是否允许自动唤醒其它人格"""
 
-    OPENAI_PROXY_SERVER: str  # 请求OpenAI的代理服务器
-    UNLOCK_CONTENT_LIMIT: bool  # 解锁内容限制
+    OPENAI_PROXY_SERVER: str
+    """请求OpenAI的代理服务器"""
+    UNLOCK_CONTENT_LIMIT: bool
+    """解锁内容限制"""
 
-    NG_EXT_LOAD_LIST: List[ExtConfig]     # 加载的拓展列表
+    NG_EXT_LOAD_LIST: List[ExtConfig]
+    """加载的拓展列表"""
 
-    DEBUG_LEVEL: int  # debug level, [0, 1, 2], 0 为关闭，等级越高debug信息越详细
+    DEBUG_LEVEL: int
+    """debug level, [0, 1, 2, 3], 0 为关闭，等级越高debug信息越详细"""
 
 # 配置文件模板(把全部默认值写到Config定义里比较乱，因此保留此默认值对象,作为真实的默认值)
 CONFIG_TEMPLATE = {
@@ -201,7 +244,7 @@ else:
 with open(config_path, 'r', encoding='utf-8') as f:
     config_obj_from_file:Dict = yaml.load(f, Loader=yaml.FullLoader)
     
-    for k, v in vars(config).items():
+    for k in dict(config).keys():
         if not k in config_obj_from_file.keys():
             logger.info(f"Naturel GPT 配置文件缺少 {k} 项，将使用默认值")
 
