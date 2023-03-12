@@ -3,11 +3,11 @@ import requests
 
 # 拓展的配置信息，用于ai理解拓展的功能 *必填*
 ext_config:dict = {
-    "name": "LoliconPic",   # 拓展名称，用于标识拓展
+    "name": "AnimePic",   # 拓展名称，用于标识拓展
     "arguments": {      
         "tag": "str",   # 关键字
     },
-    "description": "send 1 specified tag anime picture. (usage in response: /#LoliconPic&萝莉#/)",
+    "description": "send 1 specified tag anime picture. (usage in response: /#AnimePic&萝莉#/)",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": ["图", "pic", "Pic", "再", "还", "涩", "色"],
     # 每次消息回复中最大调用次数，不填则默认为99
@@ -28,7 +28,7 @@ class CustomExtension(Extension):
             arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值(类型为str)}
         """
         custom_config:dict = self.get_custom_config()  # 获取yaml中的配置信息
-        r18 = custom_config.get('r18', 0) #添加r18参数 0为否，1为是，2为混合
+        r18 = int(custom_config.get('r18', 0)) #添加r18参数 0为否，1为是，2为混合
         tag = arg_dict.get('tag', None)
 
         url = f"https://api.lolicon.app/setu/v2?tag={tag}&r18={r18}"
