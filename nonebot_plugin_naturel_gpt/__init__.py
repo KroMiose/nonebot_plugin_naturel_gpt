@@ -23,7 +23,7 @@ def set_permission_check_func(callback:Callable[[Matcher, MessageEvent, Bot, str
     matcher.permission_check_func = callback
 
 # 设置默认权限检查函数，有需求时可以覆盖
-set_permission_check_func(utils.identity_mofify_check)
+set_permission_check_func(utils.default_permission_check_func)
 
 """ ======== 读取历史记忆数据 ======== """
 PersistentDataManager.instance.load_from_file(global_data_path)
