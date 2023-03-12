@@ -953,6 +953,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     else:
         # 提取后去除所有拓展调用指令，剩余部分为对话结果 多行匹配
         talk_res = re.sub(r"/.?#(.+?)#.?/", '', talk_res)
+        reply_list.append(talk_res)
 
     # if config.get('__DEBUG__'): logger.info("分割响应结果: " + str(reply_list))
 
