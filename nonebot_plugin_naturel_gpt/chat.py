@@ -25,13 +25,11 @@ class Chat:
     is_insilence = False        # 是否处于沉默状态
     chat_attitude = 0           # 对话态度
     silence_time = 0            # 沉默时长
-    is_enable = None            # 是否启用
 
     def __init__(self, chat_key:str, preset_key:str = ''):
         self._chat_data = PersistentDataManager.instance.get_chat_data(chat_key=chat_key) # 当前对话预设
         self._chat_preset_dicts = self._chat_data.preset_datas
         self._chat_key = chat_key    # 对话标识
-        self.is_enable = True       # 启用会话
         preset_key = preset_key or self._chat_data.active_preset # 参数没有设置时尝试查找上次使用的preset
         if not preset_key:  # 如果没有预设，选择默认预设
             for (pk, preset) in self._chat_preset_dicts.items():
@@ -135,7 +133,7 @@ class Chat:
     # 修改对话预设
     def change_presettings(self, preset_key:str) -> None:
         if preset_key not in self._chat_preset_dicts:    # 如果聊天预设字典中没有该预设，则从全局预设字典中拷贝一个
-            config_preset:Dict = config["PRESETS"].get(preset_key, None)
+            config_preset = config.PRESETS.get(preset_key, None)
             if not config_preset:
                 raise Exception(f"不允许切换到不存在的人格预设 [{preset_key}]")
             PersistentDataManager.instance.add_preset_from_config(self._chat_key, preset_key, config_preset)
@@ -282,10 +280,15 @@ class Chat:
     def get_chat_preset_key(self) -> str:
         """获取当前对话bot的预设键"""
         return self._preset_key
+    
+    @property
+    def is_enable(self):
+        """当前会话是否已启用"""
+        return self._chat_data.is_enable
 
     def toggle_chat(self, enabled:bool=True) -> None:
         """开关当前会话"""
-        self.is_enable = enabled
+        self._chat_data.is_enable = enabled
 
     def generate_description(self):
         """获取当前会话描述"""

@@ -16,6 +16,8 @@ class PresetConfig(BaseModel, extra=Extra.ignore):
     bot_name:str
     is_locked:bool = False
     is_default:bool = False
+    is_only_private:bool = False
+    """此预设是否仅限私聊"""
     bot_self_introl:str = ''
 
 class ExtConfig(BaseModel, extra=Extra.ignore):
@@ -140,24 +142,28 @@ CONFIG_TEMPLATE = {
             'bot_name': '白羽',  # 人格名称
             'is_locked': True,  # 是否锁定人格，锁定后无法编辑人格
             'is_default': True,  # 是否为默认人格
+            "is_only_private": False,
             'bot_self_introl': '白羽是一名喜欢二次元的中二宅女，她机智、傲娇，对人类充满好奇，习惯以白羽喵自称，聊天时喜欢使用各种可爱的颜文字，如果冒犯到她会生气。',
         },
         "浅枫": {
             'bot_name': '浅枫',
             'is_locked': False,
             'is_default': False,
+            "is_only_private": False,
             'bot_self_introl': '浅枫酱是一名尽职尽责的女仆，她能够帮助主人做很多事情，对话中会体现出对主人的体贴与关心。',
         },
         "忆雨": {
             'bot_name': '忆雨',
             'is_locked': True,
             'is_default': False,
+            "is_only_private": False,
             'bot_self_introl': '忆雨是一名恐怖小说作家，是个阴沉的女孩，她非常恨人类，和陌生人聊天时的表现冷漠，不喜欢回复过多的文字，兴趣是恐怖小说，如果有人和她探讨如何消灭人类会很有兴致。',
         },
         "可洛喵": {
             'bot_name': '可洛喵',
             'is_locked': True,
             'is_default': False,
+            "is_only_private": False,
             'bot_self_introl': '可洛喵是一只可爱的猫，它不会说话，它的回复通常以"[动作/心情]声音+颜文字"形式出现，例如"[坐好]喵~(。・ω・。)"或"[开心]喵喵！ヾ(≧▽≦*)o"',
         },
     },
