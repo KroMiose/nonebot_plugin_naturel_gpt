@@ -45,13 +45,13 @@
   + 功能: 用于启用/禁用bot处理会话
   + options - 可选项:
     - `-target`: (可选* 默认当前会话)
-    - `-all`: (可选* 是否应用到全部会话)
+    - `-global`: (可选* 是否应用到全部会话)
 
 ### 人格指令
 
 #### 人格切换
 
-- 指令: `rg set <options?>`
+- 指令: `rg set <options?> <preset_key>`
   + 功能: 用于切换会话人格
   + options - 可选项:
     - `-target <chat_key>`: (可选* 默认当前会话)
