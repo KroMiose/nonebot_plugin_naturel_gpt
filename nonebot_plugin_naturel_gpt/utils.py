@@ -31,8 +31,8 @@ async def identity_mofify_check(matcher:Matcher, event: MessageEvent, bot:Bot, c
     if(len(args) == 0):
         return (True, None)
     elif(len(args) >= 1):
-        is_super_user = str(event.user_id) in config.ADMIN_USERID
-        is_admin = is_super_user or await (GROUP_ADMIN | GROUP_OWNER | SUPERUSER)(bot, event)
+        is_super_user = str(event.user_id) in config.ADMIN_USERID or await (SUPERUSER)(bot, event)
+        is_admin = is_super_user or await (GROUP_ADMIN | GROUP_OWNER)(bot, event)
 
         common_cmd = ['', '查询', 'query', '设定', 'set', '更新', 'update', 'edit', '添加', 'new']
         super_cmd = ['admin', '删除', 'del', 'delete',
