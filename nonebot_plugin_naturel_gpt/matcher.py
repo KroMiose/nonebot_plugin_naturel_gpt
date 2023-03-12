@@ -40,7 +40,12 @@ async def handler(matcher_:Matcher, event: MessageEvent, bot:Bot) -> None:
         logger.info(f"用户 {event.get_user_id()} 被屏蔽，拒绝处理消息")
         return
 
-    sender_name = event.dict().get('sender', {}).get('nickname', '未知')
+    if isinstance(event, GroupMessageEvent):
+        user_info = await bot.get_group_member_info(group_id=event.group_id, user_id=event.user_id, no_cache=False)
+        sender_name = user_info.get('card', None) or user_info.get('nickname', '未知')
+    else:
+        sender_name = event.sender.nickname or '未知'
+    
     resTmplate = (  # 测试用，获取消息的相关信息
         f"收到消息: {event.get_message()}"
         f"\n消息名称: {event.get_event_name()}"
