@@ -132,7 +132,7 @@ async def _(matcher_:Matcher, event: GroupIncreaseNoticeEvent, bot:Bot):  # even
 identity:Matcher = on_command("identity", aliases={"人格设定", "人格", "rg"}, rule=to_me(), priority=config.NG_MSG_PRIORITY - 1, block=True)
 @identity.handle()
 async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = CommandArg()):
-    global is_progress
+    global is_progress  # 是否产生编辑进度
     is_progress = False
     # 判断是否是禁止使用的用户
     if event.get_user_id() in config.FORBIDDEN_USERS:
