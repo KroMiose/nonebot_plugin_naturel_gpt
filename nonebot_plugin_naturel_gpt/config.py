@@ -32,7 +32,7 @@ class Config(BaseModel, extra=Extra.ignore):
     """OpenAI API Key 列表"""
     OPENAI_TIMEOUT: int
     """OpenAI 请求超时时间"""
-    PRESETS: Dict[str, PresetConfig]
+    PRESETS: Dict[str, Dict[str, Any]] #  Dict[str, PresetConfig], `Config.parse_object()`` 不会解析二级数据类型，因此无法定义 PresetConfig
     """默认人格预设"""
     IGNORE_PREFIX: str
     """忽略前缀 以该前缀开头的消息将不会被处理"""
@@ -124,7 +124,7 @@ class Config(BaseModel, extra=Extra.ignore):
     UNLOCK_CONTENT_LIMIT: bool
     """解锁内容限制"""
 
-    NG_EXT_LOAD_LIST: List[ExtConfig]
+    NG_EXT_LOAD_LIST: List[Dict[str, Any]] # List[ExtConfig], `Config.parse_object()`` 不会解析二级数据类型
     """加载的拓展列表"""
 
     DEBUG_LEVEL: int

@@ -136,7 +136,7 @@ class Chat:
             config_preset = config.PRESETS.get(preset_key, None)
             if not config_preset:
                 raise Exception(f"不允许切换到不存在的人格预设 [{preset_key}]")
-            PersistentDataManager.instance.add_preset_from_config(self._chat_key, preset_key, config_preset)
+            PersistentDataManager.instance.add_preset_from_config(self._chat_key, preset_key, PresetConfig(**config_preset))
             logger.info(f"从全局预设中拷贝预设 {preset_key} 到聊天预设字典")
         self._chat_data.active_preset = preset_key
         self._chat_preset = self._chat_preset_dicts[preset_key]
