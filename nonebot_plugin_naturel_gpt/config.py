@@ -32,7 +32,7 @@ class Config(BaseModel, extra=Extra.ignore):
     """OpenAI API Key 列表"""
     OPENAI_TIMEOUT: int
     """OpenAI 请求超时时间"""
-    PRESETS: Dict[str, PresetConfig]
+    PRESETS: Dict[str, Dict[str, Any]] #  Dict[str, PresetConfig], `Config.parse_object()`` 不会解析二级数据类型，因此无法定义 PresetConfig
     """默认人格预设"""
     IGNORE_PREFIX: str
     """忽略前缀 以该前缀开头的消息将不会被处理"""
@@ -124,8 +124,11 @@ class Config(BaseModel, extra=Extra.ignore):
     UNLOCK_CONTENT_LIMIT: bool
     """解锁内容限制"""
 
-    NG_EXT_LOAD_LIST: List[ExtConfig]
+    NG_EXT_LOAD_LIST: List[Dict[str, Any]] # List[ExtConfig], `Config.parse_object()`` 不会解析二级数据类型
     """加载的拓展列表"""
+
+    NG_CHECK_USER_NAME_HYPHEN:bool # 如果用户名中包含连字符，ChatGPT会将前半部分识别为名字，但一般情况下后半部分才是我们想被称呼的名字, eg. 策划-李华
+    """检查用户名中的连字符"""
 
     DEBUG_LEVEL: int
     """debug level, [0, 1, 2, 3], 0 为关闭，等级越高debug信息越详细"""
@@ -224,6 +227,8 @@ CONFIG_TEMPLATE = {
         'IS_ACTIVE': False,
         'EXT_CONFIG': {},
     }],     # 加载的拓展列表
+
+    'NG_CHECK_USER_NAME_HYPHEN': False, # 检查用户名中的连字符
 
     'DEBUG_LEVEL': 0  # debug level, [0, 1, 2], 0 为关闭，等级越高debug信息越详细
 }

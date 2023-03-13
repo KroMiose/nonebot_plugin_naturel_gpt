@@ -468,6 +468,9 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         (config.REPLY_ON_NAME_MENTION and (chat.get_chat_bot_name().lower() in trigger_text.lower())) or \
         (config.REPLY_ON_AT and is_tome) or wake_up\
     ):
+        if config.NG_CHECK_USER_NAME_HYPHEN and ('-' in sender_name): # 检查用户名中的连字符, 去掉第一个连字符之前的部分
+            sender_name = sender_name.split('-', 1)[1].replace('-', '').strip()
+
         # 更新全局对话历史记录
         # chat.update_chat_history_row(sender=sender_name, msg=trigger_text, require_summary=True)
         await chat.update_chat_history_row(sender=sender_name,

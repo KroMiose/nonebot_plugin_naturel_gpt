@@ -106,7 +106,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         else:
             chat_data = ChatData(chat_key=chat_key)
             for v in config.PRESETS.values():
-                preset_data = PresetData(**dict(v))
+                preset_data = PresetData(**v)
                 chat_data.preset_datas[preset_data.bot_name] = preset_data
             
             self._datas[chat_key] = chat_data
@@ -173,7 +173,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
             presets[bot_name] = PresetData(bot_name=bot_name,
                                            bot_self_introl=config_data.bot_self_introl if config_data else '')
         else:
-            presets[bot_name].reset_to_default(config_data)
+            presets[bot_name].reset_to_default(PresetConfig(**config_data))
 
     def reset_all_system_preset(self, chat_key:str):
         """重置指定chat_key的所有系统预设的人格设定"""
