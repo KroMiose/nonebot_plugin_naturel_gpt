@@ -1,4 +1,4 @@
-﻿from typing import Dict, List, Tuple
+﻿from typing import Dict, List, Tuple, Union
 
 from nonebot.params import Matcher
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent
@@ -67,9 +67,9 @@ async def gen_chat_text(event: MessageEvent, bot:Bot) -> str:
                         msg += user_name # at segment 后面跟的消息前面一般会有个空格，不知保留是否对chatgpt对话有影响
         return msg
     
-async def get_user_name(event: MessageEvent, bot:Bot, user_id:int) -> str:
+async def get_user_name(event: Union[MessageEvent, GroupIncreaseNoticeEvent], bot:Bot, user_id:int) -> str:
     """获取QQ用户名，优先群名片"""
-    if isinstance(event, GroupMessageEvent):
+    if isinstance(event, GroupMessageEvent) or isinstance(event, GroupIncreaseNoticeEvent):
         user_info = await bot.get_group_member_info(group_id=event.group_id, user_id=user_id, no_cache=False)
         return user_info.get('card', None) or user_info.get('nickname', None)
     else:
