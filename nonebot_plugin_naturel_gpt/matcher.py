@@ -24,8 +24,8 @@ is_progress:bool = False
 
 msg_sent_set:Set[str] = set() # bot 自己发送的消息
 
-"""消息发送钩子，用于记录自己发送的消息"""
-@Bot.on_called_api
+"""消息发送钩子，用于记录自己发送的消息(默认不开启，只有在用户自定义了message_sent事件之后message_sent事件才会被发送到 on_message 回调)"""
+# @Bot.on_called_api
 async def handle_group_message_sent(bot: Bot, exception: Optional[Exception], api: str, data: Dict[str, Any], result: Any):
     global msg_sent_set
     if result and (api in ['send_msg', 'send_group_msg', 'send_private_msg']):
