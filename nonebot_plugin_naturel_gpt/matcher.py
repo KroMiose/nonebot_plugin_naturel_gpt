@@ -115,10 +115,12 @@ async def _(matcher_:Matcher, event: GroupIncreaseNoticeEvent, bot:Bot):  # even
     )
     if config.DEBUG_LEVEL > 0: logger.info(resTmplate)
 
+    user_name = await get_user_name(event=event, bot=bot, user_id=event.get_user_id()) or f'qq:{event.get_user_id()}'
+
     # 进行消息响应
     await do_msg_response(
         event.get_user_id(),
-        f'qq:{event.get_user_id()} has joined the group, welcome!',
+        f'{user_name} has joined the group, welcome!',
         event.is_tome(),
         welcome,
         chat_type,
