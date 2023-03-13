@@ -5,7 +5,7 @@ import re
 import time
 import os
 import traceback
-from typing import List, Dict, Callable, Tuple
+from typing import List, Dict, Callable, Optional, Set, Tuple
 from nonebot import get_driver
 from nonebot import on_command, on_message, on_notice
 from nonebot.log import logger
@@ -22,13 +22,31 @@ from .openai_func import TextGenerator
 permission_check_func:Callable[[Matcher, MessageEvent, Bot, str, str], Tuple[bool, str]] = None
 is_progress:bool = False
 
+msg_sent_set:Set[str] = set() # bot 自己发送的消息
+
+"""消息发送钩子，用于记录自己发送的消息"""
+@Bot.on_called_api
+async def handle_group_message_sent(bot: Bot, exception: Optional[Exception], api: str, data: Dict[str, Any], result: Any):
+    global msg_sent_set
+    if result and (api in ['send_msg', 'send_group_msg', 'send_private_msg']):
+        msg_id = result.get('message_id', None)
+        if msg_id:
+            msg_sent_set.add(f"{bot.self_id}_{msg_id}")
+
 """ ======== 注册消息响应器 ======== """
 # 注册消息响应器 收到任意消息时触发
 matcher:Matcher = on_message(priority=config.NG_MSG_PRIORITY, block=config.NG_BLOCK_OTHERS)
 @matcher.handle()
 async def handler(matcher_:Matcher, event: MessageEvent, bot:Bot) -> None:
-    if event.post_type == 'message_sent': # 自己发送的不处理
-        return
+    global msg_sent_set
+    if event.post_type == 'message_sent': # 通过bot.send发送的消息不处理
+        msg_key = f"{bot.self_id}_{event.message_id}"
+        if msg_key in msg_sent_set:
+            msg_sent_set.remove(msg_key)
+            return
+        
+    if len(msg_sent_set) > 10:
+        logger.warning(f"累积的待处理的自己发送消息数量为 {len(msg_sent_set)}, 请检查逻辑是否有错误")
     
     # 处理消息前先检查权限
     (permit_success, _) = await permission_check_func(matcher=matcher_, event=event, bot=bot, cmd=None, type='message')
