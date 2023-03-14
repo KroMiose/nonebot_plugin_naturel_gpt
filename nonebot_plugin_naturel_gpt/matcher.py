@@ -18,6 +18,7 @@ from .chat import Chat, global_chat_dict
 from .persistent_data_manager import PersistentDataManager
 from .Extension import Extension, global_extensions
 from .openai_func import TextGenerator
+from .command_func import CommandManager, cmd
 
 permission_check_func:Callable[[Matcher, MessageEvent, Bot, str, str], Tuple[bool, str]] = None
 is_progress:bool = False
@@ -178,17 +179,38 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
     chat:Chat = global_chat_dict[chat_key]
     chat_presets_dict = PersistentDataManager.instance.get_presets(chat_key)
 
-    cmd:str = arg.extract_plain_text()
-    logger.info(f"接收到指令: {cmd} | 来源: {chat_key}")
+    raw_cmd:str = arg.extract_plain_text()
+    logger.info(f"接收到指令: {raw_cmd} | 来源: {chat_key}")
     
     presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == chat.get_chat_preset_key() else k}' for k in chat_presets_dict.keys()])
 
     # 执行命令前先检查权限
-    (permit_success, permit_msg) = await permission_check_func(matcher=matcher_, event=event,bot=bot,cmd=cmd,type='cmd')
+    (permit_success, permit_msg) = await permission_check_func(matcher=matcher_, event=event,bot=bot,cmd=raw_cmd,type='cmd')
     if not permit_success:
         await identity.finish(permit_msg if permit_msg else "对不起！你没有权限进行此操作 ＞﹏＜")
 
-    if not cmd:
+    # # 执行命令 *取消注释下列行以启用新的命令执行器*
+    # res = cmd.execute(
+    #     chat=chat,
+    #     command='rg '+ raw_cmd,
+    #     chat_presets_dict=chat_presets_dict,
+    # )
+
+    # if res:
+    #     if res.get('msg'):
+    #         await identity.send(res.get('msg'))  # 如果有返回消息则发送
+
+    # else:
+    #     await identity.finish("输入的命令好像有点问题呢... 请检查下再试试吧！ ╮(>_<)╭")
+
+    # if res.get('is_progress'): # 如果有编辑进度，进行数据保存
+    #     # 更新所有全局预设到会话预设中
+    #     logger.info(f"用户: {event.get_user_id()} 进行了人格预设编辑: {cmd}")
+    #     PersistentDataManager.instance.save_to_file()  # 保存数据
+    # return
+
+    # 以下为旧的人格设定指令处理
+    if not raw_cmd:
         await identity.finish((
             f"会话: {chat_key} [{'启用' if chat.is_enable else '禁用'}]\n"
             f"当前可用人格预设有:\n"
@@ -201,7 +223,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
             f"Tip: <人格信息> 是一段第三人称的人设说明(不超过200字, 不包含空格)\n"
         ))
 
-    elif cmd in ['admin']:
+    elif raw_cmd in ['admin']:
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("您没有权限执行此操作！")
         await identity.finish((
@@ -224,8 +246,8 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
             f"Tip: <人格信息> 是一段第三人称的人设说明(建议不超过200字)\n"
         ))
 
-    elif (cmd.split(' ')[0] in ["设定", "set"]) and len(cmd.split(' ')) >= 2:
-        target_preset_key = cmd.split(' ')[1]
+    elif (raw_cmd.split(' ')[0] in ["设定", "set"]) and len(raw_cmd.split(' ')) >= 2:
+        target_preset_key = raw_cmd.split(' ')[1]
         if target_preset_key not in chat_presets_dict:
             # 如果预设不存在，进行逐一进行字符匹配，选择最相似的预设
             target_preset_key = difflib.get_close_matches(target_preset_key, chat_presets_dict.keys(), n=1, cutoff=0.3)
@@ -235,7 +257,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
                 target_preset_key = target_preset_key[0]
                 await identity.send(f"预设不存在! 已为您匹配最相似的预设: {target_preset_key} v(￣▽￣)v")
 
-        if len(cmd.split(' ')) > 2 and cmd.split(' ')[2] == '-all':
+        if len(raw_cmd.split(' ')) > 2 and raw_cmd.split(' ')[2] == '-all':
             # if str(event.user_id) not in config.ADMIN_USERID:
             #     await identity.finish("您没有权限执行此操作！")
             for chat_key in global_chat_dict.keys():
@@ -246,8 +268,8 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
             await identity.send(f"应用预设: {target_preset_key} (￣▽￣)-ok!")
         is_progress = True
 
-    elif (cmd.split(' ')[0] in ["查询", "query"]) and len(cmd.split(' ')) >= 2:
-        target_preset_key = cmd.split(' ')[1]
+    elif (raw_cmd.split(' ')[0] in ["查询", "query"]) and len(raw_cmd.split(' ')) >= 2:
+        target_preset_key = raw_cmd.split(' ')[1]
         if target_preset_key not in chat_presets_dict:
             # 如果预设不存在，进行逐一进行字符匹配，选择最相似的预设
             target_preset_key = difflib.get_close_matches(target_preset_key, chat_presets_dict.keys(), n=1, cutoff=0.3)
@@ -259,27 +281,27 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
         is_progress = True
         await identity.finish(f"预设: {target_preset_key} | 人设信息:\n    {chat_presets_dict[target_preset_key].bot_self_introl}")
 
-    elif (cmd.split(' ')[0] in ["更新", "update", "edit"]) and len(cmd.split(' ')) >= 3:
-        target_preset_key = cmd.split(' ')[1]
+    elif (raw_cmd.split(' ')[0] in ["更新", "update", "edit"]) and len(raw_cmd.split(' ')) >= 3:
+        target_preset_key = raw_cmd.split(' ')[1]
         if target_preset_key not in chat_presets_dict:
             await identity.finish("找不到匹配的人格预设! 是不是手滑了呢？(；′⌒`)")
         if chat_presets_dict[target_preset_key].is_locked and (str(event.user_id) not in config.ADMIN_USERID):
             await identity.finish("该预设被神秘力量锁定了! 不能编辑呢 (＠_＠;)")
-        chat_presets_dict[target_preset_key].bot_self_introl = cmd.split(' ', 2)[2]
+        chat_presets_dict[target_preset_key].bot_self_introl = raw_cmd.split(' ', 2)[2]
         is_progress = True
         await identity.send(f"更新预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif (cmd.split(' ')[0] in ["添加", "new"]) and len(cmd.split(' ')) >= 3:
-        target_preset_key = cmd.split(' ')[1]
-        introl = cmd.split(' ', 2)[2]
+    elif (raw_cmd.split(' ')[0] in ["添加", "new"]) and len(raw_cmd.split(' ')) >= 3:
+        target_preset_key = raw_cmd.split(' ')[1]
+        introl = raw_cmd.split(' ', 2)[2]
         if target_preset_key in chat_presets_dict:
             await identity.finish("预设已存在! 请检查后重试!")
         PersistentDataManager.instance.add_preset(chat_key=chat_key, bot_name=target_preset_key, bot_self_introl=introl)
         is_progress = True
         await identity.send(f"添加预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif (cmd.split(' ')[0] in ["删除", "del", "delete"]) and len(cmd.split(' ')) == 2:
-        target_preset_key = cmd.split(' ')[1]
+    elif (raw_cmd.split(' ')[0] in ["删除", "del", "delete"]) and len(raw_cmd.split(' ')) == 2:
+        target_preset_key = raw_cmd.split(' ')[1]
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
         if target_preset_key not in chat_presets_dict:
@@ -288,8 +310,8 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
         is_progress = True
         await identity.send(f"删除预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif (cmd.split(' ')[0] in ["锁定", "lock"]) and len(cmd.split(' ')) == 2:
-        target_preset_key = cmd.split(' ')[1]
+    elif (raw_cmd.split(' ')[0] in ["锁定", "lock"]) and len(raw_cmd.split(' ')) == 2:
+        target_preset_key = raw_cmd.split(' ')[1]
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
         if target_preset_key not in chat_presets_dict:
@@ -298,8 +320,8 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
         is_progress = True
         await identity.send(f"锁定预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif (cmd.split(' ')[0] in ["解锁", "unlock"]) and len(cmd.split(' ')) == 2:
-        target_preset_key = cmd.split(' ')[1]
+    elif (raw_cmd.split(' ')[0] in ["解锁", "unlock"]) and len(raw_cmd.split(' ')) == 2:
+        target_preset_key = raw_cmd.split(' ')[1]
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
         if target_preset_key not in chat_presets_dict:
@@ -308,7 +330,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
         is_progress = True
         await identity.send(f"解锁预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif cmd in ["拓展", "ext"]:
+    elif raw_cmd in ["拓展", "ext"]:
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
         # 查询所有拓展插件并生成汇报信息
@@ -319,38 +341,38 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
             f"当前已加载的拓展模块:\n{ext_info}"
         ))
 
-    elif cmd in ["开启", "on"]:
+    elif raw_cmd in ["开启", "on"]:
         # if event.sender.role == 'member' and str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
         chat.toggle_chat(enabled=True)
         await identity.finish("已开启会话! <(￣▽￣)>")
 
-    elif (cmd.split(' ')[0] in ["开启", "on"]) and len(cmd.split(' ')) == 2:
+    elif (raw_cmd.split(' ')[0] in ["开启", "on"]) and len(raw_cmd.split(' ')) == 2:
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
-        if cmd.split(' ')[1] == '-all':
+        if raw_cmd.split(' ')[1] == '-all':
             for c in global_chat_dict.values():
                 c.toggle_chat(enabled=True)
         await identity.finish("已开启所有会话! <(￣▽￣)>")
 
-    elif cmd in ["关闭", "off"]:
+    elif raw_cmd in ["关闭", "off"]:
         # if event.sender.role == 'member' and str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
         chat.toggle_chat(enabled=False)
         await identity.finish("已停止会话! <(＿　＿)>")
 
-    elif (cmd.split(' ')[0] in ["关闭", "off"]) and len(cmd.split(' ')) == 2:
+    elif (raw_cmd.split(' ')[0] in ["关闭", "off"]) and len(raw_cmd.split(' ')) == 2:
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
-        if cmd.split(' ')[1] == '-all':
+        if raw_cmd.split(' ')[1] == '-all':
             for c in global_chat_dict.values():
                 c.toggle_chat(enabled=False)
         await identity.finish("已停止所有会话! <(＿　＿)>")
 
-    elif (cmd.split(' ')[0] in ["重置", "reset"]) and len(cmd.split(' ')) == 2:
+    elif (raw_cmd.split(' ')[0] in ["重置", "reset"]) and len(raw_cmd.split(' ')) == 2:
         # if event.sender.role == 'member' and str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
-        target_preset_key = cmd.split(' ')[1]
+        target_preset_key = raw_cmd.split(' ')[1]
         if target_preset_key == '-all': # 重置所有预设
             chat.reset_all_chat_preset()
             await identity.finish("已重置当前会话所有预设! <(￣▽￣)>")
@@ -360,16 +382,16 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
             chat.reset_chat_preset(target_preset_key)
         await identity.finish(f"已重置当前会话预设: {target_preset_key}! <(￣▽￣)>")
 
-    elif cmd.split(' ')[0] == "debug":
+    elif raw_cmd.split(' ')[0] == "debug":
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
-        debug_cmd = cmd.split(' ')[1]
+        debug_cmd = raw_cmd.split(' ')[1]
         if debug_cmd == 'show':
             await identity.finish(str(global_chat_dict))
         elif debug_cmd == 'run':
-            await identity.finish(str(exec(cmd.split(' ', 2)[2])))
+            await identity.finish(str(exec(raw_cmd.split(' ', 2)[2])))
 
-    elif cmd in ["会话", "chats"]:
+    elif raw_cmd in ["会话", "chats"]:
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
         chat_info = ''
@@ -377,7 +399,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
             chat_info += f"+ {chat.generate_description()}"
         await identity.finish((f"当前已加载的会话:\n{chat_info}"))
 
-    elif cmd in ["记忆", "memory"] and len(cmd.split(' ')) == 1:
+    elif raw_cmd in ["记忆", "memory"] and len(raw_cmd.split(' ')) == 1:
         # 检查主动记忆拓展模块和主动记忆功能是否启用
         if not (global_extensions.get('remember') and global_extensions.get('forget') and config.MEMORY_ACTIVE):
             logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
@@ -396,7 +418,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
         )
         await identity.finish((f"当前人格记忆:\n{memory_info.split()}\n\n{command_instructions}"))
 
-    elif cmd in ["记忆", "memory"] and len(cmd.split(' ')) == 2:
+    elif raw_cmd in ["记忆", "memory"] and len(raw_cmd.split(' ')) == 2:
         # 检查主动记忆拓展模块和主动记忆功能是否启用
         if not (global_extensions.get('remember') and global_extensions.get('forget') and config.MEMORY_ACTIVE):
             logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
@@ -404,7 +426,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
 
-    elif cmd.split(' ')[0] in ["记忆", "memory"] and len(cmd.split(' ')) >= 3:
+    elif raw_cmd.split(' ')[0] in ["记忆", "memory"] and len(raw_cmd.split(' ')) >= 3:
         # 检查主动记忆拓展模块和主动记忆功能是否启用
         if not (global_extensions.get('remember') and global_extensions.get('forget') and config.MEMORY_ACTIVE):
             logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
@@ -413,13 +435,13 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
         # 检查是否存在记忆
         # 检查操作
-        if cmd.split(' ')[1] in ["删除", "del", "delete"]:
+        if raw_cmd.split(' ')[1] in ["删除", "del", "delete"]:
             # 检查是否存在记忆
-            if cmd.split(' ', 2)[2] not in chat.chat_preset.chat_memory:
-                await identity.finish(f"找不到记忆: {cmd.split(' ', 2)[2]}")
-            chat.set_memory(cmd.split(' ', 2)[2], None)
-            await identity.finish(f"已删除记忆: {cmd.split(' ', 2)[2]}")
-        elif cmd.split(' ')[0] in ["记忆", "memory"] and len(cmd.split(' ')) == 4:
+            if raw_cmd.split(' ', 2)[2] not in chat.chat_preset.chat_memory:
+                await identity.finish(f"找不到记忆: {raw_cmd.split(' ', 2)[2]}")
+            chat.set_memory(raw_cmd.split(' ', 2)[2], None)
+            await identity.finish(f"已删除记忆: {raw_cmd.split(' ', 2)[2]}")
+        elif raw_cmd.split(' ')[0] in ["记忆", "memory"] and len(raw_cmd.split(' ')) == 4:
             # 检查主动记忆拓展模块和主动记忆功能是否启用
             if not (global_extensions.get('remember') and global_extensions.get('forget') and config.MEMORY_ACTIVE):
                 logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
@@ -427,16 +449,16 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
             # if str(event.user_id) not in config.ADMIN_USERID:
             #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
             # 检查操作
-            if cmd.split(' ')[1] in ["编辑", "edit", "update", "set"]:
-                chat.set_memory(cmd.split(' ')[2], cmd.split(' ')[3])
-                await identity.finish(f"编辑记忆: {cmd.split(' ')[2]} 成功! (￣▽￣)")
+            if raw_cmd.split(' ')[1] in ["编辑", "edit", "update", "set"]:
+                chat.set_memory(raw_cmd.split(' ')[2], raw_cmd.split(' ')[3])
+                await identity.finish(f"编辑记忆: {raw_cmd.split(' ')[2]} 成功! (￣▽￣)")
 
     else:
         await identity.finish("输入的命令好像有点问题呢... 请检查下再试试吧！ ╮(>_<)╭")
 
     if is_progress: # 如果有编辑进度，进行数据保存
         # 更新所有全局预设到会话预设中
-        logger.info(f"用户: {event.get_user_id()} 进行了人格预设编辑: {cmd}")
+        logger.info(f"用户: {event.get_user_id()} 进行了人格预设编辑: {raw_cmd}")
         PersistentDataManager.instance.save_to_file()  # 保存数据
 
 """ ======== 消息响应方法 ======== """
