@@ -30,7 +30,10 @@ class CustomExtension(Extension):
             arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值}
         """
         custom_config:dict = self.get_custom_config()  # 获取yaml中的配置信息
-
+        proxy = str(custom_config.get('proxy', ''))
+        if proxy:
+            if not proxy.startswith('http'):
+                proxy = 'http://' + proxy        
         # 从arg_dict中获取参数
         keyword = arg_dict.get('keyword', None)
 
@@ -45,7 +48,7 @@ class CustomExtension(Extension):
 
         url = f"https://ddg-webapp-aagd.vercel.app/search?q={keyword}&max_results=3&region=cn-zh"
 
-        res = requests.get(url, headers=headers)
+        res = requests.get(url, headers=headers,proxies={'http':proxy})
         print(res.json())
         
         try:
