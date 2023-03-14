@@ -296,7 +296,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
         introl = raw_cmd.split(' ', 2)[2]
         if target_preset_key in chat_presets_dict:
             await identity.finish("预设已存在! 请检查后重试!")
-        PersistentDataManager.instance.add_preset(chat_key=chat_key, bot_name=target_preset_key, bot_self_introl=introl)
+        PersistentDataManager.instance.add_preset(chat_key=chat_key, preset_key=target_preset_key, bot_self_introl=introl)
         is_progress = True
         await identity.send(f"添加预设: {target_preset_key} 成功! (￣▽￣)")
 

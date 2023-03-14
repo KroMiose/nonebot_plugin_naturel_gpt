@@ -53,4 +53,4 @@ proxy=config.OPENAI_PROXY_SERVER if config.OPENAI_PROXY_SERVER else None # 代�
 
 """ ======== 加载拓展模块 ======== """
 # Extension 模块有作为 __main__ 执行的需求，此时无法加载 class Config, 因此需要传递字典
-load_extensions(dict(config))
+load_extensions(config.dict())

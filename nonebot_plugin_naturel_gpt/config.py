@@ -13,7 +13,7 @@ class GlobalConfig(nonebot.Config, extra=Extra.ignore):
 
 class PresetConfig(BaseModel, extra=Extra.ignore):
     """人格预设配置项"""
-    bot_name:str
+    preset_key:str
     is_locked:bool = False
     is_default:bool = False
     is_only_private:bool = False
@@ -32,7 +32,7 @@ class Config(BaseModel, extra=Extra.ignore):
     """OpenAI API Key 列表"""
     OPENAI_TIMEOUT: int
     """OpenAI 请求超时时间"""
-    PRESETS: Dict[str, Dict[str, Any]] #  Dict[str, PresetConfig], `Config.parse_object()`` 不会解析二级数据类型，因此无法定义 PresetConfig
+    PRESETS: Dict[str, PresetConfig]
     """默认人格预设"""
     IGNORE_PREFIX: str
     """忽略前缀 以该前缀开头的消息将不会被处理"""
@@ -124,7 +124,7 @@ class Config(BaseModel, extra=Extra.ignore):
     UNLOCK_CONTENT_LIMIT: bool
     """解锁内容限制"""
 
-    NG_EXT_LOAD_LIST: List[Dict[str, Any]] # List[ExtConfig], `Config.parse_object()`` 不会解析二级数据类型
+    NG_EXT_LOAD_LIST: List[ExtConfig]
     """加载的拓展列表"""
 
     NG_CHECK_USER_NAME_HYPHEN:bool # 如果用户名中包含连字符，ChatGPT会将前半部分识别为名字，但一般情况下后半部分才是我们想被称呼的名字, eg. 策划-李华
@@ -142,28 +142,28 @@ CONFIG_TEMPLATE = {
     "OPENAI_TIMEOUT": 30,   # OpenAI 请求超时时间
     "PRESETS": {
         "白羽": {
-            'bot_name': '白羽',  # 人格名称
+            'preset_key': '白羽',  # 人格名称
             'is_locked': True,  # 是否锁定人格，锁定后无法编辑人格
             'is_default': True,  # 是否为默认人格
             "is_only_private": False,
             'bot_self_introl': '白羽是一名喜欢二次元的中二宅女，她机智、傲娇，对人类充满好奇，习惯以白羽喵自称，聊天时喜欢使用各种可爱的颜文字，如果冒犯到她会生气。',
         },
         "浅枫": {
-            'bot_name': '浅枫',
+            'preset_key': '浅枫',
             'is_locked': False,
             'is_default': False,
             "is_only_private": False,
             'bot_self_introl': '浅枫酱是一名尽职尽责的女仆，她能够帮助主人做很多事情，对话中会体现出对主人的体贴与关心。',
         },
         "忆雨": {
-            'bot_name': '忆雨',
+            'preset_key': '忆雨',
             'is_locked': True,
             'is_default': False,
             "is_only_private": False,
             'bot_self_introl': '忆雨是一名恐怖小说作家，是个阴沉的女孩，她非常恨人类，和陌生人聊天时的表现冷漠，不喜欢回复过多的文字，兴趣是恐怖小说，如果有人和她探讨如何消灭人类会很有兴致。',
         },
         "可洛喵": {
-            'bot_name': '可洛喵',
+            'preset_key': '可洛喵',
             'is_locked': True,
             'is_default': False,
             "is_only_private": False,
@@ -241,9 +241,6 @@ config_path = global_config.ng_config_path
 if not Path("config").exists():
     Path("config").mkdir()
 
-# 无论如何先用模板文件初始化config对象，防止配置文件里缺少某些配置项
-config = Config.parse_obj(CONFIG_TEMPLATE)
-
 if global_config.ng_dev_mode:  # 开发模式下不读取原配置文件，直接使用模板覆盖原配置文件
     with open(config_path, 'w', encoding='utf-8') as f:
         yaml.dump(CONFIG_TEMPLATE, f, allow_unicode=True)
@@ -258,18 +255,20 @@ else:
 with open(config_path, 'r', encoding='utf-8') as f:
     try:
         config_obj_from_file:Dict = yaml.load(f, Loader=yaml.FullLoader)
+        # 兼容 preset_key 和 bot_name
+        for v in config_obj_from_file["PRESETS"]:
+            if "preset_key" not in v:
+                v["preset_key"] = v["bot_name"]
     except Exception as e:
         logger.error(f"Naturel GPT 配置文件读取失败，请检查配置文件填写是否符合yml文件格式规范，错误信息：{e}")
         raise e
     
-    for k in dict(config).keys():
+    for k in CONFIG_TEMPLATE.keys():
         if not k in config_obj_from_file.keys():
+            config_obj_from_file[k] = CONFIG_TEMPLATE[k]
             logger.info(f"Naturel GPT 配置文件缺少 {k} 项，将使用默认值")
 
-    # 将文件中的数据覆盖到config变量中
-    for k, v in config_obj_from_file.items():
-        if hasattr(config, k):
-            setattr(config, k, v)
+    config = Config.parse_obj(config_obj_from_file)
 
 # 检查数据文件夹目录、拓展目录、日志目录是否存在 不存在则创建
 if not Path(config.NG_DATA_PATH[:-1]).exists():
@@ -281,5 +280,5 @@ if not Path(config.NG_LOG_PATH[:-1]).exists():
 
 # 保存配置文件
 with open(config_path, 'w', encoding='utf-8') as f:
-    yaml.dump(dict(config), f, allow_unicode=True)
+    yaml.dump(config.dict(), f, allow_unicode=True, sort_keys=False)
 logger.info('Naturel GPT 配置文件加载成功')
