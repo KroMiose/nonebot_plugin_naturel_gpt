@@ -171,7 +171,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         presets = self.get_presets(chat_key)
         if bot_name not in presets:
             presets[bot_name] = PresetData(bot_name=bot_name,
-                                           bot_self_introl=config_data.bot_self_introl if config_data else '')
+                                           bot_self_introl=config_data.get('bot_self_introl','') if config_data else '')
         else:
             presets[bot_name].reset_to_default(PresetConfig(**config_data) if config_data else None) # reset 非系统预设时 config_data 为None
 
