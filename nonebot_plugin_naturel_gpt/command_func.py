@@ -76,7 +76,7 @@ class CommandManager:
         target_route = ''
         for route, params_list in self.command_router.items():
             params_list = params_list['arg_list']
-            print(f"command route matching: {route} => {params_list}")
+            # print(f"command route matching: {route} => {params_list}")
             try:
                 if '/'.join(cmd_list).startswith(route):
                     param_dict = {}
@@ -178,7 +178,6 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
         else:
             target_preset_key = target_preset_key[0]
             # return {'msg': f"预设不存在! 已为您匹配最相似的预设: {target_preset_key} v(￣▽￣)v"}
-
     return {'msg': f"预设: {target_preset_key} |\n  {chat_presets_dict[target_preset_key].bot_self_introl}"}
 
 @cmd.register(route='rg/new', params=['preset_key', 'preset_intro'])
@@ -189,7 +188,7 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     if option_dict.get('global'):   # 全局应用
         for chat_key in global_chat_dict.keys():
             try:
-                PersistentDataManager.instance.add_preset(chat_key=chat_key, preset_key=target_preset_key, bot_self_introl=bot_self_introl)
+                PersistentDataManager.instance.add_preset(chat_key=chat_key, bot_name=target_preset_key, bot_self_introl=bot_self_introl)
             except Exception as e:  # 遇到错误跳过
                 pass
         return {'msg': f"添加预设: {target_preset_key} (￣▽￣)-ok! (所有会话)", 'is_progress': True}
@@ -197,28 +196,75 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
         target_chat_key = option_dict.get('target')
         if target_chat_key not in global_chat_dict:
             return {'msg': f"会话: {target_chat_key} 不存在! (；′⌒`)"}
-        PersistentDataManager.instance.add_preset(chat_key=target_chat_key, preset_key=target_preset_key, bot_self_introl=bot_self_introl)
+        PersistentDataManager.instance.add_preset(chat_key=target_chat_key, bot_name=target_preset_key, bot_self_introl=bot_self_introl)
         return {'msg': f"添加预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key})", 'is_progress': True}
     else:   # 当前会话应用
-        PersistentDataManager.instance.add_preset(chat_key=chat.get_chat_key(), preset_key=target_preset_key, bot_self_introl=bot_self_introl)
+        PersistentDataManager.instance.add_preset(chat_key=chat.get_chat_key(), bot_name=target_preset_key, bot_self_introl=bot_self_introl)
         return {'msg': f"添加预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
 
 @cmd.register(route='rg/edit', params=['preset_key', 'preset_intro'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     target_preset_key = param_dict['preset_key']
     bot_self_introl = param_dict.get('preset_intro', '')
+    
+    if option_dict.get('global'):   # 全局应用
+        for chat_key in global_chat_dict.keys():
+            try:
+                PersistentDataManager.instance.update_preset(chat_key=chat_key, bot_name=target_preset_key, bot_self_introl=bot_self_introl)
+            except Exception as e:  # 遇到错误跳过
+                pass
+        return {'msg': f"编辑预设: {target_preset_key} (￣▽￣)-ok! (所有会话)", 'is_progress': True}
+    elif option_dict.get('target'): # 指定会话应用
+        target_chat_key = option_dict.get('target')
+        if target_chat_key not in global_chat_dict:
+            return {'msg': f"会话: {target_chat_key} 不存在! (；′⌒`)"}
+        PersistentDataManager.instance.update_preset(chat_key=target_chat_key, bot_name=target_preset_key, bot_self_introl=bot_self_introl)
+        return {'msg': f"编辑预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key})", 'is_progress': True}
+    else:   # 当前会话应用
+        PersistentDataManager.instance.update_preset(chat_key=chat.get_chat_key(), bot_name=target_preset_key, bot_self_introl=bot_self_introl)
+        return {'msg': f"编辑预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
 
 @cmd.register(route='rg/del', params=['preset_key'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
-    print('rg/del')
-    print('options:', option_dict)
-    print('param:', param_dict)
+    target_preset_key = param_dict['preset_key']
+
+    if option_dict.get('global'):   # 全局应用
+        for chat_key in global_chat_dict.keys():
+            try:
+                PersistentDataManager.instance.del_preset(chat_key=chat_key, bot_name=target_preset_key)
+            except Exception as e:
+                pass
+        return {'msg': f"删除预设: {target_preset_key} (￣▽￣)-ok! (所有会话)", 'is_progress': True}
+    elif option_dict.get('target'): # 指定会话应用
+        target_chat_key = option_dict.get('target')
+        if target_chat_key not in global_chat_dict:
+            return {'msg': f"会话: {target_chat_key} 不存在! (；′⌒`)"}
+        PersistentDataManager.instance.del_preset(chat_key=target_chat_key, bot_name=target_preset_key)
+        return {'msg': f"删除预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key})", 'is_progress': True}
+    else:   # 当前会话应用
+        PersistentDataManager.instance.del_preset(chat_key=chat.get_chat_key(), bot_name=target_preset_key)
+        return {'msg': f"删除预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
 
 @cmd.register(route='rg/reset', params=['preset_key'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
-    print('rg/reset')
-    print('options:', option_dict)
-    print('param:', param_dict)
+    target_preset_key = param_dict['preset_key']
+
+    if option_dict.get('global'):   # 全局应用
+        for chat_key in global_chat_dict.keys():
+            try:
+                PersistentDataManager.instance.reset_preset(chat_key=chat_key, bot_name=target_preset_key)
+            except Exception as e:
+                pass
+        return {'msg': f"重置预设: {target_preset_key} (￣▽￣)-ok! (所有会话)", 'is_progress': True}
+    elif option_dict.get('target'): # 指定会话应用
+        target_chat_key = option_dict.get('target')
+        if target_chat_key not in global_chat_dict:
+            return {'msg': f"会话: {target_chat_key} 不存在! (；′⌒`)"}
+        PersistentDataManager.instance.reset_preset(chat_key=target_chat_key, bot_name=target_preset_key)
+        return {'msg': f"重置预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key})", 'is_progress': True}
+    else:   # 当前会话应用
+        PersistentDataManager.instance.reset_preset(chat_key=chat.get_chat_key(), bot_name=target_preset_key)
+        return {'msg': f"重置预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
 
 # 提交指令注册
 cmd.submit_commands()
