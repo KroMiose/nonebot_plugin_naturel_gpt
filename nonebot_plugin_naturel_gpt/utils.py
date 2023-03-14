@@ -71,6 +71,11 @@ async def get_user_name(event: Union[MessageEvent, GroupIncreaseNoticeEvent], bo
     """获取QQ用户名，优先群名片"""
     if isinstance(event, GroupMessageEvent) or isinstance(event, GroupIncreaseNoticeEvent):
         user_info = await bot.get_group_member_info(group_id=event.group_id, user_id=user_id, no_cache=False)
-        return user_info.get('card', None) or user_info.get('nickname', None)
+        user_name = user_info.get('card', None) or user_info.get('nickname', None)
     else:
-        return event.sender.nickname
+        user_name = event.sender.nickname
+
+    if user_name and config.NG_CHECK_USER_NAME_HYPHEN and ('-' in user_name): # 检查用户名中的连字符, 去掉第一个连字符之前的部分
+        user_name = user_name.split('-', 1)[1].replace('-', '').strip()
+        
+    return user_name
