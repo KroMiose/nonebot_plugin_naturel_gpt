@@ -34,8 +34,8 @@ class PresetData:
     def reset_to_default(self, preset_config:PresetConfig):
         """清空数据，并将人格设定为config_data中的值(如果存在的话)"""
         if preset_config is not None:
-            if preset_config.bot_name != self.bot_name:
-                raise Exception(f"wrong bot_name, expect `{self.bot_name}` but get `{preset_config.bot_name}`")
+            if preset_config.preset_key != self.bot_name:
+                raise Exception(f"wrong bot_name, expect `{self.bot_name}` but get `{preset_config.preset_key}`")
             
             # self.bot_self_introl    = config_data.bot_self_introl
             self.is_locked          = preset_config.is_locked
@@ -116,7 +116,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         """获取指定chat_key的人格数据集合, 不存在时从配置模板的预设列表自动创建"""
 
         chat_data = self.get_chat_data(chat_key=chat_key)
-        return chat_data.preset_datas if chat_data else None
+        return chat_data.preset_datas
         
     def get_active_preset_name(self, chat_key:str) ->str:
         """获取指定chat_key当前preset_name"""
@@ -125,60 +125,59 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         else:
             return None
         
-    def add_preset(self, chat_key:str, bot_name:str, bot_self_introl: str) -> bool:
+    def add_preset(self, chat_key:str, preset_key:str, bot_self_introl: str) -> bool:
         """给指定chat_key添加新人格"""
         presets = self.get_presets(chat_key)
-        if bot_name in presets:
+        if preset_key in presets:
             return False
 
-        presets[bot_name] = PresetData(bot_name=bot_name, bot_self_introl=bot_self_introl)
+        presets[preset_key] = PresetData(bot_name=preset_key, bot_self_introl=bot_self_introl)
         return True
     
-    def add_preset_from_config(self, chat_key:str, bot_name:str, config_preset: PresetConfig) -> bool:
+    def add_preset_from_config(self, chat_key:str, preset_key:str, preset_config: PresetConfig) -> bool:
         """给指定chat_key添加新人格, config_preset为config中的全局配置"""
         presets = self.get_presets(chat_key)
-        if bot_name in presets:
+        if preset_key in presets:
             return False
 
-        presets[bot_name] = PresetData(**dict(config_preset))
+        presets[preset_key] = PresetData(**dict(preset_config))
         # 更新默认值
-        if config_preset.is_default:
+        if preset_config.is_default:
             for v in presets.values():
-                v.is_default = v.bot_name == bot_name
+                v.is_default = v.bot_name == preset_key
         return True
     
-    def update_preset(self, chat_key:str, bot_name:str, bot_self_introl: str) -> bool:
+    def update_preset(self, chat_key:str, preset_key:str, bot_self_introl: str) -> bool:
         """修改指定chat_key人格预设"""
         presets = self.get_presets(chat_key)
-        if bot_name not in presets:
+        if preset_key not in presets:
             return False
         
-        presets[bot_name].bot_self_introl = bot_self_introl
+        presets[preset_key].bot_self_introl = bot_self_introl
 
-    def del_preset(self, chat_key:str, bot_name:str) -> bool:
+    def del_preset(self, chat_key:str, preset_key:str) -> bool:
         """删除指定chat_key的指定性格(允许删除系统人格)"""
         presets = self.get_presets(chat_key)
-        if bot_name not in presets:
+        if preset_key not in presets:
             return False
         
-        del presets[bot_name]
+        del presets[preset_key]
         return True
     
-    def reset_preset(self, chat_key:str, bot_name:str):
+    def reset_preset(self, chat_key:str, preset_key:str) -> bool:
         """重置指定chat_key系统预设的人格设定, 如果是系统预设名将还原默认人格设定"""
-        config_data = config.PRESETS[bot_name] if bot_name in config.PRESETS else None
+        preset_config = config.PRESETS.get(preset_key, None)
         
-        presets = self.get_presets(chat_key)
-        if bot_name not in presets:
-            presets[bot_name] = PresetData(bot_name=bot_name,
-                                           bot_self_introl=config_data.get('bot_self_introl','') if config_data else '')
-        else:
-            presets[bot_name].reset_to_default(PresetConfig(**config_data) if config_data else None) # reset 非系统预设时 config_data 为None
+        preset_datas = self.get_presets(chat_key)
+        if preset_key not in preset_datas:
+            return False
+        preset_datas[preset_key].reset_to_default(preset_config)
+        return True
 
     def reset_all_system_preset(self, chat_key:str):
         """重置指定chat_key的所有系统预设的人格设定"""
         for k in config.PRESETS.keys():
-            self.reset_preset(chat_key=chat_key, bot_name=k)
+            self.reset_preset(chat_key=chat_key, preset_key=k)
 
     def update_all_system_identity_presets():
         """配置文件更新时将新的人格数据同步到已有chat_key中"""
