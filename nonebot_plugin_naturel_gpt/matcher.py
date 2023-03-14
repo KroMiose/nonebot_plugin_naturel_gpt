@@ -189,25 +189,25 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
     if not permit_success:
         await identity.finish(permit_msg if permit_msg else "对不起！你没有权限进行此操作 ＞﹏＜")
 
-    # 执行命令 *取消注释下列行以启用新的命令执行器*
-    res = cmd.execute(
-        chat=chat,
-        command='rg '+ raw_cmd,
-        chat_presets_dict=chat_presets_dict,
-    )
+    # # 执行命令 *取消注释下列行以启用新的命令执行器*
+    # res = cmd.execute(
+    #     chat=chat,
+    #     command='rg '+ raw_cmd,
+    #     chat_presets_dict=chat_presets_dict,
+    # )
 
-    if res:
-        if res.get('msg'):
-            await identity.send(res.get('msg'))  # 如果有返回消息则发送
+    # if res:
+    #     if res.get('msg'):
+    #         await identity.send(res.get('msg'))  # 如果有返回消息则发送
 
-    else:
-        await identity.finish("输入的命令好像有点问题呢... 请检查下再试试吧！ ╮(>_<)╭")
+    # else:
+    #     await identity.finish("输入的命令好像有点问题呢... 请检查下再试试吧！ ╮(>_<)╭")
 
-    if res.get('is_progress'): # 如果有编辑进度，进行数据保存
-        # 更新所有全局预设到会话预设中
-        logger.info(f"用户: {event.get_user_id()} 进行了人格预设编辑: {cmd}")
-        PersistentDataManager.instance.save_to_file()  # 保存数据
-    return
+    # if res.get('is_progress'): # 如果有编辑进度，进行数据保存
+    #     # 更新所有全局预设到会话预设中
+    #     logger.info(f"用户: {event.get_user_id()} 进行了人格预设编辑: {cmd}")
+    #     PersistentDataManager.instance.save_to_file()  # 保存数据
+    # return
 
     # 以下为旧的人格设定指令处理
     if not raw_cmd:
