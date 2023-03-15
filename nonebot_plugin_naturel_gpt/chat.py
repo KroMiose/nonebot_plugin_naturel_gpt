@@ -10,10 +10,6 @@ from .openai_func import TextGenerator
 from .persistent_data_manager import ImpressionData, PersistentDataManager, ChatData, PresetData
 from .Extension import Extension, global_extensions
 
-# presets_dict # 全局预设？可以改为 config["PRESETS"][preset_key]
-# global_preset_userdata:dict # 全局持久化数据 [preset_key][user_id/chat_key][chat_history], 可以改为 PersistentDataManager
-
-
 # 会话类
 class Chat:
     """ ======== 定义会话类 ======== """
@@ -316,3 +312,9 @@ class Chat:
 
 global_chat_dict:Dict[str, Chat] = {}
 """进程中存在的所有聊天Session"""
+
+def create_all_chat_object():
+    """创建所有的已有Chat对象"""
+    for k in PersistentDataManager.instance.get_all_chat_keys():
+        if k not in global_chat_dict:
+            global_chat_dict[k] = Chat(k)

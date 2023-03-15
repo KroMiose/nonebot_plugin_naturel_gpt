@@ -93,9 +93,13 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         self._last_save_data_time = time.time()
         logger.info("数据保存成功")
 
-    def get_preset_names(self, chat_key:str) -> Set[str]:
+    def get_all_chat_keys(self):
+        """返回所有的chat_key"""
+        return self._datas.keys()
+
+    def get_preset_names(self, chat_key:str):
         """获取指定chat_key的人格名称列表"""
-        return self._datas[chat_key].preset_datas.keys() if chat_key in self._datas else {}
+        return self._datas[chat_key].preset_datas.keys() if chat_key in self._datas else []
 
 
     def get_chat_data(self, chat_key:str) -> ChatData:
