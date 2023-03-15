@@ -1,6 +1,7 @@
 from nonebot.log import logger
 from .chat import Chat, global_chat_dict
 from .persistent_data_manager import PersistentDataManager
+from .Extension import Extension, global_extensions
 
 import difflib
 
@@ -38,7 +39,10 @@ class CommandManager:
         option_dict, param_dict, target_route = self.resolve_command(command)
         logger.info(f'指令匹配路由: {target_route}')
         if target_route:
-            return self.command_router[target_route]['func'](option_dict, param_dict, chat, chat_presets_dict)
+            try:
+                return self.command_router[target_route]['func'](option_dict, param_dict, chat, chat_presets_dict)
+            except Exception as e:
+                return {'error': e}
         return False
 
     def submit_commands(self):
@@ -108,18 +112,14 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
                 f"当前可用人格预设有:\n"
                 f"{presets_show_text}\n"
                 f"=======================\n"
-                f"+ 使用预设: rg <设定/set> <预设名> <-all?>\n"
-                f"+ 查询预设: rg <查询/query> <预设名>\n"
-                f"+ 更新预设: rg <更新/update> <预设名> <人格信息>\n"
-                f"+ 添加预设: rg <添加/new> <预设名> <人格信息>\n"
-                f"+ 删除预设(管理): rg 删除 <预设名>\n"
-                f"+ 锁定预设(管理): rg 锁定 <预设名>\n"
-                f"+ 解锁预设(管理): rg 解锁 <预设名>\n"
-                f"+ 开启会话(管理): rg <开启/on> <-all?>\n"
-                f"+ 停止会话(管理): rg <关闭/off> <-all?>\n"
+                f"+ 使用预设: rg set <预设名> <-global?>\n"
+                f"+ 查询预设: rg query <预设名>\n"
+                f"+ 编辑预设: rg update <预设名> <人格信息> <-global?>\n"
+                f"+ 添加预设: rg new <预设名> <人格信息> <-global?>\n"
+                f"+ 删除预设(管理): rg del <预设名> <-global?>\n"
+                f"+ 开关会话(管理): rg <on/off> <-global?>\n"
+                f"+ 重置会话(管理): rg <重置/reset> <-global?>\n"
                 f"+ 查询会话(管理): rg <会话/chats>\n"
-                f"+ 重置会话(管理): rg <重置/reset> <-all?>\n"
-                f"+ 查询记忆(管理): rg <记忆/memory>\n"
                 f"+ 拓展信息(管理): rg <拓展/ext>\n"
                 f"Tip: <人格信息> 是一段第三人称的人设说明(建议不超过200字)\n"
             )
@@ -131,10 +131,10 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
                 f"当前可用人格预设有:\n"
                 f"{presets_show_text}\n"
                 f"=======================\n"
-                f"+ 使用预设: rg 设定 <预设名>\n"
-                f"+ 查询预设: rg 查询 <预设名>\n"
-                f"+ 更新预设: rg 更新 <预设名> <人格信息>\n"
-                f"+ 添加预设: rg 添加 <预设名> <人格信息>\n"
+                f"+ 使用预设: rg set <预设名>\n"
+                f"+ 查询预设: rg query <预设名>\n"
+                f"+ 编辑预设: rg edit <预设名> <人格信息>\n"
+                f"+ 添加预设: rg new <预设名> <人格信息>\n"
                 f"Tip: <人格信息> 是一段第三人称的人设说明(不超过200字, 不包含空格)\n"
             )
         }
@@ -266,36 +266,52 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
         PersistentDataManager.instance.reset_preset(chat_key=chat.get_chat_key(), bot_name=target_preset_key)
         return {'msg': f"重置预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
 
-@cmd.register(route='rg/on', params=['preset_key'])
+@cmd.register(route='rg/on')
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     if option_dict.get('global'):
         for chat in global_chat_dict.values():
             chat.toggle_chat(enabled=True)
-        return {'msg': f"启用所有会话 (￣▽￣)-ok!", 'is_progress': True}
+        return {'msg': f"启用所有会话 (￣▽￣)-ok!"}
     elif option_dict.get('target'):
         global_chat_dict[option_dict.get('target')].toggle_chat(enabled=True)
+        return {'msg': f"启用会话: {option_dict.get('target')} (￣▽￣)-ok!"}
     else:
         chat.toggle_chat(enabled=True)
+        return {'msg': f"启用当前会话 (￣▽￣)-ok!"}
 
-@cmd.register(route='rg/off', params=['preset_key'])
+@cmd.register(route='rg/off')
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     if option_dict.get('global'):
         for chat in global_chat_dict.values():
             chat.toggle_chat(enabled=False)
-        return {'msg': f"禁用所有会话 (￣▽￣)-ok!", 'is_progress': True}
+        return {'msg': f"禁用所有会话 (￣▽￣)-ok!"}
     elif option_dict.get('target'):
         global_chat_dict[option_dict.get('target')].toggle_chat(enabled=False)
+        return {'msg': f"禁用会话: {option_dict.get('target')} (￣▽￣)-ok!"}
     else:
         chat.toggle_chat(enabled=False)
+        return {'msg': f"禁用当前会话 (￣▽￣)-ok!"}
 
+@cmd.register(route='rg/ext')
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    ext_info:str = ''
+    for ext in global_extensions.values():
+        ext_info += f"  {ext.generate_short_description()}"
+    return {'msg': f"已加载的扩展:\n{ext_info}"}
+
+@cmd.register(route='rg/chats')
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    chat_info:str = ''
+    for chat in global_chat_dict.values():
+        chat_info += f"+ {chat.generate_description()}"
+    return {'msg': f"当前已加载的会话:\n{chat_info}"}
 
 # 提交指令注册
 cmd.submit_commands()
 
-if __name__ == '__main__':
-    print(cmd.execute(
-        command='rg new -target group_123456 test test_intro 123',
-        chat=None,
-        chat_presets_dict={},
-    ))
-
+# if __name__ == '__main__':
+#     print(cmd.execute(
+#         command='rg new -target group_123456 test test_intro 123',
+#         chat=None,
+#         chat_presets_dict={},
+#     ))

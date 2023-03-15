@@ -199,6 +199,8 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
     if res:
         if res.get('msg'):
             await identity.send(res.get('msg'))  # 如果有返回消息则发送
+        elif res.get('error'):
+            await identity.finish(f"执行命令时出现错误: {res.get('error')}")  # 如果有返回错误则发送
 
     else:
         await identity.finish("输入的命令好像有点问题呢... 请检查下再试试吧！ ╮(>_<)╭")
