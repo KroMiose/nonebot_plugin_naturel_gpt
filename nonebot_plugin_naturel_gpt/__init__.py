@@ -14,6 +14,7 @@ from .openai_func import TextGenerator
 from .Extension import load_extensions
 from .persistent_data_manager import PersistentDataManager
 from . import matcher
+from . import chat
 
 
 global_data_path = f"{config.NG_DATA_PATH}naturel_gpt.pkl"
@@ -27,6 +28,7 @@ set_permission_check_func(utils.default_permission_check_func)
 
 """ ======== 读取历史记忆数据 ======== """
 PersistentDataManager.instance.load_from_file(global_data_path)
+chat.create_all_chat_object() # 启动时创建所有的已有Chat对象，以便被 -all 相关指令控制
 
 # 读取ApiKeys
 api_keys = config.OPENAI_API_KEYS
