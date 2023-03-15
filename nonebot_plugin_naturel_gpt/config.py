@@ -256,7 +256,7 @@ with open(config_path, 'r', encoding='utf-8') as f:
     try:
         config_obj_from_file:Dict = yaml.load(f, Loader=yaml.FullLoader)
         # 兼容 preset_key 和 bot_name
-        for v in config_obj_from_file["PRESETS"]:
+        for v in config_obj_from_file["PRESETS"].values():
             if "preset_key" not in v:
                 v["preset_key"] = v["bot_name"]
     except Exception as e:
