@@ -266,6 +266,29 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
         PersistentDataManager.instance.reset_preset(chat_key=chat.get_chat_key(), bot_name=target_preset_key)
         return {'msg': f"重置预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
 
+@cmd.register(route='rg/on', params=['preset_key'])
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    if option_dict.get('global'):
+        for chat in global_chat_dict.values():
+            chat.toggle_chat(enabled=True)
+        return {'msg': f"启用所有会话 (￣▽￣)-ok!", 'is_progress': True}
+    elif option_dict.get('target'):
+        global_chat_dict[option_dict.get('target')].toggle_chat(enabled=True)
+    else:
+        chat.toggle_chat(enabled=True)
+
+@cmd.register(route='rg/off', params=['preset_key'])
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    if option_dict.get('global'):
+        for chat in global_chat_dict.values():
+            chat.toggle_chat(enabled=False)
+        return {'msg': f"禁用所有会话 (￣▽￣)-ok!", 'is_progress': True}
+    elif option_dict.get('target'):
+        global_chat_dict[option_dict.get('target')].toggle_chat(enabled=False)
+    else:
+        chat.toggle_chat(enabled=False)
+
+
 # 提交指令注册
 cmd.submit_commands()
 
