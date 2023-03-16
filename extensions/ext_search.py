@@ -15,9 +15,11 @@ ext_config:dict = {
     # 每次消息回复中最大调用次数，不填则默认为99
     "max_call_times_per_msg": 5,
     # 作者信息
-    "author": "KroMiose",
+    "author": "CCYellowStar",
     # 版本
-    "version": "0.0.1"
+    "version": "0.0.1",
+    # 拓展简介
+    "intro": "让机器人openai能搜索信息",
 }
 
 class CustomExtension(Extension):
@@ -28,7 +30,10 @@ class CustomExtension(Extension):
             arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值}
         """
         custom_config:dict = self.get_custom_config()  # 获取yaml中的配置信息
-
+        proxy = str(custom_config.get('proxy', ''))
+        if proxy:
+            if not proxy.startswith('http'):
+                proxy = 'http://' + proxy        
         # 从arg_dict中获取参数
         keyword = arg_dict.get('keyword', None)
 
@@ -41,26 +46,27 @@ class CustomExtension(Extension):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63'
         }
 
-        url = f"http://baike.baidu.com/api/openapi/BaikeLemmaCardApi?scope=103&format=json&appid=379020&bk_key={quote}_length=600"
+        url = f"https://ddg-webapp-aagd.vercel.app/search?q={keyword}&max_results=3&region=cn-zh"
 
-        res = requests.get(url, headers=headers)
-        print(res.json())   # todo 此处拿不到数据，原因暂时不明
+        res = requests.get(url, headers=headers,proxies={'http':proxy})
+        print(res.json())
         
         try:
-            abstract = res.json()['abstract']
-            refer_url = res.json()['url']
+            data=res.json()    
+            text = data[0]['body']+"\n"+data[0]['href']+"\n"+data[1]['body']+"\n"+data[1]['href']+"\n"+data[2]['body']+"\n"+data[2]['href']
+            #refer_url = data[0]['href']+"\n"+data[1]['href']+"\n"+data[2]['href']
         except:
             return {
-                'text': f"[ext_baidu] 未找到关于{keyword}的百科信息",
+                'text': f"[ext_search] 未找到关于{keyword}的信息",
                 'image': None,  # 图片url
                 'voice': None,  # 语音url
             }
         # 返回的信息将会被发送到会话中
         return {
-            'text': f'[ext_baidu] 调用百度百科搜索: {keyword} ...',
+            'text': f'[ext_search] 搜索: {keyword} ...',
             'notify': {
-                'sender': '[baidu]',
-                'msg': f"[ext_baidu] 百度百科搜索 {keyword} 结果:\n{abstract}\n{refer_url}"
+                'sender': '[search]',
+                'msg': f"[ext_search] 搜索 {keyword} 结果:\n{text}\n"
             },
             'wake_up': True,  # 是否再次响应
         }
