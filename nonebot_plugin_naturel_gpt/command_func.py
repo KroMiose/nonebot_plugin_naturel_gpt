@@ -155,20 +155,16 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
         for chat_key in global_chat_dict.keys():
             if not global_chat_dict[chat_key].change_presettings(target_preset_key):
                 err_cnt += 1
-        return {'msg': f"应用预设: {target_preset_key} (￣▽￣)-ok! (所有会话) {f'错误:{err_cnt}' if err_cnt else ''}", 'is_progress': True}
+        return {'msg': f"应用预设: {target_preset_key} (￣▽￣)-Completed! (所有会话) {f'错误计数:{err_cnt}' if err_cnt else ''}", 'is_progress': True}
     elif option_dict.get('target'): # 指定会话应用
         target_chat_key = option_dict.get('target')
         if target_chat_key not in global_chat_dict:
             return {'msg': f"会话: {target_chat_key} 不存在! (；′⌒`)"}
-        if global_chat_dict[target_chat_key].change_presettings(target_preset_key):
-            return {'msg': f"应用预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key})", 'is_progress': True}
-        else:
-            return {'msg': f"应用预设: {target_preset_key} (会话: {target_chat_key}) 错误 ＞﹏＜!", 'is_progress': True}
+        global_chat_dict[target_chat_key].change_presettings(target_preset_key)
+        return {'msg': f"应用预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key})", 'is_progress': True}
     else:   # 当前会话应用
-        if chat.change_presettings(target_preset_key):
-            return {'msg': f"应用预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
-        else:
-            return {'msg': f"应用预设: {target_preset_key} 错误 ＞﹏＜!", 'is_progress': True}
+        chat.change_presettings(target_preset_key)
+        return {'msg': f"应用预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
 
 @cmd.register(route='rg/query', params=['preset_key'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
