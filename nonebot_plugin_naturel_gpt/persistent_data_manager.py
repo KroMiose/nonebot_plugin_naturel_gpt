@@ -159,6 +159,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
             return False
         
         presets[preset_key].bot_self_introl = bot_self_introl
+        return True
 
     def del_preset(self, chat_key:str, preset_key:str) -> bool:
         """删除指定chat_key的指定性格(允许删除系统人格)"""
