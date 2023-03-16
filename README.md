@@ -18,6 +18,8 @@
     <a href="https://jq.qq.com/?_wv=1027&k=71t9iCT7">
         <img src="https://img.shields.io/badge/加入交流群-636925153-c42.svg" alt="python">
     </a>
+    <h2>🎉 [2023/3/16] 项目重构 🎉</h2>
+    <p>项目重构整理基本完成，敬请期待重构后更多功能性更新，感谢<a href="https://github.com/Misaka-Mikoto-Tech">@Misaka-Mikoto-Tech</a>大佬对项目重构提供的大力支持</p>
     <h2>✏️ [2023/3/2] v1.4 更新: 支持ChatGPT模型 ✏️</h2>
     <p>本次更新后插件开始支持官方ChatGPT模型接口，token定价仅为GPT3的 1/10, 回复质量更高 响应速度更快</p>
     <h2>🧩 [2023/2/18] v1.3 更新: 自定义拓展支持 🧩</h2>
