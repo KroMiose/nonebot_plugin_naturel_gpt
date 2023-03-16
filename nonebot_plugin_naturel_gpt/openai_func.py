@@ -6,6 +6,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import openai
 from transformers import GPT2TokenizerFast
+from .singleton import Singleton
 
 tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
 
@@ -17,8 +18,8 @@ try:    # 检查openai版本是否高于0.27.0
 except:
     logger.warning(f"无法获取 openai 库版本，请更新至 0.27.0 版本以上，否则 gpt-3.5-turbo 模型将无法使用")
 
-class TextGenerator:
-    def __init__(self, api_keys: list, config: dict, proxy = None):
+class TextGenerator(Singleton["TextGenerator"]):
+    def init(self, api_keys: list, config: dict, proxy = None):
         self.api_keys = api_keys
         self.key_index = 0
         self.config = config
@@ -26,7 +27,7 @@ class TextGenerator:
             if not proxy.startswith('http'):
                 proxy = 'http://' + proxy
         openai.proxy = proxy
-
+    
     # 获取文本生成
     @run_sync
     def get_response(self, prompt, type: str = 'chat', custom: dict = {}) -> str:
@@ -81,7 +82,6 @@ class TextGenerator:
                     timeout=self.config.get('timeout', 30),
                     stop=[f"\n{custom.get('bot_name', 'AI')}:", f"\n{custom.get('sender_name', 'Human')}:"]
                 )
-                if self.config.get('__DEBUG__'): logger.info('openai 原始回应 ->',response)
                 res = ''
                 for choice in response.choices:
                     res += choice.message.content
@@ -94,6 +94,9 @@ class TextGenerator:
                 # 去掉可能存在的开头起始标志
                 if res.startswith(f"{custom.get('bot_name', 'AI')}:"):
                     res = res[len(f"{custom.get('bot_name', 'AI')}:"):]
+                # 去掉可能存在的开头起始标志 (中文)
+                if res.startswith(f"{custom.get('bot_name', 'AI')}："):
+                    res = res[len(f"{custom.get('bot_name', 'AI')}："):]
                 # 替换多段回应中的回复起始标志
                 res = res.replace(f"\n\n{custom.get('bot_name', 'AI')}:", "*;")
             else:
@@ -129,7 +132,6 @@ class TextGenerator:
                     presence_penalty=0,
                     timeout=self.config.get('timeout', 30),
                 )
-                if self.config.get('__DEBUG__'): logger.info('openai 原始回应 ->',response)
                 res = ''
                 for choice in response.choices:
                     res += choice.message.content
@@ -171,7 +173,6 @@ class TextGenerator:
                     presence_penalty=0,
                     timeout=self.config.get('timeout', 30),
                 )
-                if self.config.get('__DEBUG__'): logger.info('openai 原始回应 ->',response)
                 res = ''
                 for choice in response.choices:
                     res += choice.message.content
