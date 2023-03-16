@@ -303,6 +303,32 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
         chat.toggle_chat(enabled=False)
         return {'msg': f"禁用当前会话 (￣▽￣)-ok!"}
 
+@cmd.register(route='rg/lock')
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    if option_dict.get('global'):
+        for chat in global_chat_dict.values():
+            chat.toggle_auto_switch(enabled=False)
+        return {'msg': f"锁定所有会话 (￣▽￣)-ok!"}
+    elif option_dict.get('target'):
+        global_chat_dict[option_dict.get('target')].toggle_auto_switch(enabled=False)
+        return {'msg': f"锁定会话: {option_dict.get('target')} (￣▽￣)-ok!"}
+    else:
+        chat.toggle_auto_switch(enabled=False)
+        return {'msg': f"锁定当前会话 (￣▽￣)-ok!"}
+
+@cmd.register(route='rg/unlock')
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    if option_dict.get('global'):
+        for chat in global_chat_dict.values():
+            chat.toggle_auto_switch(enabled=True)
+        return {'msg': f"解锁所有会话 (￣▽￣)-ok!"}
+    elif option_dict.get('target'):
+        global_chat_dict[option_dict.get('target')].toggle_auto_switch(enabled=True)
+        return {'msg': f"解锁会话: {option_dict.get('target')} (￣▽￣)-ok!"}
+    else:
+        chat.toggle_auto_switch(enabled=True)
+        return {'msg': f"解锁当前会话 (￣▽￣)-ok!"}
+
 @cmd.register(route='rg/ext')
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     ext_info:str = ''
@@ -316,6 +342,8 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     for chat in global_chat_dict.values():
         chat_info += f"+ {chat.generate_description()}"
     return {'msg': f"当前已加载的会话:\n{chat_info}"}
+
+
 
 # 提交指令注册
 cmd.submit_commands()

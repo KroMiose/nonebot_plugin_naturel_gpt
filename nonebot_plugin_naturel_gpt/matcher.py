@@ -497,7 +497,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         wake_up = True
 
     # 其它人格唤醒判断
-    if chat.get_chat_bot_name().lower() not in trigger_text.lower() and config.NG_ENABLE_AWAKE_IDENTITIES:
+    if chat.get_chat_bot_name().lower() not in trigger_text.lower() and chat.enable_auto_switch_identity:
         presets_dict = PersistentDataManager.instance.get_presets(chat_key)
         for preset_key in presets_dict:
             if preset_key.lower() in trigger_text.lower():

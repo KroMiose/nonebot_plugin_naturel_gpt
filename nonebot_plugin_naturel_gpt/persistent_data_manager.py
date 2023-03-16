@@ -56,7 +56,8 @@ class PresetData:
 class ChatData:
     """用户聊天数据(群，私聊)"""
     chat_key:str  # group_123456, private_123456
-    is_enable:bool = True
+    is_enable:bool = True   # 是否启用会话
+    enable_auto_switch_identity = False    # 是否允许自动切换人格
     active_preset:str = '' # 当前 preset_name
     preset_datas:Dict[str, PresetData] = field(default_factory=lambda:{}) # [preset_name/bot_name, data]
 

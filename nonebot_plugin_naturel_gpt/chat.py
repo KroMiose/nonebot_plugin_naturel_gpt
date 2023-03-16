@@ -16,8 +16,8 @@ class Chat:
     _chat_key:str
     _preset_key = ''  # 预设标识
     _chat_data:ChatData # 此chat_key聊天数据
-    _chat_preset:PresetData = None                       # 当前对话预设
-    _chat_preset_dicts:Dict[str, PresetData] = None      # 预设字典
+    _chat_preset:PresetData = None                      # 当前对话预设
+    _chat_preset_dicts:Dict[str, PresetData] = None     # 预设字典
     is_insilence = False        # 是否处于沉默状态
     chat_attitude = 0           # 对话态度
     silence_time = 0            # 沉默时长
@@ -286,6 +286,15 @@ class Chat:
     def toggle_chat(self, enabled:bool=True) -> None:
         """开关当前会话"""
         self._chat_data.is_enable = enabled
+
+    @property
+    def enable_auto_switch_identity(self):
+        """当前会话是否已启用自动切换人格"""
+        return self._chat_data.enable_auto_switch_identity
+
+    def toggle_auto_switch(self, enabled:bool=True) -> None:
+        """开关当前会话自动切换人格"""
+        self._chat_data.enable_auto_switch_identity = enabled
 
     def generate_description(self):
         """获取当前会话描述"""
