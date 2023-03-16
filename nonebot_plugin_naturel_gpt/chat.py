@@ -97,6 +97,7 @@ class Chat:
 
     # 为当前预设设置记忆
     def set_memory(self, mem_key:str, mem_value:str = '') -> None:
+        mem_key = mem_key.replace(' ', '_')  # 将空格替换为下划线
         # 如果没有指定mem_value，则删除该记忆
         if not mem_value:
             if mem_key in self._chat_preset.chat_memory:
