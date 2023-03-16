@@ -163,12 +163,12 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
         if global_chat_dict[target_chat_key].change_presettings(target_preset_key):
             return {'msg': f"应用预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key})", 'is_progress': True}
         else:
-            return {'msg': f"应用预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key}) 错误!", 'is_progress': True}
+            return {'msg': f"应用预设: {target_preset_key} (会话: {target_chat_key}) 错误 ＞﹏＜!", 'is_progress': True}
     else:   # 当前会话应用
         if chat.change_presettings(target_preset_key):
             return {'msg': f"应用预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
         else:
-            return {'msg': f"应用预设: {target_preset_key} (￣▽￣)-ok! 错误!", 'is_progress': True}
+            return {'msg': f"应用预设: {target_preset_key} 错误 ＞﹏＜!", 'is_progress': True}
 
 @cmd.register(route='rg/query', params=['preset_key'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
@@ -226,12 +226,12 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
         if PersistentDataManager.instance.update_preset(chat_key=target_chat_key, preset_key=target_preset_key, bot_self_introl=bot_self_introl):
             return {'msg': f"编辑预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key})", 'is_progress': True}
         else:
-            return {'msg': f"编辑预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key}) 失败!", 'is_progress': True}
+            return {'msg': f"编辑预设: {target_preset_key} (会话: {target_chat_key}) 错误 ＞﹏＜!", 'is_progress': True}
     else:   # 当前会话应用
         if PersistentDataManager.instance.update_preset(chat_key=chat.get_chat_key(), preset_key=target_preset_key, bot_self_introl=bot_self_introl):
             return {'msg': f"编辑预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
         else:
-            return {'msg': f"编辑预设: {target_preset_key} (￣▽￣)-ok! 失败!", 'is_progress': True}
+            return {'msg': f"编辑预设: {target_preset_key} 错误 ＞﹏＜!", 'is_progress': True}
 
 @cmd.register(route='rg/del', params=['preset_key'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
@@ -250,12 +250,12 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
         if PersistentDataManager.instance.del_preset(chat_key=target_chat_key, preset_key=target_preset_key):
             return {'msg': f"删除预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key})", 'is_progress': True}
         else:
-            return {'msg': f"删除预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key}) 错误!", 'is_progress': True}
+            return {'msg': f"删除预设: {target_preset_key} (会话: {target_chat_key}) 错误 ＞﹏＜!", 'is_progress': True}
     else:   # 当前会话应用
         if PersistentDataManager.instance.del_preset(chat_key=chat.get_chat_key(), preset_key=target_preset_key):
             return {'msg': f"删除预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
         else:
-            return {'msg': f"删除预设: {target_preset_key} (￣▽￣)-ok! 错误!", 'is_progress': True}
+            return {'msg': f"删除预设: {target_preset_key} 错误 ＞﹏＜!", 'is_progress': True}
 
 @cmd.register(route='rg/reset', params=['preset_key'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
@@ -274,12 +274,12 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
         if PersistentDataManager.instance.reset_preset(chat_key=target_chat_key, preset_key=target_preset_key):
             return {'msg': f"重置预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key})", 'is_progress': True}
         else:
-            return {'msg': f"重置预设: {target_preset_key} 失败! (会话: {target_chat_key})", 'is_progress': True}
+            return {'msg': f"重置预设: {target_preset_key} (会话: {target_chat_key}) 错误 ＞﹏＜!", 'is_progress': True}
     else:   # 当前会话应用
         if PersistentDataManager.instance.reset_preset(chat_key=chat.get_chat_key(), preset_key=target_preset_key):
             return {'msg': f"重置预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
         else:
-            return {'msg': f"重置预设: {target_preset_key} 失败!", 'is_progress': True}
+            return {'msg': f"重置预设: {target_preset_key} 错误 ＞﹏＜!", 'is_progress': True}
 
 @cmd.register(route='rg/on')
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
