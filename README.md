@@ -7,6 +7,7 @@
 <div align="center">
     ✨ 更人性化(拟人)的GPT聊天Ai插件! ✨<br/>
     🧬 支持多个人格自定义 / 切换 | 尽情发挥你的想象力吧！ ⚙️<br/>
+    🧬 <a href="https://docs.google.com/spreadsheets/d/1JQNmVH-vlDn2uEPwkjv3iN-zn0PHpQ7RGbgA5T3fxOA/edit?usp=sharing">预设收集共享表(欢迎分享各种自定义人设)</a> 🧬 <br/>
     🎆 如果喜欢请点个⭐吧！您的支持就是我持续更新的动力 🎉<br/>
     <a href="./LICENSE">
         <img src="https://img.shields.io/badge/license-Apache 2.0-6cg.svg" alt="license">
