@@ -262,12 +262,12 @@ A: 由于用户数据信息与人格预设信息高度绑定，如果已经生�
 - 拓展文件: ext_random.py
 - 说明: 一个示例拓展，用于引导bot调用并生成随机数（仅供测试使用，不建议日常开启）
 
-#### > 发送随机二次元图片（与ext_lolicon_pic二选一）
+#### > 发送随机二次元图片 (与ext_lolicon_pic二选一使用)
 
 - 拓展文件: ext_random_pic.py
 - 说明: 调用 `api.ixiaowai.cn` 的接口获取一张二次元图片并发送
 
-#### > 发送指定二次元图片（与ext_random_pic二选一）
+#### > 发送指定二次元图片 (by:CCYellowStar, 与ext_random_pic二选一使用)
 
 - 拓展文件: ext_lolicon_pic.py
 - 说明: 调用 `loliconapi`接口按指定tag获取一张二次元图片并发送
