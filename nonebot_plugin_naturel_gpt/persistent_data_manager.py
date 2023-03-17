@@ -18,8 +18,9 @@ class ImpressionData:
 @dataclass
 class PresetData:
     """特定chat_key的特定preset人格预设及其产生的聊天数据"""
-    preset_key:str
-    bot_self_introl:str
+    preset_key:str = ''
+    bot_self_introl:str = ''
+    bot_name:str = '' # 兼容一个版本的数据，下个版本将取消兼容
     is_locked:bool  = False
     is_default:bool = False
     is_only_private:bool = False
@@ -86,6 +87,13 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
             logger.info("找不到历史数据，初始化成功")
+        
+        # 兼容 bot_name 字段的pickle数据，下个版本将取消兼容
+        for v in self._datas.values():
+            for v2 in v.preset_datas.values():
+                if not v2.preset_key:
+                    v2.preset_key = v2.bot_name
+                    
         self._last_save_data_time = time.time()
 
     def save_to_file(self):
