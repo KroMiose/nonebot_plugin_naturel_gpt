@@ -19,7 +19,7 @@ class ImpressionData:
 class PresetData:
     """特定chat_key的特定preset人格预设及其产生的聊天数据"""
     bot_name:str
-    bot_self_introl:str
+    bot_self_introl:str = ''
     is_locked:bool  = False
     is_default:bool = False
     is_only_private:bool = False
@@ -31,18 +31,22 @@ class PresetData:
     chat_impressions:Dict[str, ImpressionData]  = field(default_factory=lambda:{}) # 对(群聊中)特定用户的印象
     chat_memory:Dict[str, str]                  = field(default_factory=lambda:{})
 
+    @classmethod
+    def create_from_config(cls, preset_config:PresetConfig):
+        """从PresetConfig创建一个PresetData实例"""
+        preset_data = PresetData(preset_config.preset_key)
+        preset_data.reset_to_default(preset_config)
+
     def reset_to_default(self, preset_config:PresetConfig):
         """清空数据，并将人格设定为config_data中的值(如果存在的话)"""
         if preset_config is not None:
             if preset_config.preset_key != self.bot_name:
                 raise Exception(f"wrong bot_name, expect `{self.bot_name}` but get `{preset_config.preset_key}`")
             
-            # self.bot_self_introl    = config_data.bot_self_introl
             self.is_locked          = preset_config.is_locked
             self.is_default         = preset_config.is_default
             self.is_only_private    = preset_config.is_only_private
         else:
-            # self.bot_self_introl    = ''
             self.is_locked          = False
             self.is_default         = False
             self.is_only_private    = False
@@ -111,7 +115,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         else:
             chat_data = ChatData(chat_key=chat_key)
             for v in config.PRESETS.values():
-                preset_data = PresetData(**v)
+                preset_data = PresetData.create_from_config(v)
                 chat_data.preset_datas[preset_data.bot_name] = preset_data
             
             self._datas[chat_key] = chat_data
@@ -145,7 +149,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         if preset_key in presets:
             return False
 
-        presets[preset_key] = PresetData(**dict(preset_config))
+        presets[preset_key] = PresetData.create_from_config(preset_config)
         # 更新默认值
         if preset_config.is_default:
             for v in presets.values():
