@@ -18,6 +18,7 @@ class Chat:
     _chat_data:ChatData # 此chat_key聊天数据
     _chat_preset:PresetData = None                      # 当前对话预设
     _chat_preset_dicts:Dict[str, PresetData] = None     # 预设字典
+    _last_msg_time = 0          # 上次对话时间
     is_insilence = False        # 是否处于沉默状态
     chat_attitude = 0           # 对话态度
     silence_time = 0            # 沉默时长
@@ -39,9 +40,10 @@ class Chat:
     # 更新当前会话的全局对话历史行
     async def update_chat_history_row(self, sender:str, msg: str, require_summary:bool = False) -> None:
         tg = TextGenerator.instance
-        messageunit = tg.generate_msg_template(sender=sender, msg=msg)
+        messageunit = tg.generate_msg_template(sender=sender, msg=msg, time_str=f"[{time.strftime('%H:%M:%S %p', time.localtime())}] ")
         self._chat_preset.chat_history.append(messageunit)
         logger.info(f"[会话: {self._chat_key}]添加对话历史行: {messageunit}  |  当前对话历史行数: {len(self._chat_preset.chat_history)}")
+        self._last_msg_time = time.time()   # 更新上次对话时间
         while len(self._chat_preset.chat_history) > config.CHAT_MEMORY_MAX_LENGTH * 2:    # 保证对话历史不超过最大长度的两倍
             self._chat_preset.chat_history.pop(0)
 
