@@ -90,7 +90,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         
         # 兼容 bot_name 字段的pickle数据，下个版本将取消兼容
         for v in self._datas.values():
-            for v2 in v.values():
+            for v2 in v.preset_datas.values():
                 if not v2.preset_key:
                     v2.preset_key = v2.bot_name
                     
