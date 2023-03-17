@@ -13,24 +13,24 @@ class ImpressionData:
     """某个会话中对某个用户的印象"""
     user_id:str
     chat_history:List[str] = field(default_factory=lambda:[])
+    """特定预设与特定用户的聊天记录，用于生成chat_impression"""
     chat_impression:str = ''
+    """特定预设对特定用户的印象"""
 
 @dataclass
 class PresetData:
     """特定chat_key的特定preset人格预设及其产生的聊天数据"""
-    preset_key:str = ''
-    bot_self_introl:str = ''
-    bot_name:str = '' # 兼容一个版本的数据，下个版本将取消兼容
+    preset_key:str
+    bot_self_introl:str
     is_locked:bool  = False
     is_default:bool = False
     is_only_private:bool = False
     """此预设是否仅限私聊"""
 
     # 以下为对话产生的数据
-    chat_history:List[str]  = field(default_factory=lambda:[])
-    chat_summarized:str     = ''
     chat_impressions:Dict[str, ImpressionData]  = field(default_factory=lambda:{}) # 对(群聊中)特定用户的印象
-    chat_memory:Dict[str, str]                  = field(default_factory=lambda:{})
+    chat_memory:Dict[str, str]  = field(default_factory=lambda:{})
+    """当前预设的记忆"""
 
     @classmethod
     def create_from_config(cls, preset_config:PresetConfig):
@@ -52,8 +52,6 @@ class PresetData:
             self.is_default         = False
             self.is_only_private    = False
         
-        self.chat_history.clear()
-        self.chat_summarized=''
         self.chat_impressions.clear()
         self.chat_memory.clear()
 
@@ -61,10 +59,25 @@ class PresetData:
 class ChatData:
     """用户聊天数据(群，私聊)"""
     chat_key:str  # group_123456, private_123456
-    is_enable:bool = True   # 是否启用会话
-    enable_auto_switch_identity = False    # 是否允许自动切换人格
-    active_preset:str = '' # 当前 preset_name
-    preset_datas:Dict[str, PresetData] = field(default_factory=lambda:{}) # [preset_name/bot_name, data]
+    is_enable:bool              = True      # 是否启用会话
+    enable_auto_switch_identity = False     # 是否允许自动切换人格
+    active_preset:str           = ''        # 当前 preset_name
+    preset_datas:Dict[str, PresetData] = field(default_factory=lambda:{}) # [preset_name, data]
+
+    # 以下为对话产生的数据
+    chat_history:List[str]      = field(default_factory=lambda:[]) # 当前会话全局历史
+    """当前会话的全局对话历史"""
+    chat_summarized:str         = ''
+    """总结"""
+    
+    def reset(self):
+        """重置当前会话历史数据"""
+        self.chat_history.clear()
+        self.chat_summarized = ''
+
+        for k, v in self.preset_datas.items():
+            v.reset_to_default(preset_config = config.PRESETS.get(k, None))
+
 
 class PersistentDataManager(Singleton["PersistentDataManager"]):
     """用户聊天(群，私聊)持久化数据管理器"""
@@ -88,12 +101,35 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
 
             logger.info("找不到历史数据，初始化成功")
         
+        """-------------------数据版本兼容开始-------------------"""
         # 兼容 bot_name 字段的pickle数据，下个版本将取消兼容
         for v in self._datas.values():
             for v2 in v.preset_datas.values():
-                if not v2.preset_key:
-                    v2.preset_key = v2.bot_name
-                    
+                if (not hasattr(v2, 'preset_key')) and hasattr(v2, 'bot_name'):
+                    setattr(v2, 'preset_key', getattr(v2, 'bot_name'))
+                    delattr(v2, 'bot_name')
+        
+        # 兼容聊天记录人格分离版本的数据，将 active_preset 的聊天记录复制到ChatData内
+        for v in self._datas.values():
+            if not hasattr(v, 'chat_history'):
+                chat_history = []
+                setattr(v, 'chat_history', chat_history)
+                setattr(v, 'chat_summarized', '')
+
+                preset_data = v.preset_datas.get(v.active_preset, None)
+                if preset_data:
+                    preset_chat_history:List[str] = getattr(preset_data, 'chat_history')
+                    preset_summary = getattr(preset_data, 'chat_summarized')
+                    for item in preset_chat_history:
+                        chat_history.append(item)
+                    setattr(v, 'chat_summarized', preset_summary)
+                
+                for v2 in v.preset_datas.values():
+                    delattr(v2, 'chat_history')
+                    delattr(v2, 'chat_summarized')
+        
+        """-------------------数据版本兼容结束-------------------"""
+
         self._last_save_data_time = time.time()
 
     def save_to_file(self):
@@ -183,7 +219,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         return True
     
     def reset_preset(self, chat_key:str, preset_key:str) -> bool:
-        """重置指定chat_key系统预设的人格设定, 如果是系统预设名将还原默认人格设定"""
+        """重置指定会话系统预设的人格设定, 如果是系统预设名将还原默认人格设定"""
         preset_config = config.PRESETS.get(preset_key, None)
         
         preset_datas = self.get_presets(chat_key)
@@ -191,11 +227,12 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
             return False
         preset_datas[preset_key].reset_to_default(preset_config)
         return True
-
-    def reset_all_system_preset(self, chat_key:str):
-        """重置指定chat_key的所有系统预设的人格设定"""
-        for k in config.PRESETS.keys():
-            self.reset_preset(chat_key=chat_key, preset_key=k)
+    
+    def reset_chat(self, chat_key:str) -> bool:
+        """置当前会话所有预设，将丢失性格或历史数据"""
+        chat_data = self.get_chat_data(chat_key=chat_key)
+        chat_data.reset()
+        return True
 
     def update_all_system_identity_presets():
         """配置文件更新时将新的人格数据同步到已有chat_key中"""
