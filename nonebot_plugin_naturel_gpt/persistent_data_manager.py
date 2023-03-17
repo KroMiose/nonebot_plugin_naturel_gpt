@@ -18,7 +18,7 @@ class ImpressionData:
 @dataclass
 class PresetData:
     """特定chat_key的特定preset人格预设及其产生的聊天数据"""
-    bot_name:str
+    preset_key:str
     bot_self_introl:str
     is_locked:bool  = False
     is_default:bool = False
@@ -40,8 +40,8 @@ class PresetData:
     def reset_to_default(self, preset_config:PresetConfig):
         """清空数据，并将人格设定为config_data中的值(如果存在的话)"""
         if preset_config is not None:
-            if preset_config.preset_key != self.bot_name:
-                raise Exception(f"wrong bot_name, expect `{self.bot_name}` but get `{preset_config.preset_key}`")
+            if preset_config.preset_key != self.preset_key:
+                raise Exception(f"wrong preset key, expect `{self.preset_key}` but get `{preset_config.preset_key}`")
             
             self.is_locked          = preset_config.is_locked
             self.is_default         = preset_config.is_default
@@ -116,7 +116,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
             chat_data = ChatData(chat_key=chat_key)
             for v in config.PRESETS.values():
                 preset_data = PresetData.create_from_config(v)
-                chat_data.preset_datas[preset_data.bot_name] = preset_data
+                chat_data.preset_datas[preset_data.preset_key] = preset_data
             
             self._datas[chat_key] = chat_data
             return chat_data
@@ -140,7 +140,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         if preset_key in presets:
             return False
 
-        presets[preset_key] = PresetData(bot_name=preset_key, bot_self_introl=bot_self_introl)
+        presets[preset_key] = PresetData(preset_key=preset_key, bot_self_introl=bot_self_introl)
         return True
     
     def add_preset_from_config(self, chat_key:str, preset_key:str, preset_config: PresetConfig) -> bool:
@@ -153,7 +153,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         # 更新默认值
         if preset_config.is_default:
             for v in presets.values():
-                v.is_default = v.bot_name == preset_key
+                v.is_default = v.preset_key == preset_key
         return True
     
     def update_preset(self, chat_key:str, preset_key:str, bot_self_introl: str) -> bool:
