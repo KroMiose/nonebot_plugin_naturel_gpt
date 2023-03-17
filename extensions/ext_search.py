@@ -51,8 +51,9 @@ class CustomExtension(Extension):
         print(res.json())
         
         try:
-            data=res.json()    
+            data=res.json()
             text = '\n'.join([f"{data[i]['body']}" for i in range(len(data)) if i < max_results])
+            text = text.replace('\n\n', '  ')
             # text = data[0]['body']+"\n"+data[0]['href']+"\n"+data[1]['body']+"\n"+data[1]['href']+"\n"+data[2]['body']+"\n"+data[2]['href']
             #refer_url = data[0]['href']+"\n"+data[1]['href']+"\n"+data[2]['href']
         except:
@@ -65,8 +66,8 @@ class CustomExtension(Extension):
         return {
             'text': f'[ext_search] 搜索: {keyword} [完成]',
             'notify': {
-                'sender': '[search]',
-                'msg': f"[ext_search] Search results for xxx {keyword} (Please refer to the following information to respond):\n{text}\n"
+                'sender': f'[Search results for {keyword} (Please refer to the following information to respond)]',
+                'msg': f"{text}"
             },
             'wake_up': True,  # 是否再次响应
         }
