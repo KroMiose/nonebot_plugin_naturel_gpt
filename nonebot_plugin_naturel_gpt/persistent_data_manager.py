@@ -19,7 +19,7 @@ class ImpressionData:
 class PresetData:
     """特定chat_key的特定preset人格预设及其产生的聊天数据"""
     bot_name:str
-    bot_self_introl:str = ''
+    bot_self_introl:str
     is_locked:bool  = False
     is_default:bool = False
     is_only_private:bool = False
@@ -34,8 +34,8 @@ class PresetData:
     @classmethod
     def create_from_config(cls, preset_config:PresetConfig):
         """从PresetConfig创建一个PresetData实例"""
-        preset_data = PresetData(preset_config.preset_key)
-        preset_data.reset_to_default(preset_config)
+        preset_data = PresetData(**preset_config.dict())
+        return preset_data
 
     def reset_to_default(self, preset_config:PresetConfig):
         """清空数据，并将人格设定为config_data中的值(如果存在的话)"""
