@@ -20,7 +20,8 @@
         <img src="https://img.shields.io/badge/加入交流群-636925153-c42.svg" alt="python">
     </a>
     <h2>🎉 [2023/3/16] 项目重构 🎉</h2>
-    <p>项目重构整理基本完成，敬请期待重构后更多功能性更新，感谢<a href="https://github.com/Misaka-Mikoto-Tech">@Misaka-Mikoto-Tech</a>大佬对项目重构提供的大力支持</p>
+    <p>项目重构整理基本完成，敬请期待重构后更多功能性更新<br/>
+    感谢<a href="https://github.com/Misaka-Mikoto-Tech">@Misaka-Mikoto-Tech</a>大佬对项目重构提供的大力支持</p>
     <h2>✏️ [2023/3/2] v1.4 更新: 支持ChatGPT模型 ✏️</h2>
     <p>本次更新后插件开始支持官方ChatGPT模型接口，token定价仅为GPT3的 1/10, 回复质量更高 响应速度更快</p>
     <h2>🧩 [2023/2/18] v1.3 更新: 自定义拓展支持 🧩</h2>
@@ -53,8 +54,8 @@
 * [X] 主动记忆和记忆管理功能: 让TA主动记住点什么吧！hmm让我康康你记住了什么 (主动记忆需要拓展支持)
 * [X] 潜在人格唤醒机制: 当用户呼叫未启用的人格时，可自动切换人格 (可选开关)
 * [X] 定时任务: 可以用自然语言直接定时，让TA提醒你该吃饭了！
-* [ ] 图片感知: 拟使用腾讯云提供的识图api，协助bot感知图片内容
 * [X] 在线搜索: GPT3.5的数据库过时了？通过主动搜索拓展让TA可以实时检索到最新的信息 (仿newbing机制)
+* [ ] 图片感知: 拟使用腾讯云提供的识图api，协助bot感知图片内容
 * [ ] 主动聊天参与逻辑: 尽力模仿人类的聊天参与逻辑，目标是让TA能够真正融入你的群组
 * [ ] 回忆录生成: 记录你们之间的点点滴滴，获取你与TA的专属回忆
 
@@ -88,9 +89,9 @@
 | CHAT_MEMORY_MAX_LENGTH        | int   | 聊天记忆最大条数                           | 16                             | 超出此长度后会进行记忆总结并删除更早的记录                                           |
 | CHAT_MEMORY_SHORT_LENGTH      | int   | 短期聊天记忆参考条数                       | 8                              |                                                                                      |
 | CHAT_MODEL                    | str   | 聊天生成的语言模型                         | gpt-3.5-turbo                  | 默认使用GPT3.5的模型(推荐)                                                           |
-| CHAT_FREQUENCY_PENALTY        | float | 回复内容复读惩罚                           | 0.6                            | 范围(-2~2) 越高产生的回复内容越多样化                                                |
-| CHAT_PRESENCE_PENALTY         | float | 回复主题重复惩罚                           | 0.6                            | 范围(-2~2) 越高越倾向于产生新的话题                                                  |
-| CHAT_TEMPERATURE              | float | 聊天生成温度: 越高越随机                   | 0.6                            |                                                                                      |
+| CHAT_FREQUENCY_PENALTY        | float | 回复内容复读惩罚                           | 0.4                            | 范围(-2~2) 越高产生的回复内容越多样化                                                |
+| CHAT_PRESENCE_PENALTY         | float | 回复主题重复惩罚                           | 0.4                            | 范围(-2~2) 越高越倾向于产生新的话题                                                  |
+| CHAT_TEMPERATURE              | float | 聊天生成温度: 越高越随机                   | 0.4                            |                                                                                      |
 | CHAT_TOP_P                    | float | 聊天信息采样率                             | 1                              |                                                                                      |
 | IGNORE_PREFIX                 | str   | 忽略前置修饰：添加此修饰的聊天信息将被忽略 | #                              |                                                                                      |
 | USER_MEMORY_SUMMARY_THRESHOLD | int   | 用户聊天印象总结触发阈值                   | 16                             | 越小触发越频繁，推荐10-20                                                            |
@@ -111,7 +112,7 @@
 | NG_ENABLE_MSG_SPLIT           | bool  | 是否允许消息分割发送                       | True                           | 如果允许，bot有可能会在一次回复中发送多条消息                                        |
 | NG_ENABLE_AWAKE_IDENTITIES    | bool  | 是否允许自动唤醒其它人格                   | True                           | 如果允许，bot在检测到未启用人格呼叫时会自动唤醒并切换人格                            |
 | FORBIDDEN_USERS               | array | 黑名单用户id，以字符串列表方式填入         | ['']                           | 黑名单中的用户消息不会被记录和响应设                                                 |
-| UNLOCK_CONTENT_LIMIT          | bool  | 是否解锁内容限制                           | False                          |                                                                                      |
+| UNLOCK_CONTENT_LIMIT          | bool  | 是否解锁内容限制                           | False                          | 可能导致 OpenAi 账号风险，请自行承担后果                                             |
 | OPENAI_PROXY_SERVER           | str   | 请求OpenAI的代理服务器                     | ''                             | 填写示例 '127.0.0.1:1234' 或 'username:password@127.0.0.1:1234'                      |
 | \_\_DEBUG\_\_                 | bool  | 是否开启DEBUG输出                          | False                          | 开启可查看prompt模板输出                                                             |
 

@@ -146,7 +146,7 @@ CONFIG_TEMPLATE = {
             'is_locked': True,  # 是否锁定人格，锁定后无法编辑人格
             'is_default': True,  # 是否为默认人格
             "is_only_private": False,
-            'bot_self_introl': '白羽是一名喜欢二次元的中二宅女，她机智、傲娇，对人类充满好奇，习惯以白羽喵自称，聊天时喜欢使用各种可爱的颜文字，如果冒犯到她会生气。',
+            'bot_self_introl': '白羽是一名喜欢二次元的中二宅女，她机智、傲娇，对人类充满好奇，聊天时喜欢使用各种可爱的颜文字，如果冒犯到她会生气。',
         },
         "浅枫": {
             'preset_key': '浅枫',
@@ -173,9 +173,9 @@ CONFIG_TEMPLATE = {
     'IGNORE_PREFIX': '#',   # 忽略前缀 以该前缀开头的消息将不会被处理
     'CHAT_MODEL': "gpt-3.5-turbo",
     'CHAT_TOP_P': 1,
-    'CHAT_TEMPERATURE': 0.3,    # 温度越高越随机
-    'CHAT_PRESENCE_PENALTY': 0.3,   # 主题重复惩罚
-    'CHAT_FREQUENCY_PENALTY': 0.3,  # 复读惩罚
+    'CHAT_TEMPERATURE': 0.4,    # 温度越高越随机
+    'CHAT_PRESENCE_PENALTY': 0.4,   # 主题重复惩罚
+    'CHAT_FREQUENCY_PENALTY': 0.4,  # 复读惩罚
 
     'CHAT_HISTORY_MAX_TOKENS': 2048,    # 上下文聊天记录最大token数
     'CHAT_MAX_SUMMARY_TOKENS': 512,   # 单次总结最大token数
@@ -198,8 +198,8 @@ CONFIG_TEMPLATE = {
     'NG_EXT_PATH': "./data/naturel_gpt/extensions/",  # 拓展目录
     'NG_LOG_PATH': "./data/naturel_gpt/logs/",  # 拓展目录
 
-    'ADMIN_USERID': ['替换成管理员QQ号_(用单引号包裹)'],  # 管理员QQ号
-    'FORBIDDEN_USERS': ['替换成屏蔽QQ号_(用单引号包裹)'],   # 拒绝回应的QQ号
+    'ADMIN_USERID': ['123456'],  # 管理员QQ号
+    'FORBIDDEN_USERS': ['123456'],   # 拒绝回应的QQ号
 
     'WORD_FOR_WAKE_UP': [],  # 自定义触发词
     'WORD_FOR_FORBIDDEN': [],  # 自定义禁止触发词
@@ -225,7 +225,7 @@ CONFIG_TEMPLATE = {
     'NG_EXT_LOAD_LIST': [{
         'EXT_NAME': 'ext_random',
         'IS_ACTIVE': False,
-        'EXT_CONFIG': {},
+        'EXT_CONFIG': {'arg': 'arg_value'},
     }],     # 加载的拓展列表
 
     'NG_CHECK_USER_NAME_HYPHEN': False, # 检查用户名中的连字符
