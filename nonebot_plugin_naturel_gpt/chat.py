@@ -41,15 +41,15 @@ class Chat:
     async def update_chat_history_row(self, sender:str, msg: str, require_summary:bool = False) -> None:
         tg = TextGenerator.instance
         messageunit = tg.generate_msg_template(sender=sender, msg=msg, time_str=f"[{time.strftime('%H:%M:%S %p', time.localtime())}] ")
-        self._chat_preset.chat_history.append(messageunit)
-        logger.info(f"[会话: {self._chat_key}]添加对话历史行: {messageunit}  |  当前对话历史行数: {len(self._chat_preset.chat_history)}")
+        self._chat_data.chat_history.append(messageunit)
+        logger.info(f"[会话: {self._chat_key}]添加对话历史行: {messageunit}  |  当前对话历史行数: {len(self._chat_data.chat_history)}")
         self._last_msg_time = time.time()   # 更新上次对话时间
-        while len(self._chat_preset.chat_history) > config.CHAT_MEMORY_MAX_LENGTH * 2:    # 保证对话历史不超过最大长度的两倍
-            self._chat_preset.chat_history.pop(0)
+        while len(self._chat_data.chat_history) > config.CHAT_MEMORY_MAX_LENGTH * 2:    # 保证对话历史不超过最大长度的两倍
+            self._chat_data.chat_history.pop(0)
 
-        if len(self._chat_preset.chat_history) > config.CHAT_MEMORY_MAX_LENGTH and require_summary and config.CHAT_ENABLE_SUMMARY_CHAT: # 只有在开启总结功能并且在bot回复后才进行总结 避免不必要的token消耗
-            prev_summarized = f"Summary of last conversation:{self._chat_preset.chat_summarized}\n\n"
-            history_str = '\n'.join(self._chat_preset.chat_history)
+        if len(self._chat_data.chat_history) > config.CHAT_MEMORY_MAX_LENGTH and require_summary and config.CHAT_ENABLE_SUMMARY_CHAT: # 只有在开启总结功能并且在bot回复后才进行总结 避免不必要的token消耗
+            prev_summarized = f"Summary of last conversation:{self._chat_data.chat_summarized}\n\n"
+            history_str = '\n'.join(self._chat_data.chat_history)
             prompt = (  # 以机器人的视角总结对话历史
                 f"{prev_summarized}[Chat]\n"
                 f"{history_str}"
@@ -58,13 +58,13 @@ class Chat:
             # if config.DEBUG_LEVEL > 0: logger.info(f"生成对话历史摘要prompt: {prompt}")
             res, success = await tg.get_response(prompt, type='summarize')  # 生成新的对话历史摘要
             if success:
-                self._chat_preset.chat_summarized = res.strip()
+                self._chat_data.chat_summarized = res.strip()
             else:
                 logger.error(f"生成对话历史摘要失败: {res}")
                 return
             # logger.info(f"生成对话历史摘要: {self.chat_presets['chat_summarized']}")
-            logger.info(f"摘要生成消耗token数: {tg.cal_token_count(prompt + self._chat_preset.chat_summarized)}")
-            self._chat_preset.chat_history = self._chat_preset.chat_history[-config.CHAT_MEMORY_SHORT_LENGTH:]
+            logger.info(f"摘要生成消耗token数: {tg.cal_token_count(prompt + self._chat_data.chat_summarized)}")
+            self._chat_data.chat_history = self._chat_data.chat_history[-config.CHAT_MEMORY_SHORT_LENGTH:]
 
     # 更新对特定用户的对话历史行
     async def update_chat_history_row_for_user(self, sender:str, msg: str, userid:str, username:str, require_summary:bool = False) -> None:
@@ -182,17 +182,17 @@ class Chat:
 
         # 对话历史
         offset = 0
-        chat_history:str = '\n\n'.join(self._chat_preset.chat_history[-(config.CHAT_MEMORY_SHORT_LENGTH + offset):])  # 从对话历史中截取短期对话
+        chat_history:str = '\n\n'.join(self._chat_data.chat_history[-(config.CHAT_MEMORY_SHORT_LENGTH + offset):])  # 从对话历史中截取短期对话
         tg = TextGenerator.instance
         while tg.cal_token_count(chat_history) > config.CHAT_HISTORY_MAX_TOKENS:
             offset += 1 # 如果对话历史过长，则逐行删除对话历史
-            chat_history = '\n\n'.join(self._chat_preset.chat_history[-(config.CHAT_MEMORY_SHORT_LENGTH + offset):])
+            chat_history = '\n\n'.join(self._chat_data.chat_history[-(config.CHAT_MEMORY_SHORT_LENGTH + offset):])
             if offset > 99: # 如果对话历史删除执行出现问题，为了避免死循环，则只保留最后一条对话
-                chat_history = self._chat_preset.chat_history[-1]
+                chat_history = self._chat_data.chat_history[-1]
                 break
 
         # 对话历史摘要
-        summary = f"\n\n[Summary]: {self._chat_preset.chat_summarized}" if self._chat_preset.chat_summarized else ''  # 如果有对话历史摘要，则添加摘要
+        summary = f"\n\n[Summary]: {self._chat_data.chat_summarized}" if self._chat_data.chat_summarized else ''  # 如果有对话历史摘要，则添加摘要
 
         # 拓展描述
         ext_descs = ''.join([global_extensions[ek].generate_description(chat_history) for ek in global_extensions.keys()])
@@ -309,13 +309,12 @@ class Chat:
         return self._chat_preset_dicts.keys()
     
     def reset_chat_preset(self, preset_key:str):
-        """重置指定预设，将丢失性格或历史数据"""
+        """重置指定预设，将丢失对用户的对话历史和印象数据"""
         PersistentDataManager.instance.reset_preset(self._chat_key, preset_key)
 
-    def reset_all_chat_preset(self):
+    def reset_chat(self):
         """重置当前会话所有预设，将丢失性格或历史数据"""
-        for k in self._chat_preset_dicts.keys:
-            PersistentDataManager.instance.reset_preset(self._chat_key, k)
+        PersistentDataManager.instance.reset_chat(self._chat_key)
     
 
 global_chat_dict:Dict[str, Chat] = {}

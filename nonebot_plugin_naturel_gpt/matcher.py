@@ -509,8 +509,9 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
     # 判断是否需要回复
     if (    # 如果不是 bot 相关的信息，则直接返回
+        wake_up or \
         (config.REPLY_ON_NAME_MENTION and (chat.get_chat_preset_key().lower() in trigger_text.lower())) or \
-        (config.REPLY_ON_AT and is_tome) or wake_up\
+        (config.REPLY_ON_AT and is_tome)
     ):
         # 更新全局对话历史记录
         # chat.update_chat_history_row(sender=sender_name, msg=trigger_text, require_summary=True)
