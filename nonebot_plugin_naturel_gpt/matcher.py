@@ -497,7 +497,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         wake_up = True
 
     # 其它人格唤醒判断
-    if chat.get_chat_bot_name().lower() not in trigger_text.lower() and chat.enable_auto_switch_identity:
+    if chat.get_chat_preset_key().lower() not in trigger_text.lower() and chat.enable_auto_switch_identity:
         presets_dict = PersistentDataManager.instance.get_presets(chat_key)
         for preset_key in presets_dict:
             if preset_key.lower() in trigger_text.lower():
@@ -509,13 +509,13 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
     # 判断是否需要回复
     if (    # 如果不是 bot 相关的信息，则直接返回
-        (config.REPLY_ON_NAME_MENTION and (chat.get_chat_bot_name().lower() in trigger_text.lower())) or \
+        (config.REPLY_ON_NAME_MENTION and (chat.get_chat_preset_key().lower() in trigger_text.lower())) or \
         (config.REPLY_ON_AT and is_tome) or wake_up\
     ):
         # 更新全局对话历史记录
         # chat.update_chat_history_row(sender=sender_name, msg=trigger_text, require_summary=True)
         await chat.update_chat_history_row(sender=sender_name,
-                                    msg=f"@{chat.get_chat_bot_name()} {trigger_text}" if is_tome and chat_type=='group' else trigger_text,
+                                    msg=f"@{chat.get_chat_preset_key()} {trigger_text}" if is_tome and chat_type=='group' else trigger_text,
                                     require_summary=False)
         logger.info("符合 bot 发言条件，进行回复...")
     else:
@@ -555,7 +555,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         logger.info(f"对话 prompt 模板已保存到日志文件: {chat_key}.{time.strftime('%Y-%m-%d %H-%M-%S')}.prompt.log")
 
     tg = TextGenerator.instance
-    raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.get_chat_bot_name(), 'sender_name': sender_name})  # 生成对话结果
+    raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.get_chat_preset_key(), 'sender_name': sender_name})  # 生成对话结果
     if not success:  # 如果生成对话结果失败，则直接返回
         logger.info("生成对话结果失败，跳过处理...")
         await matcher.finish(raw_res)
@@ -607,7 +607,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
             logger.info(f"检测到拓展调用指令: {ext_name} {ext_args_dict} | 正在调用拓展模块...")
             try:    # 调用拓展的call方法
                 ext_res:dict = await global_extensions[ext_name].call(ext_args_dict, {
-                    'bot_name': chat.get_chat_bot_name(),
+                    'bot_name': chat.get_chat_preset_key(),
                     'user_send_raw_text': trigger_text,
                     'bot_send_raw_text': raw_res
                 })
@@ -685,9 +685,9 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         time.sleep(0.1)
 
     logger.info(f"token消耗: {cost_token} | 对话响应: \"{raw_res}\"")
-    await chat.update_chat_history_row(sender=chat.get_chat_bot_name(), msg=raw_res, require_summary=True)  # 更新全局对话历史记录
+    await chat.update_chat_history_row(sender=chat.get_chat_preset_key(), msg=raw_res, require_summary=True)  # 更新全局对话历史记录
     # 更新对用户的对话信息
-    await chat.update_chat_history_row_for_user(sender=chat.get_chat_bot_name(), msg=raw_res, userid=trigger_userid, username=sender_name, require_summary=True)
+    await chat.update_chat_history_row_for_user(sender=chat.get_chat_preset_key(), msg=raw_res, userid=trigger_userid, username=sender_name, require_summary=True)
     PersistentDataManager.instance.save_to_file()  # 保存数据
     if config.DEBUG_LEVEL > 0: logger.info(f"对话响应完成 | 耗时: {time.time() - sta_time}s")
     

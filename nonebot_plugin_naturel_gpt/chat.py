@@ -51,7 +51,7 @@ class Chat:
             prompt = (  # 以机器人的视角总结对话历史
                 f"{prev_summarized}[Chat]\n"
                 f"{history_str}"
-                f"\n\n{self._chat_preset.bot_self_introl}\nSummarize the chat in one paragraph from the perspective of '{self._chat_preset.bot_name}' and record as much important information as possible from the conversation:"
+                f"\n\n{self._chat_preset.bot_self_introl}\nSummarize the chat in one paragraph from the perspective of '{self._chat_preset.preset_key}' and record as much important information as possible from the conversation:"
             )
             # if config.DEBUG_LEVEL > 0: logger.info(f"生成对话历史摘要prompt: {prompt}")
             res, success = await tg.get_response(prompt, type='summarize')  # 生成新的对话历史摘要
@@ -82,7 +82,7 @@ class Chat:
             prompt = (   # 以机器人的视角总结对话
                 f"{prev_summarized}[Chat]\n"
                 f"{history_str}"
-                f"\n\n{self._chat_preset.bot_self_introl}\nUpdate {username} impressions from the perspective of {self._chat_preset.bot_name}:"
+                f"\n\n{self._chat_preset.bot_self_introl}\nUpdate {username} impressions from the perspective of {self._chat_preset.preset_key}:"
             )
             # if config.DEBUG_LEVEL > 0: logger.info(f"生成对话历史摘要prompt: {prompt}")
             res, success = await tg.get_response(prompt, type='summarize')  # 生成新的对话历史摘要
@@ -211,13 +211,13 @@ class Chat:
         )
 
         # 发言提示
-        # say_prompt = f"(Multiple segment replies are separated by '*;', single quotes are not included, please only give the details of {self.chat_presets['bot_name']} response and do not give any irrelevant information)" if config.NG_ENABLE_MSG_SPLIT else ''
+        # say_prompt = f"(Multiple segment replies are separated by '*;', single quotes are not included, please only give the details of {self.chat_presets['preset_key']} response and do not give any irrelevant information)" if config.NG_ENABLE_MSG_SPLIT else ''
 
         res_rule_prompt = (
             f"\n[Response rule: Your response needs to follow the following rules]\n"
             f"\n1. If the content of a reply is too long, please segment it in the appropriate place, use '*;' delimited(single quotes are not included)"
-            # f"\n2. Only give the response content of {self.chat_presets['bot_name']} and do not carry any irrelevant information or the speeches of other members"
-            # f"\n2. Please play the {self.chat_presets['bot_name']} role and only give the reply content of the {self.chat_presets['bot_name']} role, response needs to follow the role's setting and habits(Provided by the user)"
+            # f"\n2. Only give the response content of {self.chat_presets['preset_key']} and do not carry any irrelevant information or the speeches of other members"
+            # f"\n2. Please play the {self.chat_presets['preset_key']} role and only give the reply content of the {self.chat_presets['preset_key']} role, response needs to follow the role's setting and habits(Provided by the user)"
             f"\n2. If the response contains code blocks, use the markdown format below"
             f"\n```python"
             f"\nprint('hi')"
@@ -233,13 +233,13 @@ class Chat:
         #     f"{extension_text}"
         #     f"{res_rule_prompt}"
         #     f"\n[Chat History (current time: {time.strftime('%Y-%m-%d %H:%M:%S')})]\n"
-        #     f"\n{chat_history}\n{self.chat_presets['bot_name']}:"
+        #     f"\n{chat_history}\n{self.chat_presets['preset_key']}:"
         # )
 
         # 返回对话 prompt 模板
         return [
             {'role': 'system', 'content': ( # 系统消息
-                # f"You must strictly follow the user's instructions to give {self.chat_presets['bot_name']}'s response."
+                # f"You must strictly follow the user's instructions to give {self.chat_presets['preset_key']}'s response."
                 f"You must follow the user's instructions to play the specified role in the first person and give the response information according to the changed role. If necessary, you can generate a reply in the specified format to call the extension function."
                 f"\n{extension_text}"
                 f"\n{res_rule_prompt}"
@@ -262,17 +262,13 @@ class Chat:
                 f"[Character setting]\n{self._chat_preset.bot_self_introl}\n\n"
                 f"{memory}{impression_text}{summary}"
                 f"\n[Chat History (current time: {time.strftime('%Y-%m-%d %H:%M:%S %A')})]\n"
-                f"\n{chat_history}\n\n{self._chat_preset.bot_name}:(Generate the response content of {self._chat_preset.bot_name}, excluding '{self._chat_preset.bot_name}:', Do not generate any reply from anyone else.)"
+                f"\n{chat_history}\n\n{self._chat_preset.preset_key}:(Generate the response content of {self._chat_preset.preset_key}, excluding '{self._chat_preset.preset_key}:', Do not generate any reply from anyone else.)"
             )},
         ]
 
     def get_chat_key(self) ->str:
         """获取当前会话 chat_key"""
         return self._chat_key
-    
-    def get_chat_bot_name(self) -> str:
-        """获取当前对话bot的名称"""
-        return self._chat_preset.bot_name
 
     def get_chat_preset_key(self) -> str:
         """获取当前对话bot的预设键"""
@@ -298,7 +294,7 @@ class Chat:
 
     def generate_description(self):
         """获取当前会话描述"""
-        return f"[{'启用' if self.is_enable else '禁用'}] 会话: {self._chat_key[:-6]+('*'*6)} 预设: {self.get_chat_bot_name()}\n"
+        return f"[{'启用' if self.is_enable else '禁用'}] 会话: {self._chat_key[:-6]+('*'*6)} 预设: {self.get_chat_preset_key()}\n"
     
     @property
     def chat_preset(self)->PresetData:
@@ -310,9 +306,9 @@ class Chat:
         """获取当前会话的所有预设名称列表"""
         return self._chat_preset_dicts.keys()
     
-    def reset_chat_preset(self, bot_name:str):
+    def reset_chat_preset(self, preset_key:str):
         """重置指定预设，将丢失性格或历史数据"""
-        PersistentDataManager.instance.reset_preset(self._chat_key, bot_name)
+        PersistentDataManager.instance.reset_preset(self._chat_key, preset_key)
 
     def reset_all_chat_preset(self):
         """重置当前会话所有预设，将丢失性格或历史数据"""
