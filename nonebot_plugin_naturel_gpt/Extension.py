@@ -103,7 +103,8 @@ def load_extensions(config:Dict[str, Any]) -> None:
                 CustomExtension:Extension = getattr(importlib.import_module(f'ext_cache.{tmpExt.get("EXT_NAME")}'), 'CustomExtension')
                 time.sleep(0.3)  # 等待文件导入完成
 
-                ext = CustomExtension(tmpExt.get("EXT_CONFIG", {}))  # 加载拓展模块并实例化
+                ext_config_dict = tmpExt.get("EXT_CONFIG") if isinstance(tmpExt.get("EXT_CONFIG"), dict) else {}
+                ext = CustomExtension(ext_config_dict)  # 加载拓展模块并实例化
                 global_extensions[ext.get_config().get('name').lower()] = ext  # 将拓展模块添加到全局拓展模块字典中
                 logger.info(f"加载拓展模块 {tmpExt.get('EXT_NAME')} 成功！")
             except Exception as e:
