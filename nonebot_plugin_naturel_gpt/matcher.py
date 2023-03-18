@@ -5,7 +5,7 @@ import re
 import time
 import os
 import traceback
-from typing import List, Dict, Callable, Optional, Set, Tuple
+from typing import Awaitable, List, Dict, Callable, Optional, Set, Tuple
 from nonebot import get_driver
 from nonebot import on_command, on_message, on_notice
 from nonebot.log import logger
@@ -20,7 +20,7 @@ from .Extension import Extension, global_extensions
 from .openai_func import TextGenerator
 from .command_func import CommandManager, cmd
 
-permission_check_func:Callable[[Matcher, MessageEvent, Bot, str, str], Tuple[bool, str]] = None
+permission_check_func:Callable[[Matcher, MessageEvent, Bot, str, str], Awaitable[Tuple[bool,str]]] = None
 is_progress:bool = False
 
 msg_sent_set:Set[str] = set() # bot 自己发送的消息

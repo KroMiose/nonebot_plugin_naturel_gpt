@@ -28,15 +28,12 @@ async def default_permission_check_func(matcher:Matcher, event: MessageEvent, bo
     if event.user_id == int(bot.self_id): # bot 在控制自己，永远有权限
         return (True, None)
     
-    if isinstance(event, PrivateMessageEvent): # 私聊
-        return (True, None)
-
     cmd_list = [c.strip() for c in cmd.split(' ') if c.strip()]
     if(len(cmd_list) == 0): # rg
         return (True, None)
-
+    
     is_super_user = str(event.user_id) in config.ADMIN_USERID or await (SUPERUSER)(bot, event)
-    is_admin = is_super_user or await (GROUP_ADMIN | GROUP_OWNER)(bot, event)
+    is_admin = is_super_user or isinstance(event, PrivateMessageEvent) or await (GROUP_ADMIN | GROUP_OWNER)(bot, event) # 超级管理员，私聊，群主，群管理，均视为admin
 
     common_cmd = ['', '查询', 'query', '设定', 'set', '更新', 'update', 'edit', '添加', 'new']
     super_cmd = ['admin', '删除', 'del', 'delete',
@@ -44,7 +41,7 @@ async def default_permission_check_func(matcher:Matcher, event: MessageEvent, bo
                     '记忆', 'memory']
     
     cmd_0 = cmd_list[0]
-    if cmd_0 in super_cmd or '-global' in cmd_list:
+    if cmd_0 in super_cmd or '-global' in cmd_list: # 超级命令或者命令中包含 `-global` 选项需要超级管理员权限
         return (is_super_user, None if is_super_user else '权限不足，只有超级管理员才允许使用此指令')
     elif cmd_0 in common_cmd:
         return (is_admin, None if is_admin else '权限不足，只有管理员才允许使用此指令')
