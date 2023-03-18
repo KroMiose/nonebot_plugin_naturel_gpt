@@ -47,7 +47,7 @@ class CustomExtension(Extension):
 
         url = f"https://ddg-webapp-aagd.vercel.app/search?q={keyword}&max_results={max_results}&region=cn-zh"
 
-        res = requests.get(url, headers=headers,proxies={'http':proxy})
+        res = requests.get(url, headers=headers,proxies={'http':proxy, 'https':proxy})
         print(res.json())
         
         try:

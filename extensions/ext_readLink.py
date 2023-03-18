@@ -48,7 +48,7 @@ class CustomExtension(Extension):
 
         url = f"https://ddg-webapp-aagd.vercel.app/url_to_text?url={quote}"
 
-        res = requests.get(url, headers=headers,proxies={'http':proxy})
+        res = requests.get(url, headers=headers,proxies={'http':proxy, 'https':proxy})
         print(res.json())
         
         try:
