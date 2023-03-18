@@ -28,10 +28,10 @@ async def default_permission_check_func(matcher:Matcher, event: MessageEvent, bo
     if event.user_id == int(bot.self_id):
         return (True, None)
 
-    args:List[str] = cmd.split(' ')
-    if(len(args) == 0):
+    cmd_list = [c.strip() for c in cmd.split(' ') if c.strip()]
+    if(len(cmd_list) == 0):
         return (True, None)
-    elif(len(args) >= 1):
+    elif(len(cmd_list) >= 1):
         is_super_user = str(event.user_id) in config.ADMIN_USERID or await (SUPERUSER)(bot, event)
         is_admin = is_super_user or await (GROUP_ADMIN | GROUP_OWNER)(bot, event)
 
@@ -40,11 +40,11 @@ async def default_permission_check_func(matcher:Matcher, event: MessageEvent, bo
                        '锁定', 'lock', '解锁', 'unlock', '拓展', 'ext', '开启', 'on', '关闭', 'off', '重置', 'reset', 'debug', '会话', 'chats',
                        '记忆', 'memory']
         
-        cmd = args[0]
-        if cmd in common_cmd:
+        cmd_0 = cmd_list[0]
+        if cmd_0 in super_cmd or '-global' in cmd_list:
+            return (is_super_user, None if is_super_user else '权限不足，只有超级管理员才允许使用此指令')
+        elif cmd_0 in common_cmd:
             return (is_admin, None if is_admin else '权限不足，只有管理员才允许使用此指令')
-        elif cmd in super_cmd:
-            return (is_super_user, None if is_super_user else '只有超级管理员才允许使用此指令')
         else:
             return (True, None)
     else:

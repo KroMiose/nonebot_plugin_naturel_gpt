@@ -37,8 +37,8 @@ class Chat:
                 preset_key = list(self._chat_preset_dicts.keys())[0]
         self.change_presettings(preset_key)
 
-    # 更新当前会话的全局对话历史行
     async def update_chat_history_row(self, sender:str, msg: str, require_summary:bool = False) -> None:
+        """更新当前会话的全局对话历史行"""
         tg = TextGenerator.instance
         messageunit = tg.generate_msg_template(sender=sender, msg=msg, time_str=f"[{time.strftime('%H:%M:%S %p', time.localtime())}] ")
         self._chat_data.chat_history.append(messageunit)
@@ -66,8 +66,8 @@ class Chat:
             logger.info(f"摘要生成消耗token数: {tg.cal_token_count(prompt + self._chat_data.chat_summarized)}")
             self._chat_data.chat_history = self._chat_data.chat_history[-config.CHAT_MEMORY_SHORT_LENGTH:]
 
-    # 更新对特定用户的对话历史行
     async def update_chat_history_row_for_user(self, sender:str, msg: str, userid:str, username:str, require_summary:bool = False) -> None:
+        """更新对特定用户的对话历史行"""
         if userid not in self._chat_preset.chat_impressions:
             impression_data = ImpressionData(user_id=userid)
             self._chat_preset.chat_impressions[userid] = impression_data
@@ -97,8 +97,8 @@ class Chat:
             logger.info(f"印象生成消耗token数: {tg.cal_token_count(prompt + impression_data.chat_impression)}")
             impression_data.chat_history = impression_data.chat_history[-config.CHAT_MEMORY_SHORT_LENGTH:]
 
-    # 为当前预设设置记忆
     def set_memory(self, mem_key:str, mem_value:str = '') -> None:
+        """为当前预设设置记忆"""
         mem_key = mem_key.replace(' ', '_')  # 将空格替换为下划线
         # 如果没有指定mem_value，则删除该记忆
         if not mem_value:
@@ -118,8 +118,8 @@ class Chat:
                 del self._chat_preset.chat_memory[del_key]
                 if config.DEBUG_LEVEL > 0: logger.info(f"忘记了: {del_key} (超出最大记忆长度)")
 
-    # 增强记忆 如果响应中的内容与记忆中的内容相似，则增强记忆(将改记忆移到最后)
     def enhance_memory(self, response:str) -> bool:
+        """增强记忆 如果响应中的内容与记忆中的内容相似，则增强记忆(将改记忆移到最后)"""
         for mem_key, mem_value in self._chat_preset.chat_memory.items():#模糊匹配
             compare_score = compare_text(response, mem_value)
             if config.DEBUG_LEVEL > 0: logger.info(f"增强记忆比较: {response} vs {mem_value} = {compare_score}")
@@ -129,20 +129,21 @@ class Chat:
                 return True
         return False
 
-    # 修改对话预设
-    def change_presettings(self, preset_key:str) -> None:
+    def change_presettings(self, preset_key:str) -> bool:
+        """修改对话预设"""
         if preset_key not in self._chat_preset_dicts:    # 如果聊天预设字典中没有该预设，则从全局预设字典中拷贝一个
             preset_config = config.PRESETS.get(preset_key, None)
             if not preset_config:
-                raise Exception(f"不允许切换到不存在的人格预设 [{preset_key}]")
+                return False
             PersistentDataManager.instance.add_preset_from_config(self._chat_key, preset_key, preset_config)
             logger.info(f"从全局预设中拷贝预设 {preset_key} 到聊天预设字典")
         self._chat_data.active_preset = preset_key
         self._chat_preset = self._chat_preset_dicts[preset_key]
         self._preset_key = preset_key
+        return True
 
-    # 对话 prompt 模板生成
     def get_chat_prompt_template(self, userid:str = None)-> str:
+        """对话 prompt 模板生成"""
         # 印象描述
         impression_text = f"[impression]\n{self._chat_preset.chat_impressions[userid].chat_impression}\n\n" \
             if userid in self._chat_preset.chat_impressions else ''  # 用户印象描述
