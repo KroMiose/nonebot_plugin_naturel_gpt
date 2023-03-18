@@ -22,31 +22,32 @@ def to_me():
 
 async def default_permission_check_func(matcher:Matcher, event: MessageEvent, bot:Bot, cmd:str, type:str = 'cmd') -> Tuple[bool, str]:
     """默认权限检查函数"""
-    if cmd is None:
+    if cmd is None: # 非命令调用
         return (True, None)
     
-    if event.user_id == int(bot.self_id):
+    if event.user_id == int(bot.self_id): # bot 在控制自己，永远有权限
+        return (True, None)
+    
+    if isinstance(event, PrivateMessageEvent): # 私聊
         return (True, None)
 
     cmd_list = [c.strip() for c in cmd.split(' ') if c.strip()]
-    if(len(cmd_list) == 0):
+    if(len(cmd_list) == 0): # rg
         return (True, None)
-    elif(len(cmd_list) >= 1):
-        is_super_user = str(event.user_id) in config.ADMIN_USERID or await (SUPERUSER)(bot, event)
-        is_admin = is_super_user or await (GROUP_ADMIN | GROUP_OWNER)(bot, event)
 
-        common_cmd = ['', '查询', 'query', '设定', 'set', '更新', 'update', 'edit', '添加', 'new']
-        super_cmd = ['admin', '删除', 'del', 'delete',
-                       '锁定', 'lock', '解锁', 'unlock', '拓展', 'ext', '开启', 'on', '关闭', 'off', '重置', 'reset', 'debug', '会话', 'chats',
-                       '记忆', 'memory']
-        
-        cmd_0 = cmd_list[0]
-        if cmd_0 in super_cmd or '-global' in cmd_list:
-            return (is_super_user, None if is_super_user else '权限不足，只有超级管理员才允许使用此指令')
-        elif cmd_0 in common_cmd:
-            return (is_admin, None if is_admin else '权限不足，只有管理员才允许使用此指令')
-        else:
-            return (True, None)
+    is_super_user = str(event.user_id) in config.ADMIN_USERID or await (SUPERUSER)(bot, event)
+    is_admin = is_super_user or await (GROUP_ADMIN | GROUP_OWNER)(bot, event)
+
+    common_cmd = ['', '查询', 'query', '设定', 'set', '更新', 'update', 'edit', '添加', 'new']
+    super_cmd = ['admin', '删除', 'del', 'delete',
+                    '锁定', 'lock', '解锁', 'unlock', '拓展', 'ext', '开启', 'on', '关闭', 'off', '重置', 'reset', 'debug', '会话', 'chats',
+                    '记忆', 'memory']
+    
+    cmd_0 = cmd_list[0]
+    if cmd_0 in super_cmd or '-global' in cmd_list:
+        return (is_super_user, None if is_super_user else '权限不足，只有超级管理员才允许使用此指令')
+    elif cmd_0 in common_cmd:
+        return (is_admin, None if is_admin else '权限不足，只有管理员才允许使用此指令')
     else:
         return (True, None)
     
