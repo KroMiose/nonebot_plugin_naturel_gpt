@@ -185,11 +185,16 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     bot_self_introl = param_dict.get('preset_intro', '')
     
     if option_dict.get('global'):   # 全局应用
-        err_cnt = 0
-        for chat_key in global_chat_dict.keys():
-            if not PersistentDataManager.instance.add_preset(chat_key=chat_key, preset_key=target_preset_key, bot_self_introl=bot_self_introl):
-                err_cnt += 1
-        return {'msg': f"添加预设: {target_preset_key} (￣▽￣)-ok! (所有会话) {f'错误:{err_cnt}' if err_cnt else ''}", 'is_progress': True}
+        if target_preset_key in chat_presets_dict:
+            return {'msg': "预设已存在! 请检查后重试!"}
+        chat_presets_dict[target_preset_key] = {
+            'bot_name': target_preset_key,
+            'is_locked': False,
+            'is_default': False,
+            'bot_self_introl': bot_self_introl,
+        }
+        return {'msg': f"添加预设: {target_preset_key} 成功! (￣▽￣)", 'is_progress': True}
+    
     elif option_dict.get('target'): # 指定会话应用
         target_chat_key = option_dict.get('target')
         if target_chat_key not in global_chat_dict:
