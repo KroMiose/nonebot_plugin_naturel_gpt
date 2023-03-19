@@ -236,6 +236,49 @@ CONFIG_TEMPLATE = {
 driver = get_driver()
 global_config = GlobalConfig.parse_obj(driver.config)
 config_path = global_config.ng_config_path
+config:Config = None
+
+def get_config() ->Config:
+    """获取config数据（为了能够reload建议使用此函数获取对象）"""
+    return config
+
+def load_config_from_file_then_save():
+    """加载配置文件，然后保存回文件"""
+    global config
+    # 读取配置文件
+    with open(config_path, 'r', encoding='utf-8') as f:
+        try:
+            config_obj_from_file:Dict = yaml.load(f, Loader=yaml.FullLoader)
+            # 兼容 preset_key 和 bot_name
+            for v in config_obj_from_file["PRESETS"].values():
+                if 'bot_name' in v:
+                    if "preset_key" not in v:
+                        v["preset_key"] = v["bot_name"]
+                    del v["bot_name"]
+        except Exception as e:
+            logger.error(f"Naturel GPT 配置文件读取失败，请检查配置文件填写是否符合yml文件格式规范，错误信息：{e}")
+            raise e
+        
+        for k in CONFIG_TEMPLATE.keys():
+            if not k in config_obj_from_file.keys():
+                config_obj_from_file[k] = CONFIG_TEMPLATE[k]
+                logger.info(f"Naturel GPT 配置文件缺少 {k} 项，将使用默认值")
+
+        config = Config.parse_obj(config_obj_from_file)
+
+    # 检查数据文件夹目录、拓展目录、日志目录是否存在 不存在则创建
+    if not Path(config.NG_DATA_PATH[:-1]).exists():
+        Path(config.NG_DATA_PATH[:-1]).mkdir(parents=True)
+    if not Path(config.NG_EXT_PATH[:-1]).exists():
+        Path(config.NG_EXT_PATH[:-1]).mkdir(parents=True)
+    if not Path(config.NG_LOG_PATH[:-1]).exists():
+        Path(config.NG_LOG_PATH[:-1]).mkdir(parents=True)
+
+    # 保存配置文件
+    with open(config_path, 'w', encoding='utf-8') as f:
+        yaml.dump(config.dict(), f, allow_unicode=True, sort_keys=False)
+    logger.info('Naturel GPT 配置文件加载成功')
+
 
 # 检查config文件夹是否存在 不存在则创建
 if not Path("config").exists():
@@ -251,34 +294,5 @@ else:
             yaml.dump(CONFIG_TEMPLATE, f, allow_unicode=True)
             logger.info('Naturel GPT 配置文件创建成功')
 
-# 读取配置文件
-with open(config_path, 'r', encoding='utf-8') as f:
-    try:
-        config_obj_from_file:Dict = yaml.load(f, Loader=yaml.FullLoader)
-        # 兼容 preset_key 和 bot_name
-        for v in config_obj_from_file["PRESETS"].values():
-            if "preset_key" not in v:
-                v["preset_key"] = v["bot_name"]
-    except Exception as e:
-        logger.error(f"Naturel GPT 配置文件读取失败，请检查配置文件填写是否符合yml文件格式规范，错误信息：{e}")
-        raise e
-    
-    for k in CONFIG_TEMPLATE.keys():
-        if not k in config_obj_from_file.keys():
-            config_obj_from_file[k] = CONFIG_TEMPLATE[k]
-            logger.info(f"Naturel GPT 配置文件缺少 {k} 项，将使用默认值")
-
-    config = Config.parse_obj(config_obj_from_file)
-
-# 检查数据文件夹目录、拓展目录、日志目录是否存在 不存在则创建
-if not Path(config.NG_DATA_PATH[:-1]).exists():
-    Path(config.NG_DATA_PATH[:-1]).mkdir(parents=True)
-if not Path(config.NG_EXT_PATH[:-1]).exists():
-    Path(config.NG_EXT_PATH[:-1]).mkdir(parents=True)
-if not Path(config.NG_LOG_PATH[:-1]).exists():
-    Path(config.NG_LOG_PATH[:-1]).mkdir(parents=True)
-
-# 保存配置文件
-with open(config_path, 'w', encoding='utf-8') as f:
-    yaml.dump(config.dict(), f, allow_unicode=True, sort_keys=False)
-logger.info('Naturel GPT 配置文件加载成功')
+# 加载配置文件
+load_config_from_file_then_save()
