@@ -1,7 +1,7 @@
 import os
 import pickle
 import time
-from typing import Set, Dict, List, overload
+from typing import Set, Dict, List, Tuple, overload
 from dataclasses import dataclass, field
 
 from nonebot import logger
@@ -187,6 +187,17 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         presets[preset_key] = PresetData(preset_key=preset_key, bot_self_introl=bot_self_introl)
         return True
     
+    def add_preset_for_all(self, preset_key:str, bot_self_introl: str) -> Tuple[int, int]:
+        """将预设添加到所有的会话中, 返回值为(成功数量，失败数量)"""
+        success_cnt = 0
+        fail_cnt = 0
+        for chat_key in self.get_all_chat_keys():
+            if(self.add_preset(chat_key=chat_key,preset_key=preset_key, bot_self_introl=bot_self_introl)):
+                success_cnt += 1
+            else:
+                fail_cnt += 1
+        return (success_cnt, fail_cnt)
+    
     def add_preset_from_config(self, chat_key:str, preset_key:str, preset_config: PresetConfig) -> bool:
         """给指定chat_key添加新人格, config_preset为config中的全局配置"""
         presets = self.get_presets(chat_key)
@@ -208,6 +219,17 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         
         presets[preset_key].bot_self_introl = bot_self_introl
         return True
+    
+    def update_preset_for_all(self, preset_key:str, bot_self_introl: str) -> Tuple[int, int]:
+        """修改所有会话的人格预设, 返回值为(成功数量，失败数量)"""
+        success_cnt = 0
+        fail_cnt = 0
+        for chat_key in self.get_all_chat_keys():
+            if(self.update_preset(chat_key=chat_key,preset_key=preset_key, bot_self_introl=bot_self_introl)):
+                success_cnt += 1
+            else:
+                fail_cnt += 1
+        return (success_cnt, fail_cnt)
 
     def del_preset(self, chat_key:str, preset_key:str) -> bool:
         """删除指定chat_key的指定性格(允许删除系统人格)"""
@@ -217,6 +239,20 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         
         del presets[preset_key]
         return True
+    
+    def del_preset_for_all(self, preset_key:str) -> Tuple[int, int]:
+        """删除所有会话的指定预设， 返回值为(成功数量，失败数量)"""
+        success_cnt = 0
+        fail_cnt = 0
+        for chat_key in self.get_all_chat_keys():
+            if self._datas[chat_key].active_preset == chat_key: # 正在使用的 preset 不允许删除
+                fail_cnt += 1
+                continue
+            if(self.del_preset(chat_key=chat_key,preset_key=preset_key)):
+                success_cnt += 1
+            else:
+                fail_cnt += 1
+        return (success_cnt, fail_cnt)
     
     def reset_preset(self, chat_key:str, preset_key:str) -> bool:
         """重置指定会话系统预设的人格设定, 如果是系统预设名将还原默认人格设定"""
@@ -228,11 +264,33 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         preset_datas[preset_key].reset_to_default(preset_config)
         return True
     
+    def reset_preset_for_all(self, preset_key:str) -> Tuple[int, int]:
+        """重置所有会话的指定预设，返回值为(成功数量，失败数量)"""
+        success_cnt = 0
+        fail_cnt = 0
+        for chat_key in self.get_all_chat_keys():
+            if(self.reset_preset(chat_key=chat_key,preset_key=preset_key)):
+                success_cnt += 1
+            else:
+                fail_cnt += 1
+        return (success_cnt, fail_cnt)
+    
     def reset_chat(self, chat_key:str) -> bool:
-        """置当前会话所有预设，将丢失性格或历史数据"""
+        """重置当前会话所有预设，将丢失性格或历史数据"""
         chat_data = self.get_chat_data(chat_key=chat_key)
         chat_data.reset()
         return True
+    
+    def reset_chat_for_all(self) -> Tuple[int, int]:
+        """重置所有会话，返回值为(成功数量，失败数量)"""
+        success_cnt = 0
+        fail_cnt = 0
+        for chat_key in self.get_all_chat_keys():
+            if(self.reset_chat(chat_key=chat_key)):
+                success_cnt += 1
+            else:
+                fail_cnt += 1
+        return (success_cnt, fail_cnt)
 
     def update_all_system_identity_presets():
         """配置文件更新时将新的人格数据同步到已有chat_key中"""
