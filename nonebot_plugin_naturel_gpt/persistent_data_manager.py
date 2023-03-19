@@ -187,7 +187,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         presets[preset_key] = PresetData(preset_key=preset_key, bot_self_introl=bot_self_introl)
         return True
     
-    def add_preset_for_all(self, chat_key:str, preset_key:str, bot_self_introl: str) -> Tuple[int, int]:
+    def add_preset_for_all(self, preset_key:str, bot_self_introl: str) -> Tuple[int, int]:
         """将预设添加到所有的会话中, 返回值为(成功数量，失败数量)"""
         success_cnt = 0
         fail_cnt = 0
@@ -220,7 +220,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         presets[preset_key].bot_self_introl = bot_self_introl
         return True
     
-    def update_preset_for_all(self, chat_key:str, preset_key:str, bot_self_introl: str) -> Tuple[int, int]:
+    def update_preset_for_all(self, preset_key:str, bot_self_introl: str) -> Tuple[int, int]:
         """修改所有会话的人格预设, 返回值为(成功数量，失败数量)"""
         success_cnt = 0
         fail_cnt = 0
@@ -240,7 +240,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         del presets[preset_key]
         return True
     
-    def del_preset_for_all(self, chat_key:str, preset_key:str) -> Tuple[int, int]:
+    def del_preset_for_all(self, preset_key:str) -> Tuple[int, int]:
         """删除所有会话的指定预设， 返回值为(成功数量，失败数量)"""
         success_cnt = 0
         fail_cnt = 0
@@ -264,7 +264,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         preset_datas[preset_key].reset_to_default(preset_config)
         return True
     
-    def reset_preset_for_all(self, chat_key:str, preset_key:str) -> Tuple[int, int]:
+    def reset_preset_for_all(self, preset_key:str) -> Tuple[int, int]:
         """重置所有会话的指定预设，返回值为(成功数量，失败数量)"""
         success_cnt = 0
         fail_cnt = 0
@@ -281,7 +281,7 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         chat_data.reset()
         return True
     
-    def reset_chat_for_all(self, chat_key:str) -> Tuple[int, int]:
+    def reset_chat_for_all(self) -> Tuple[int, int]:
         """重置所有会话，返回值为(成功数量，失败数量)"""
         success_cnt = 0
         fail_cnt = 0
