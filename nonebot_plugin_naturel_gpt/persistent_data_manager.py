@@ -178,8 +178,18 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         else:
             return None
         
-    def add_preset(self, chat_key:str, preset_key:str, bot_self_introl: str) -> bool:
+    def add_preset(self, chat_key:str, preset_key:str, bot_self_introl:str, is_global:bool=False, chat_presets_dict:dict=None) -> bool:
         """给指定chat_key添加新人格"""
+        if is_global:
+            if preset_key in chat_presets_dict:
+                return False
+            chat_presets_dict[preset_key] = {
+            'bot_name': preset_key,
+            'is_locked': False,
+            'is_default': False,
+            'bot_self_introl': bot_self_introl,
+            }
+            return True
         presets = self.get_presets(chat_key)
         if preset_key in presets:
             return False
