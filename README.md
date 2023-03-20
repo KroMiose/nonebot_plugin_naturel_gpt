@@ -369,8 +369,10 @@ A: 由于用户数据信息与人格预设信息高度绑定，如果已经生�
 
 #### > 发送语音消息——[VOX版](https://voicevox.hiroshiba.jp/) (docker一键部署)
 > VOX docker 部署指令 (请自行使用screen或其他方式保持服务常驻)
-> docker pull voicevox/voicevox_engine:cpu-ubuntu20.04-latest
-> docker run --rm -it -p '50021:50021' voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+```bash
+docker pull voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+docker run --rm -it -p '50021:50021' voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+```
 
 - 拓展文件: ext_voice.py
 - 说明: 调用语音生成接口实现语音回复 (需自行准备语音合成api接口)
