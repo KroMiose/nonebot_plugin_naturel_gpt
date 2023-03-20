@@ -156,7 +156,7 @@ class CustomExtension(Extension):
 
         if not url:    # 如果没有配置语音服务器url则返回错误信息
             return {'text': f"[ext_VOICEVOX] 未配置语音服务器url"}
-        if not url.startswith('http://'):   # 如果不是http开头则添加
+        if not url.startswith('http'):   # 如果不是http开头则添加
             url = f'http://{url}'
         if not url.endswith('/'):   # 如果不是/结尾则添加
             url = f'{url}/'
@@ -278,7 +278,7 @@ class CustomExtension(Extension):
         if text is not None:
             return {
                 'voice': local_url,             # 语音url
-                'text': f"[语音消息] {raw_text}",    # 文本
+                'text': f"[语音] {raw_text}",    # 文本
             }
         return {}
 
@@ -288,8 +288,8 @@ class CustomExtension(Extension):
         url = custom_config.get('api_url')
 
         if not url:    # 如果没有配置语音服务器url则返回错误信息
-            return {'text': f"[ext_VOICEVOX] 未配置语音服务器url"}
-        if not url.startswith('http://'):   # 如果不是http开头则添加
+            return {'text': f"[VOICEVOX] 未配置语音服务器url"}
+        if not url.startswith('http'):   # 如果不是http开头则添加
             url = f'http://{url}'
         if not url.endswith('/'):   # 如果不是/结尾则添加
             url = f'{url}/'
