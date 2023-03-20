@@ -355,6 +355,8 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     try:
         with open(ext_file_path, 'w') as f:
             code = requests.get(f"{ext_base_url}/{ext_name}", timeout=10)
+            if code.text.startswith('404: Not Found'):
+                return {'msg': f"下载扩展失败: 未找到扩展 {ext_name}"}
             f.write(code.text)
     except Exception as e:
         return {'msg': f"下载扩展失败: {e}"}
