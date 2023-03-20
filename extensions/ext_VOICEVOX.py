@@ -152,7 +152,7 @@ class CustomExtension(Extension):
         is_base64 = custom_config.get('is_base64', False)   # 是否使用base64编码
 
         character = custom_config.get('character', 'もち子さん')  # 人物
-        url = custom_config.get('api_url')
+        url = custom_config.get('api_url', '127.0.0.1:50021')
 
         if not url:    # 如果没有配置语音服务器url则返回错误信息
             return {'text': f"[ext_VOICEVOX] 未配置语音服务器url"}
