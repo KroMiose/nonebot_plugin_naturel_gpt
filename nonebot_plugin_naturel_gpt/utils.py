@@ -1,4 +1,5 @@
 ﻿from typing import Dict, List, Tuple, Union
+import asyncio, requests
 
 from nonebot.params import Matcher
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent
@@ -75,3 +76,12 @@ async def get_user_name(event: Union[MessageEvent, GroupIncreaseNoticeEvent], bo
         user_name = user_name.split('-', 1)[1].replace('-', '').strip()
         
     return user_name
+
+async def translate(text:str, from_:str="auto", to_:str="en") -> str:
+    """翻译"""
+    loop = asyncio.get_event_loop()
+    try:
+        r = await loop.run_in_executor(None, requests.post, "https://hf.space/embed/mikeee/gradio-gtr/+/api/predict", {"data": [text, from_, to_]})
+        return r.json()["data"][0]
+    except:
+        raise Exception("翻译 API 请求失败")
