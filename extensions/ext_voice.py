@@ -46,7 +46,6 @@ ext_config:dict = {
 }
 
 
-# 自定义扩展
 class CustomExtension(Extension):
     async def call(self, arg_dict: dict, ctx_data: dict) -> dict:
         """ 当拓展被调用时执行的函数 *由拓展自行实现*

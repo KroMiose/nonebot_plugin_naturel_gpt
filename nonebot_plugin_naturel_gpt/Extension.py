@@ -56,7 +56,7 @@ class Extension:
         self._call_time = self._ext_config.get('max_call_times_per_msg', 99)
 
 def load_extensions(config:Dict[str, Any]) -> None:
-    """加载扩展模块"""
+    """加载拓展模块"""
     global global_extensions
     global_extensions.clear()
     if not config.get('NG_ENABLE_EXT'):
@@ -111,7 +111,7 @@ def load_extensions(config:Dict[str, Any]) -> None:
                 logger.error(f"加载拓展模块 \"{tmpExt.get('EXT_NAME')}\" 失败 | 原因: {e}")
 
 
-global_extensions:Dict[str, Extension] = {}  # 用于存储所有扩展的字典
+global_extensions:Dict[str, Extension] = {}  # 用于存储所有拓展的字典
 
 if __name__ == '__main__':
     import os, shutil

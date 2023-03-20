@@ -21,7 +21,7 @@ class PresetConfig(BaseModel, extra=Extra.ignore):
     bot_self_introl:str = ''
 
 class ExtConfig(BaseModel, extra=Extra.ignore):
-    """扩展配置项"""
+    """拓展配置项"""
     EXT_NAME:str
     IS_ACTIVE:bool
     EXT_CONFIG:Any
