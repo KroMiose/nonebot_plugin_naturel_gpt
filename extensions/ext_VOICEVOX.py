@@ -285,10 +285,10 @@ class CustomExtension(Extension):
     def __init__(self, custom_config: dict):
         super().__init__(ext_config.copy(), custom_config)
 
-        url = custom_config.get('api_url')
+        url = custom_config.get('api_url', '127.0.0.1:50021')
 
         if not url:    # 如果没有配置语音服务器url则返回错误信息
-            return {'text': f"[VOICEVOX] 未配置语音服务器url"}
+            raise Exception("未配置语音服务器url")
         if not url.startswith('http'):   # 如果不是http开头则添加
             url = f'http://{url}'
         if not url.endswith('/'):   # 如果不是/结尾则添加

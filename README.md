@@ -218,12 +218,12 @@
   + 返回数据示例: {code: 200, msg: (查询结果), data: (查询结果dict)}
 
 #### 添加拓展 (开发中)
-- 指令: `rg ext install <ext_name>`
+- 指令: `rg ext add <ext_name>`
   + 功能: 从GitHub仓库中 下载/更新 指定拓展
   + 返回数据示例: {code: 200, msg: (是否成功), data: (是否成功)}
 
 #### 移除拓展 (开发中)
-- 指令: `rg ext remove <ext_name>`
+- 指令: `rg ext del <ext_name>`
   + 功能: 从本地文件中删除指定拓展
   + 返回数据示例: {code: 200, msg: (是否成功), data: (是否成功)}
 
