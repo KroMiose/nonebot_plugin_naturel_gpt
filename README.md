@@ -368,10 +368,13 @@ A: 由于用户数据信息与人格预设信息高度绑定，如果已经生�
   + is_base64: 是否使用base64解码音频 (默认: false)
 
 #### > 发送语音消息——[VOX版](https://voicevox.hiroshiba.jp/) (docker一键部署)
-> VOX docker 部署指令 (请自行使用screen或其他方式保持服务常驻)
+> VOX docker 部署指令
 ```bash
+STEP 1. 拉取镜像
 docker pull voicevox/voicevox_engine:cpu-ubuntu20.04-latest
-docker run --rm -it -p '50021:50021' voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+STEP 2. 运行镜像 (二选一执行)
+(前台运行) docker run --rm -it -p '50021:50021' voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+(后台运行) docker run --rm -d -it -p '50021:50021' voicevox/voicevox_engine:cpu-ubuntu20.04-latest
 ```
 
 - 拓展文件: ext_voice.py
