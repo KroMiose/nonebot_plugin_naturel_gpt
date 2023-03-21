@@ -189,11 +189,8 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     bot_self_introl = param_dict.get('preset_intro', '')
     
     if option_dict.get('global'):   # 全局应用
-        err_cnt = 0
-        for chat_key in global_chat_dict.keys():
-            if not PersistentDataManager.instance.add_preset(chat_key=chat_key, preset_key=target_preset_key, bot_self_introl=bot_self_introl):
-                err_cnt += 1
-        return {'msg': f"添加预设: {target_preset_key} (￣▽￣)-ok! (所有会话) {f'错误:{err_cnt}' if err_cnt else ''}", 'is_progress': True}
+        success_cnt, fail_cnt = PersistentDataManager.instance.add_preset_for_all(preset_key=target_preset_key, bot_self_introl=bot_self_introl)
+        return {'msg': f"添加预设: {target_preset_key} (￣▽￣)-ok! (所有会话) 成功:{success_cnt}，失败:{fail_cnt}", 'is_progress': True}
     elif option_dict.get('target'): # 指定会话应用
         target_chat_key = option_dict.get('target')
         if target_chat_key not in global_chat_dict:
@@ -214,11 +211,9 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     bot_self_introl = param_dict.get('preset_intro', '')
     
     if option_dict.get('global'):   # 全局应用
-        err_cnt = 0
-        for chat_key in global_chat_dict.keys():
-            if not PersistentDataManager.instance.update_preset(chat_key=chat_key, preset_key=target_preset_key, bot_self_introl=bot_self_introl):
-                err_cnt += 1
-        return {'msg': f"编辑预设: {target_preset_key} (￣▽￣)-ok! (所有会话) {f'错误:{err_cnt}' if err_cnt else ''}", 'is_progress': True}
+        if option_dict.get('global'):   # 全局应用
+            success_cnt, fail_cnt = PersistentDataManager.instance.update_preset_for_all(preset_key=target_preset_key, bot_self_introl=bot_self_introl)
+            return {'msg': f"编辑预设: {target_preset_key} (￣▽￣)-ok! (所有会话) 成功:{success_cnt}，失败:{fail_cnt}", 'is_progress': True}
     elif option_dict.get('target'): # 指定会话应用
         target_chat_key = option_dict.get('target')
         if target_chat_key not in global_chat_dict:
@@ -238,12 +233,9 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     target_preset_key = param_dict['preset_key']
 
     if option_dict.get('global'):   # 全局应用
-        err_cnt = 0
-        for chat_key in global_chat_dict.keys():
-            if not PersistentDataManager.instance.del_preset(chat_key=chat_key, preset_key=target_preset_key):
-                err_cnt += 1
-        return {'msg': f"删除预设: {target_preset_key} (￣▽￣)-ok! (所有会话) {f'错误:{err_cnt}' if err_cnt else ''}", 'is_progress': True}
-    elif option_dict.get('target'): # 指定会话应用
+        if option_dict.get('global'):   # 全局应用
+            success_cnt, fail_cnt = PersistentDataManager.instance.del_preset_for_all(preset_key=target_preset_key)
+            return {'msg': f"删除预设: {target_preset_key} (￣▽￣)-ok! (所有会话) 成功:{success_cnt}，失败:{fail_cnt}", 'is_progress': True}
         target_chat_key = option_dict.get('target')
         if target_chat_key not in global_chat_dict:
             return {'msg': f"会话: {target_chat_key} 不存在! (；′⌒`)"}
@@ -261,11 +253,9 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
 
     if option_dict.get('global'):   # 全局应用
-        err_cnt = 0
-        for chat_key in global_chat_dict.keys():
-            if not PersistentDataManager.instance.reset_chat(chat_key=chat_key):
-                err_cnt += 1
-        return {'msg': f"重置 (￣▽￣)-ok! (所有会话) {f'错误:{err_cnt}' if err_cnt else ''}", 'is_progress': True}
+        if option_dict.get('global'):   # 全局应用
+            success_cnt, fail_cnt = PersistentDataManager.instance.reset_chat_for_all()
+            return {'msg': f"重置会话(￣▽￣)-ok! (所有会话) 成功:{success_cnt}，失败:{fail_cnt}", 'is_progress': True}
     elif option_dict.get('target'): # 指定会话应用
         target_chat_key = option_dict.get('target')
         if target_chat_key not in global_chat_dict:
