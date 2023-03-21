@@ -244,7 +244,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
             f"+ 查询会话(管理): rg <会话/chats>\n"
             f"+ 重置会话(管理): rg <重置/reset> <-all?>\n"
             f"+ 查询记忆(管理): rg <记忆/memory>\n"
-            f"+ 拓展信息(管理): rg <拓展/ext>\n"
+            f"+ 扩展信息(管理): rg <扩展/ext>\n"
             f"Tip: <人格信息> 是一段第三人称的人设说明(建议不超过200字)\n"
         ))
 
@@ -332,15 +332,15 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
         is_progress = True
         await identity.send(f"解锁预设: {target_preset_key} 成功! (￣▽￣)")
 
-    elif raw_cmd in ["拓展", "ext"]:
+    elif raw_cmd in ["扩展", "ext"]:
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
-        # 查询所有拓展插件并生成汇报信息
+        # 查询所有扩展插件并生成汇报信息
         ext_info = ''
         for ext in global_extensions.values():
             ext_info += f"  {ext.generate_short_description()}"
         await identity.finish((
-            f"当前已加载的拓展模块:\n{ext_info}"
+            f"当前已加载的扩展模块:\n{ext_info}"
         ))
 
     elif raw_cmd in ["开启", "on"]:
@@ -402,9 +402,9 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
         await identity.finish((f"当前已加载的会话:\n{chat_info}"))
 
     elif raw_cmd in ["记忆", "memory"] and len(raw_cmd.split(' ')) == 1:
-        # 检查主动记忆拓展模块和主动记忆功能是否启用
+        # 检查主动记忆扩展模块和主动记忆功能是否启用
         if not (global_extensions.get('remember') and global_extensions.get('forget') and config.MEMORY_ACTIVE):
-            logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
+            logger.warning("记忆扩展模块未启用或主动记忆功能未开启！")
         # 检查权限
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
@@ -421,17 +421,17 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
         await identity.finish((f"当前人格记忆:\n{memory_info.split()}\n\n{command_instructions}"))
 
     elif raw_cmd in ["记忆", "memory"] and len(raw_cmd.split(' ')) == 2:
-        # 检查主动记忆拓展模块和主动记忆功能是否启用
+        # 检查主动记忆扩展模块和主动记忆功能是否启用
         if not (global_extensions.get('remember') and global_extensions.get('forget') and config.MEMORY_ACTIVE):
-            logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
+            logger.warning("记忆扩展模块未启用或主动记忆功能未开启！")
         # 检查权限
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
 
     elif raw_cmd.split(' ')[0] in ["记忆", "memory"] and len(raw_cmd.split(' ')) >= 3:
-        # 检查主动记忆拓展模块和主动记忆功能是否启用
+        # 检查主动记忆扩展模块和主动记忆功能是否启用
         if not (global_extensions.get('remember') and global_extensions.get('forget') and config.MEMORY_ACTIVE):
-            logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
+            logger.warning("记忆扩展模块未启用或主动记忆功能未开启！")
         # 检查权限
         # if str(event.user_id) not in config.ADMIN_USERID:
         #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
@@ -444,9 +444,9 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
             chat.set_memory(raw_cmd.split(' ', 2)[2], None)
             await identity.finish(f"已删除记忆: {raw_cmd.split(' ', 2)[2]}")
         elif raw_cmd.split(' ')[0] in ["记忆", "memory"] and len(raw_cmd.split(' ')) == 4:
-            # 检查主动记忆拓展模块和主动记忆功能是否启用
+            # 检查主动记忆扩展模块和主动记忆功能是否启用
             if not (global_extensions.get('remember') and global_extensions.get('forget') and config.MEMORY_ACTIVE):
-                logger.warning("记忆拓展模块未启用或主动记忆功能未开启！")
+                logger.warning("记忆扩展模块未启用或主动记忆功能未开启！")
             # 检查权限
             # if str(event.user_id) not in config.ADMIN_USERID:
             #     await identity.finish("对不起！你没有权限进行此操作 ＞﹏＜")
@@ -503,7 +503,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
             if preset_key.lower() in trigger_text.lower():
                 chat.change_presettings(preset_key)
                 logger.info(f"检测到 {preset_key} 的唤醒词，切换到 {preset_key} 的人格")
-                if config.DEBUG_LEVEL > 0: await matcher.send(f'[DEBUG] 已切换到 {preset_key} (￣▽￣)-ok !')
+                await matcher.send(f'[NG] 已切换到 {preset_key} (￣▽￣)-ok !')
                 wake_up = True
                 break
 
@@ -572,31 +572,31 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     # 提取后去除所有markdown格式的代码块，剩余部分为对话结果
     talk_res = re.sub(r"```(.+?)```", '', raw_res)
 
-    # 分割对话结果提取出所有 "/#拓展名&参数1&参数2#/" 格式的拓展调用指令 参数之间用&分隔 多行匹配
+    # 分割对话结果提取出所有 "/#扩展名&参数1&参数2#/" 格式的扩展调用指令 参数之间用&分隔 多行匹配
     ext_calls = re.findall(r"/.?#(.+?)#.?/", talk_res, re.S)
 
     # 对分割后的对话根据 '*;' 进行分割，表示对话结果中的分句，处理结果为列表，其中每个元素为一句话
     if config.NG_ENABLE_MSG_SPLIT:
-        # 提取后去除所有拓展调用指令并切分信息，剩余部分为对话结果 多行匹配
+        # 提取后去除所有扩展调用指令并切分信息，剩余部分为对话结果 多行匹配
         talk_res = re.sub(r"/.?#(.+?)#.?/", '*;', talk_res)
         reply_list = talk_res.split('*;')
     else:
-        # 提取后去除所有拓展调用指令，剩余部分为对话结果 多行匹配
+        # 提取后去除所有扩展调用指令，剩余部分为对话结果 多行匹配
         talk_res = re.sub(r"/.?#(.+?)#.?/", '', talk_res)
         reply_list.append(talk_res)
 
     # if config.DEBUG_LEVEL > 0: logger.info("分割响应结果: " + str(reply_list))
 
-    # 重置所有拓展调用次数
+    # 重置所有扩展调用次数
     for ext_name in global_extensions.keys():
         global_extensions[ext_name].reset_call_times()
 
-    # 遍历所有拓展调用指令
+    # 遍历所有扩展调用指令
     for ext_call_str in ext_calls:  
         ext_name, *ext_args = ext_call_str.split('&')
         ext_name = ext_name.strip().lower()
         if ext_name in global_extensions.keys():
-            # 提取出拓展调用指令中的参数为字典
+            # 提取出扩展调用指令中的参数为字典
             ext_args_dict:dict = {}
             # 按照参数顺序依次提取参数值
             for arg_name in global_extensions[ext_name].get_config().get('arguments').keys():
@@ -605,25 +605,25 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 else:
                     ext_args_dict[arg_name] = None
 
-            logger.info(f"检测到拓展调用指令: {ext_name} {ext_args_dict} | 正在调用拓展模块...")
-            try:    # 调用拓展的call方法
+            logger.info(f"检测到扩展调用指令: {ext_name} {ext_args_dict} | 正在调用扩展模块...")
+            try:    # 调用扩展的call方法
                 ext_res:dict = await global_extensions[ext_name].call(ext_args_dict, {
                     'bot_name': chat.get_chat_preset_key(),
                     'user_send_raw_text': trigger_text,
                     'bot_send_raw_text': raw_res
                 })
-                if config.DEBUG_LEVEL > 0: logger.info(f"拓展 {ext_name} 返回结果: {ext_res}")
+                if config.DEBUG_LEVEL > 0: logger.info(f"扩展 {ext_name} 返回结果: {ext_res}")
                 if ext_res is not None:
-                    # 将拓展返回的结果插入到回复列表的最后
+                    # 将扩展返回的结果插入到回复列表的最后
                     reply_list.append(ext_res)
             except Exception as e:
-                logger.error(f"调用拓展 {ext_name} 时发生错误: {e}")
-                if config.DEBUG_LEVEL > 0: logger.error(f"[拓展 {ext_name}] 错误详情: {traceback.format_exc()}")
+                logger.error(f"调用扩展 {ext_name} 时发生错误: {e}")
+                if config.DEBUG_LEVEL > 0: logger.error(f"[扩展 {ext_name}] 错误详情: {traceback.format_exc()}")
                 ext_res = None
                 # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
                 raw_res = re.sub(r"/.?#(.+?)#.?/", '', raw_res)
         else:
-            logger.error(f"未找到拓展 {ext_name}，跳过调用...")
+            logger.error(f"未找到扩展 {ext_name}，跳过调用...")
             # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
             raw_res = re.sub(r"/.?#(.+?)#.?/", '', raw_res)
 

@@ -174,8 +174,8 @@ class Chat:
                     f"[memory (max length: {config.MEMORY_MAX_LENGTH} - Delete the unimportant memory in time before exceed it)]\n"
                     f"ATTENTION: The earlier chat history may not be provided again in the next request. There are currently no saved memories, use /#remember&key&value#/ to remember something.\n\n"
                 )
-            else:   # 如果没有加载 memory 拓展，则使用固定记忆
-                logger.warning("未加载主动记忆 memory 拓展，仅启用固定记忆！")
+            else:   # 如果没有加载 memory 扩展，则使用固定记忆
+                logger.warning("未加载主动记忆 memory 扩展，仅启用固定记忆！")
                 memory = (
                     f"[history memory]\n"
                     f"{memory_text}\n"
@@ -195,9 +195,9 @@ class Chat:
         # 对话历史摘要
         summary = f"\n\n[Summary]: {self._chat_data.chat_summarized}" if self._chat_data.chat_summarized else ''  # 如果有对话历史摘要，则添加摘要
 
-        # 拓展描述
+        # 扩展描述
         ext_descs = ''.join([global_extensions[ek].generate_description(chat_history) for ek in global_extensions.keys()])
-        # 拓展使用示例
+        # 扩展使用示例
         extension_text = (
             f"[Extension functions: You can use the following extension functions. The extension module can be invoked multiple times in a single response.]\n"
             # 'Including the above content in a chat message will call the extension module for processing.\n'
@@ -207,7 +207,7 @@ class Chat:
             f'{ext_descs}\n'
             "Usage format in response: /#{extension_name}&{param1}&{param2}#/ (parameters are separated by '&')\n"
             'ATTENTION: Do not use any extensions in response that are not listed above! If the response contains content in this format, the extension will be called directly for execution. Do not respond any content in this format if you do not want to call the extension\n'
-            # 'example use in response: i will send 2 random number /#Random&0&5#/ /#Random&5&10#/\n\n'    # 拓展使用示例 /#拓展名&参数1&参数2#/，参数之间用&分隔
+            # 'example use in response: i will send 2 random number /#Random&0&5#/ /#Random&5&10#/\n\n'    # 扩展使用示例 /#扩展名&参数1&参数2#/，参数之间用&分隔
         ) if config.NG_ENABLE_EXT and ext_descs else (
             '[Extension response options]\n'
             'No extension is currently available. Do not use the extension function like /#{extension_name}&{param1}&{param2}#/.\n'

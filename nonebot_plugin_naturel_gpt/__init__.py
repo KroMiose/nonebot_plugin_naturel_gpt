@@ -53,6 +53,6 @@ TextGenerator.instance.init(api_keys=api_keys, config={
 proxy=config.OPENAI_PROXY_SERVER if config.OPENAI_PROXY_SERVER else None # 代理服务器配置
 )
 
-""" ======== 加载拓展模块 ======== """
+""" ======== 加载扩展模块 ======== """
 # Extension 模块有作为 __main__ 执行的需求，此时无法加载 class Config, 因此需要传递字典
 load_extensions(config.dict())

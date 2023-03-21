@@ -1,9 +1,9 @@
 from .Extension import Extension
 import requests
 
-# 拓展的配置信息，用于ai理解拓展的功能 *必填*
+# 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config:dict = {
-    "name": "AnimePic",   # 拓展名称，用于标识拓展
+    "name": "AnimePic",   # 扩展名称，用于标识扩展
     "arguments": {},
     "description": "send 1 random anime picture. (not parameters! usage in response: /#AnimePic#/)",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
@@ -14,13 +14,13 @@ ext_config:dict = {
     "author": "KroMiose",
     # 版本
     "version": "0.0.1",
-    # 拓展简介
+    # 扩展简介
     "intro": "发送随机二次元图片",
 }
 
 class CustomExtension(Extension):
     async def call(self, arg_dict: dict, ctx_data: dict) -> dict:
-        """ 当拓展被调用时执行的函数 *由拓展自行实现*
+        """ 当扩展被调用时执行的函数 *由扩展自行实现*
         
         参数:
             arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值(类型为str)}
@@ -32,7 +32,7 @@ class CustomExtension(Extension):
 
         if img_src is None:
             return {
-                'text': f"[来自拓展] 发送图片错误或超时...",
+                'text': f"[来自扩展] 发送图片错误或超时...",
                 'image': None,  # 图片url
                 'voice': None,  # 语音url
             }

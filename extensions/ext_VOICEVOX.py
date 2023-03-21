@@ -34,14 +34,14 @@ except:
     from json import loads as loadJsonS
 
 
-# 拓展的配置信息，用于ai理解拓展的功能 *必填*
+# 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config: dict = {
-    "name": "voice",   # 拓展名称，用于标识拓展
+    "name": "voice",   # 扩展名称，用于标识扩展
     "arguments": {
         'sentence': 'str',  # 需要转换的文本
         'emotion': 'str',   # 情感
     },
-    # 拓展的描述信息，用于提示ai理解拓展的功能 *必填* 尽量简短 使用英文更节省token
+    # 扩展的描述信息，用于提示ai理解扩展的功能 *必填* 尽量简短 使用英文更节省token
     "description": "Send a voice sentence. The emotional parameter must be one of \"normal,sweet,tsundere,sexy,whisper,murmur\" (usage in response: /#voice&hello&sweet#/) ",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
@@ -49,7 +49,7 @@ ext_config: dict = {
     "author": "恋如雨止",
     # 版本
     "version": "0.0.2",
-    # 拓展简介
+    # 扩展简介
     "intro": "发送语音消息(支持翻译)",
 }
 
@@ -130,7 +130,7 @@ emotion_translate_en2jp = {f: t for t, f in emotion_translate_jp2en.items()}
 
 class CustomExtension(Extension):
     async def call(self, arg_dict: dict, ctx_data: dict) -> dict:
-        """ 当拓展被调用时执行的函数 *由拓展自行实现*
+        """ 当扩展被调用时执行的函数 *由扩展自行实现*
 
         参数:
             arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值}

@@ -21,7 +21,7 @@ class PresetConfig(BaseModel, extra=Extra.ignore):
     bot_self_introl:str = ''
 
 class ExtConfig(BaseModel, extra=Extra.ignore):
-    """拓展配置项"""
+    """扩展配置项"""
     EXT_NAME:str
     IS_ACTIVE:bool
     EXT_CONFIG:Any
@@ -79,7 +79,7 @@ class Config(BaseModel, extra=Extra.ignore):
     NG_DATA_PATH: str
     """数据文件目录"""
     NG_EXT_PATH: str
-    """拓展目录"""
+    """扩展目录"""
     NG_LOG_PATH: str
     """日志文件目录"""
 
@@ -101,7 +101,7 @@ class Config(BaseModel, extra=Extra.ignore):
     NG_BLOCK_OTHERS: bool
     """是否阻止其他插件响应"""
     NG_ENABLE_EXT: bool
-    """是否启用拓展"""
+    """是否启用扩展"""
     NG_TO_ME: bool
     """响应命令是否需要@bot"""
 
@@ -125,7 +125,7 @@ class Config(BaseModel, extra=Extra.ignore):
     """解锁内容限制"""
 
     NG_EXT_LOAD_LIST: List[ExtConfig]
-    """加载的拓展列表"""
+    """加载的扩展列表"""
 
     NG_CHECK_USER_NAME_HYPHEN:bool # 如果用户名中包含连字符，ChatGPT会将前半部分识别为名字，但一般情况下后半部分才是我们想被称呼的名字, eg. 策划-李华
     """检查用户名中的连字符"""
@@ -195,8 +195,8 @@ CONFIG_TEMPLATE = {
     'CHAT_SUMMARY_INTERVAL': 10,  # 长期对话记忆间隔
 
     'NG_DATA_PATH': "./data/naturel_gpt/",  # 数据文件目录
-    'NG_EXT_PATH': "./data/naturel_gpt/extensions/",  # 拓展目录
-    'NG_LOG_PATH': "./data/naturel_gpt/logs/",  # 拓展目录
+    'NG_EXT_PATH': "./data/naturel_gpt/extensions/",  # 扩展目录
+    'NG_LOG_PATH': "./data/naturel_gpt/logs/",  # 扩展目录
 
     'ADMIN_USERID': ['123456'],  # 管理员QQ号
     'FORBIDDEN_USERS': ['123456'],   # 拒绝回应的QQ号
@@ -208,7 +208,7 @@ CONFIG_TEMPLATE = {
 
     'NG_MSG_PRIORITY': 99,       # 消息响应优先级
     'NG_BLOCK_OTHERS': False,    # 是否阻止其他插件响应
-    'NG_ENABLE_EXT': True,      # 是否启用拓展
+    'NG_ENABLE_EXT': True,      # 是否启用扩展
     'NG_TO_ME':False,           # 响应命令是否需要@bot
 
     'MEMORY_ACTIVE': True,  # 是否启用记忆功能
@@ -226,7 +226,7 @@ CONFIG_TEMPLATE = {
         'EXT_NAME': 'ext_random',
         'IS_ACTIVE': False,
         'EXT_CONFIG': {'arg': 'arg_value'},
-    }],     # 加载的拓展列表
+    }],     # 加载的扩展列表
 
     'NG_CHECK_USER_NAME_HYPHEN': False, # 检查用户名中的连字符
 
@@ -266,7 +266,7 @@ def load_config_from_file_then_save():
 
         config = Config.parse_obj(config_obj_from_file)
 
-    # 检查数据文件夹目录、拓展目录、日志目录是否存在 不存在则创建
+    # 检查数据文件夹目录、扩展目录、日志目录是否存在 不存在则创建
     if not Path(config.NG_DATA_PATH[:-1]).exists():
         Path(config.NG_DATA_PATH[:-1]).mkdir(parents=True)
     if not Path(config.NG_EXT_PATH[:-1]).exists():

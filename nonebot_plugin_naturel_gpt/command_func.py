@@ -124,7 +124,7 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
                 f"+ 开关会话(管理): rg <on/off> <-global?>\n"
                 f"+ 重置会话(管理): rg <重置/reset> <-global?>\n"
                 f"+ 查询会话(管理): rg <会话/chats>\n"
-                f"+ 拓展信息(管理): rg <拓展/ext>\n"
+                f"+ 扩展信息(管理): rg <扩展/ext>\n"
                 f"Tip: <人格信息> 是一段第三人称的人设说明(建议不超过200字)\n"
             )
         }
@@ -327,53 +327,53 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     ext_info:str = ''
     for ext in global_extensions.values():
         ext_info += f"  {ext.generate_short_description()}"
-    return {'msg': f"已加载的拓展:\n{ext_info}"}
+    return {'msg': f"已加载的扩展:\n{ext_info}"}
 
 @cmd.register(route='rg/ext/add', params=['ext_name'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     ext_base_url = "https://raw.githubusercontent.com/KroMiose/nonebot_plugin_naturel_gpt/main/extensions"
     ext_name:str = param_dict.get('ext_name')
     if not ext_name:
-        return {'msg': f"未指定拓展名!"}
-    if not ext_name.startswith('ext_'): # 拓展名不以 ext_ 开头则自动补全
+        return {'msg': f"未指定扩展名!"}
+    if not ext_name.startswith('ext_'): # 扩展名不以 ext_ 开头则自动补全
         ext_name = f"ext_{ext_name}"
-    if not ext_name.endswith('.py'):    # 拓展名不以 .py 结尾则自动补全
+    if not ext_name.endswith('.py'):    # 扩展名不以 .py 结尾则自动补全
         ext_name = f"{ext_name}.py"
 
-    ext_file_path = f"{config.NG_EXT_PATH}{ext_name}"   # 拓展文件存储路径
-    # 从 github 下载拓展
+    ext_file_path = f"{config.NG_EXT_PATH}{ext_name}"   # 扩展文件存储路径
+    # 从 github 下载扩展
     try:
         with open(ext_file_path, 'w') as f:
             code = requests.get(f"{ext_base_url}/{ext_name}", timeout=10)
             if code.text.startswith('404: Not Found'):
-                return {'msg': f"下载拓展失败: 未找到拓展 {ext_name}"}
+                return {'msg': f"下载扩展失败: 未找到扩展 {ext_name}"}
             f.write(code.text)
     except Exception as e:
-        return {'msg': f"下载拓展失败: {e}"}
-    return {'msg': f"下载拓展 {ext_name} 成功!"}
+        return {'msg': f"下载扩展失败: {e}"}
+    return {'msg': f"下载扩展 {ext_name} 成功!"}
 
 @cmd.register(route='rg/ext/del', params=['ext_name'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     ext_name = param_dict.get('ext_name')
     if not ext_name:
-        return {'msg': f"未指定拓展名!"}
-    if not ext_name.startswith('ext_'): # 拓展名不以 ext_ 开头则自动补全
+        return {'msg': f"未指定扩展名!"}
+    if not ext_name.startswith('ext_'): # 扩展名不以 ext_ 开头则自动补全
         ext_name = f"ext_{ext_name}"
-    if not ext_name.endswith('.py'):    # 拓展名不以 .py 结尾则自动补全
+    if not ext_name.endswith('.py'):    # 扩展名不以 .py 结尾则自动补全
         ext_name = f"{ext_name}.py"
 
-    ext_file_path = f"{config.NG_EXT_PATH}{ext_name}"   # 拓展文件存储路径
-    # 从本地文件删除拓展
+    ext_file_path = f"{config.NG_EXT_PATH}{ext_name}"   # 扩展文件存储路径
+    # 从本地文件删除扩展
     try:
         os.remove(ext_file_path)
     except Exception as e:
-        return {'msg': f"删除拓展失败: {e}"}
-    return {'msg': f"删除拓展 {ext_name} 成功!"}
+        return {'msg': f"删除扩展失败: {e}"}
+    return {'msg': f"删除扩展 {ext_name} 成功!"}
 
 @cmd.register(route='rg/ext/reload', params=['ext_name'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     load_extensions(config.dict())
-    return {'msg': f"重载拓展成功!"}
+    return {'msg': f"重载扩展成功!"}
 
 @cmd.register(route='rg/chats')
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):

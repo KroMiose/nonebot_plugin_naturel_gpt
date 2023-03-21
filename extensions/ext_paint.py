@@ -2,9 +2,9 @@ import openai
 
 from .Extension import Extension
 
-# 拓展的配置信息，用于ai理解拓展的功能 *必填*
+# 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config:dict = {
-    "name": "paint",   # 拓展名称，用于标识拓展
+    "name": "paint",   # 扩展名称，用于标识扩展
     "arguments": {
         'style': 'str',  # 绘画风格
         'content': 'str',  # 绘画内容描述
@@ -18,13 +18,13 @@ ext_config:dict = {
     "author": "OREOREO",
     # 版本
     "version": "0.0.1",
-    # 拓展简介
+    # 扩展简介
     "intro": "绘图",
 }
 
 class CustomExtension(Extension):
     async def call(self, arg_dict: dict, ctx_data: dict) -> dict:
-        """ 当拓展被调用时执行的函数 *由拓展自行实现*
+        """ 当扩展被调用时执行的函数 *由扩展自行实现*
         
         参数:
             arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值(类型为str)}

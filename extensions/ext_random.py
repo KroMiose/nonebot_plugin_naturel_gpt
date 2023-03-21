@@ -1,15 +1,15 @@
 from .Extension import Extension
 import random
 
-# 拓展的配置信息，用于ai理解拓展的功能 *必填*
+# 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config:dict = {
-    "name": "Random",   # 拓展名称，用于标识拓展
+    "name": "Random",   # 扩展名称，用于标识扩展
     "arguments": {      
         "min": "int",   # 填写希望的参数类型，尽量使用简单类型，便于ai理解含义使用
         "max": "int",   # 注意：实际接收到的参数类型为str(由ai生成)，需要自行转换
     },
-    # 拓展的描述信息，用于提示ai理解拓展的功能 *必填* 尽量简短 使用英文更节省token
-    # 如果bot无法理解拓展的功能，可适当添加使用示例 格式: /#拓展名&参数1&...&参数n#/
+    # 扩展的描述信息，用于提示ai理解扩展的功能 *必填* 尽量简短 使用英文更节省token
+    # 如果bot无法理解扩展的功能，可适当添加使用示例 格式: /#扩展名&参数1&...&参数n#/
     "description": "send a random number beteen the range. (usage in response: /#Random&0&20#/))",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
@@ -19,13 +19,13 @@ ext_config:dict = {
     "author": "KroMiose",
     # 版本
     "version": "0.0.1",
-    # 拓展简介
+    # 扩展简介
     "intro": "随机数生成模块",
 }
 
 class CustomExtension(Extension):
     async def call(self, arg_dict: dict, ctx_data: dict) -> dict:
-        """ 当拓展被调用时执行的函数 *由拓展自行实现*
+        """ 当扩展被调用时执行的函数 *由扩展自行实现*
         
         参数:
             arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值}
@@ -46,7 +46,7 @@ class CustomExtension(Extension):
 
         # 返回的信息将会被发送到会话中
         return {
-            'text': f"[来自拓展]你要的数字是: {random.randint(min, max)} ^_^",
+            'text': f"[来自扩展]你要的数字是: {random.randint(min, max)} ^_^",
             'image': None,  # 图片url
             'voice': None,  # 语音url
         }
