@@ -42,7 +42,7 @@ class Chat:
         tg = TextGenerator.instance
         messageunit = tg.generate_msg_template(sender=sender, msg=msg, time_str=f"[{time.strftime('%H:%M:%S %p', time.localtime())}] ")
         self._chat_data.chat_history.append(messageunit)
-        logger.info(f"[会话: {self._chat_key}]添加对话历史行: {messageunit}  |  当前对话历史行数: {len(self._chat_data.chat_history)}")
+        if config.DEBUG_LEVEL > 0: logger.info(f"[会话: {self._chat_key}]添加对话历史行: {messageunit}  |  当前对话历史行数: {len(self._chat_data.chat_history)}")
         self._last_msg_time = time.time()   # 更新上次对话时间
         while len(self._chat_data.chat_history) > config.CHAT_MEMORY_MAX_LENGTH * 2:    # 保证对话历史不超过最大长度的两倍
             self._chat_data.chat_history.pop(0)
@@ -63,7 +63,7 @@ class Chat:
                 logger.error(f"生成对话历史摘要失败: {res}")
                 return
             # logger.info(f"生成对话历史摘要: {self.chat_presets['chat_summarized']}")
-            logger.info(f"摘要生成消耗token数: {tg.cal_token_count(prompt + self._chat_data.chat_summarized)}")
+            if config.DEBUG_LEVEL > 0: logger.info(f"摘要生成消耗token数: {tg.cal_token_count(prompt + self._chat_data.chat_summarized)}")
             self._chat_data.chat_history = self._chat_data.chat_history[-config.CHAT_MEMORY_SHORT_LENGTH:]
 
     async def update_chat_history_row_for_user(self, sender:str, msg: str, userid:str, username:str, require_summary:bool = False) -> None:
@@ -76,7 +76,7 @@ class Chat:
         tg = TextGenerator.instance
         messageunit = tg.generate_msg_template(sender=sender, msg=msg)
         impression_data.chat_history.append(messageunit)
-        logger.info(f"添加对话历史行: {messageunit}  |  当前对话历史行数: {len(impression_data.chat_history)}")
+        if config.DEBUG_LEVEL > 0: logger.info(f"添加对话历史行: {messageunit}  |  当前对话历史行数: {len(impression_data.chat_history)}")
         # 保证对话历史不超过最大长度
         if len(impression_data.chat_history) > config.USER_MEMORY_SUMMARY_THRESHOLD and require_summary:
             prev_summarized = f"Last impression:{impression_data.chat_impression}\n\n"
@@ -94,7 +94,7 @@ class Chat:
                 logger.error(f"生成对话印象摘要失败: {res}")
                 return
             # logger.info(f"生成对话印象摘要: {global_preset_userdata[self.preset_key][userid]['chat_impression']}")
-            logger.info(f"印象生成消耗token数: {tg.cal_token_count(prompt + impression_data.chat_impression)}")
+            if config.DEBUG_LEVEL > 0: logger.info(f"印象生成消耗token数: {tg.cal_token_count(prompt + impression_data.chat_impression)}")
             impression_data.chat_history = impression_data.chat_history[-config.CHAT_MEMORY_SHORT_LENGTH:]
 
     def set_memory(self, mem_key:str, mem_value:str = '') -> None:
@@ -136,7 +136,7 @@ class Chat:
             if not preset_config:
                 return False
             PersistentDataManager.instance.add_preset_from_config(self._chat_key, preset_key, preset_config)
-            logger.info(f"从全局预设中拷贝预设 {preset_key} 到聊天预设字典")
+            if config.DEBUG_LEVEL > 0: logger.info(f"从全局预设中拷贝预设 {preset_key} 到聊天预设字典")
         self._chat_data.active_preset = preset_key
         self._chat_preset = self._chat_preset_dicts[preset_key]
         self._preset_key = preset_key
@@ -162,7 +162,7 @@ class Chat:
         if len(self._chat_preset.chat_memory) > config.MEMORY_MAX_LENGTH:
             self._chat_preset.chat_memory = {k: v for k, v in sorted(self._chat_preset.chat_memory.items(), key=lambda item: item[1])}
             self._chat_preset.chat_memory = {k: v for k, v in list(self._chat_preset.chat_memory.items())[:config.MEMORY_MAX_LENGTH]}
-            logger.info(f"删除多余记忆: {self._chat_preset.chat_memory}")
+            if config.DEBUG_LEVEL > 0: logger.info(f"删除多余记忆: {self._chat_preset.chat_memory}")
 
         if config.MEMORY_ACTIVE:  # 如果记忆功能开启
             if global_extensions.get('remember') and global_extensions.get('forget'): # 如果记忆功能已加载

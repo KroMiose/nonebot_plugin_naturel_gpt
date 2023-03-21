@@ -171,16 +171,16 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
 
     # 判断是否已经存在对话
     if chat_key in global_chat_dict:
-        logger.info(f"已存在对话 {chat_key} - 继续对话")
+        if config.DEBUG_LEVEL > 0: logger.info(f"已存在对话 {chat_key} - 继续对话")
     else:
-        logger.info("不存在对话 - 创建新对话")
+        if config.DEBUG_LEVEL > 0: logger.info("不存在对话 - 创建新对话")
         # 创建新对话
         global_chat_dict[chat_key] = Chat(chat_key)
     chat:Chat = global_chat_dict[chat_key]
     chat_presets_dict = PersistentDataManager.instance.get_presets(chat_key)
 
     raw_cmd:str = arg.extract_plain_text()
-    logger.info(f"接收到指令: {raw_cmd} | 来源: {chat_key}")
+    if config.DEBUG_LEVEL > 0: logger.info(f"接收到指令: {raw_cmd} | 来源: {chat_key}")
     
     presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == chat.get_chat_preset_key() else k}' for k in chat_presets_dict.keys()])
 
@@ -207,7 +207,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
 
     if res.get('is_progress'): # 如果有编辑进度，进行数据保存
         # 更新所有全局预设到会话预设中
-        logger.info(f"用户: {event.get_user_id()} 进行了人格预设编辑: {cmd}")
+        if config.DEBUG_LEVEL > 0: logger.info(f"用户: {event.get_user_id()} 进行了人格预设编辑: {cmd}")
         PersistentDataManager.instance.save_to_file()  # 保存数据
     return
 
@@ -468,9 +468,9 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
 async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, matcher: Matcher, chat_type: str, chat_key: str, sender_name: str = None, wake_up: bool = False, loop_times=0, loop_data={}):
     # 判断是否已经存在对话
     if chat_key in global_chat_dict:
-        logger.info(f"已存在对话 {chat_key} - 继续对话")
+        if config.DEBUG_LEVEL > 0: logger.info(f"已存在对话 {chat_key} - 继续对话")
     else:
-        logger.info("不存在对话 - 创建新对话")
+        if config.DEBUG_LEVEL > 0: logger.info("不存在对话 - 创建新对话")
         # 创建新对话
         global_chat_dict[chat_key] = Chat(chat_key)
     chat:Chat = global_chat_dict[chat_key]
@@ -558,7 +558,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     tg = TextGenerator.instance
     raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.get_chat_preset_key(), 'sender_name': sender_name})  # 生成对话结果
     if not success:  # 如果生成对话结果失败，则直接返回
-        logger.info("生成对话结果失败，跳过处理...")
+        logger.warning("生成对话结果失败，跳过处理...")
         await matcher.finish(raw_res)
 
     # 输出对话原始响应结果
@@ -689,7 +689,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     while time.time() - sta_time < 1.5:   # 限制对话响应时间
         time.sleep(0.1)
 
-    logger.info(f"token消耗: {cost_token} | 对话响应: \"{raw_res}\"")
+    if config.DEBUG_LEVEL > 0: logger.info(f"token消耗: {cost_token} | 对话响应: \"{raw_res}\"")
     await chat.update_chat_history_row(sender=chat.get_chat_preset_key(), msg=raw_res, require_summary=True)  # 更新全局对话历史记录
     # 更新对用户的对话信息
     await chat.update_chat_history_row_for_user(sender=chat.get_chat_preset_key(), msg=raw_res, userid=trigger_userid, username=sender_name, require_summary=True)

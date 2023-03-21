@@ -106,7 +106,7 @@ def load_extensions(config:Dict[str, Any]) -> None:
                 ext_config_dict = tmpExt.get("EXT_CONFIG") if isinstance(tmpExt.get("EXT_CONFIG"), dict) else {}
                 ext = CustomExtension(ext_config_dict)  # 加载扩展模块并实例化
                 global_extensions[ext.get_config().get('name').lower()] = ext  # 将扩展模块添加到全局扩展模块字典中
-                logger.info(f"加载扩展模块 {tmpExt.get('EXT_NAME')} 成功！")
+                logger.success(f"加载扩展模块 {tmpExt.get('EXT_NAME')} 成功！")
             except Exception as e:
                 logger.error(f"加载扩展模块 \"{tmpExt.get('EXT_NAME')}\" 失败 | 原因: {e}")
 

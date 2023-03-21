@@ -498,7 +498,7 @@ class CustomExtension(Extension):
 
 - 切换人格时的聊天输出改为非DEBUG模式下也会发送
 - 增加了扩展 安装/删除 指令，可直接从GitHub上获取到最新扩展
-- 
+- 精简了非DEBUG模式下的控制台输出
 
 ## [2023/3/20] v2.0.1
 

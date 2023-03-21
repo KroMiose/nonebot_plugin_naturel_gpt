@@ -39,9 +39,8 @@ class CommandManager:
 
     def execute(self, chat:Chat, command:str, chat_presets_dict:dict) -> dict:
         """执行指令"""
-        logger.info('执行指令:' + command)
         option_dict, param_dict, target_route = self.resolve_command(command)
-        logger.info(f'指令匹配路由: {target_route}')
+        logger.info(f'执行命令: "{command}";  指令匹配路由: {target_route}')
         if target_route:
             try:
                 return self.command_router[target_route]['func'](option_dict, param_dict, chat, chat_presets_dict)

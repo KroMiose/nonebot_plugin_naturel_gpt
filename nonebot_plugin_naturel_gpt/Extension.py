@@ -92,7 +92,7 @@ def load_extensions(config:Dict[str, Any]) -> None:
 
     for tmpExt in config['NG_EXT_LOAD_LIST']:   # 遍历扩展模块列表
         if tmpExt.get('IS_ACTIVE') and tmpExt.get('EXT_NAME'):
-            logger.info(f"正在从加载扩展模块 \"{tmpExt.get('EXT_NAME')}\" ...")
+            if config.DEBUG_LEVEL > 0: logger.info(f"正在从加载扩展模块 \"{tmpExt.get('EXT_NAME')}\" ...")
             try:
                 file_name = tmpExt.get("EXT_NAME") + '.py'  # 扩展模块文件名
 
