@@ -22,7 +22,7 @@ class PresetData:
     """特定chat_key的特定preset人格预设及其产生的聊天数据"""
     preset_key:str
     bot_self_introl:str
-    is_locked:bool  = False
+    is_locked:bool  = False # 是否锁定人格，锁定后无法编辑人格
     is_default:bool = False
     is_only_private:bool = False
     """此预设是否仅限私聊"""
@@ -233,8 +233,15 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
 
     def del_preset(self, chat_key:str, preset_key:str) -> bool:
         """删除指定chat_key的指定性格(允许删除系统人格)"""
-        presets = self.get_presets(chat_key)
+        chat_data = self.get_chat_data(chat_key)
+        presets = chat_data.preset_datas
         if preset_key not in presets:
+            return False
+        
+        if presets[preset_key].is_default: # 默认预设不允许删除
+            return False
+        
+        if chat_data.active_preset == preset_key: # 当前正在使用的预设不允许删除(后续可以改成先让Chat强制更改为默认预设再删除)
             return False
         
         del presets[preset_key]
