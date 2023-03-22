@@ -639,7 +639,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         # 判断回复内容是否为str
         if isinstance(reply, str) and reply.strip():
             # 判断文本内容是否为纯符号(包括空格，换行、英文标点、中文标点)并且长度小于3
-            if re.match(r'^[^\u4e00-\u9fa5\w]{1,3}$', reply.strip()):
+            if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply.strip()):
                 if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号文本: {reply.strip()}，跳过发送...")
                 continue
             await matcher.send(reply.strip())
