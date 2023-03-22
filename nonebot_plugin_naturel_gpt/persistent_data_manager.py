@@ -217,10 +217,6 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         if preset_key not in presets:
             return False
         
-        # TODO 考虑返回值带错误消息
-        if presets[preset_key].is_locked: # 被锁定的人格无法编辑
-            return False
-        
         presets[preset_key].bot_self_introl = bot_self_introl
         return True
     
