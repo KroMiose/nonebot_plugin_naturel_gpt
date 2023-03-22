@@ -646,8 +646,8 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         else:
             for key in reply:   # 遍历回复内容类型字典
                 if key == 'text' and reply.get(key) and reply.get(key).strip(): # 发送文本
-                    # 判断文本内容是否为纯符号(包括空格，换行、英文标点、中文标点)并且长度小于2
-                    if re.match(r'^[^\u4e00-\u9fa5\w]{1,2}$', reply.get(key).strip()):
+                    # 判断文本内容是否为纯符号(包括空格，换行、英文标点、中文标点)并且长度为1
+                    if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply.get(key).strip()):
                         if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号文本: {reply.get(key).strip()}，跳过发送...")
                         continue
                     await matcher.send(reply.get(key).strip())
