@@ -36,6 +36,8 @@ class CustomExtension(Extension):
         params = {
             'r18': r18,
             'keyword': keyword,
+        } if keyword else {
+            'r18': r18,
         }
 
         url = "https://sex.nyan.xyz/api/v2"
@@ -61,7 +63,7 @@ class CustomExtension(Extension):
             }
         except Exception as e:
             return {
-                'text': f"[sexnyan] 找不到关于 {keyword} 的图片",
+                'text': f"[sexnyan] 找不到关于 \"{keyword}\" 的图片",
                 'image': None,  # 图片url
                 'voice': None,  # 语音url
             }
