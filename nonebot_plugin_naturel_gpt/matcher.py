@@ -19,6 +19,12 @@ from .persistent_data_manager import PersistentDataManager
 from .Extension import Extension, global_extensions
 from .openai_func import TextGenerator
 from .command_func import CommandManager, cmd
+try:
+    import nonebot_plugin_htmlrender
+    from .text_func import text_to_img
+except:
+    config.ENABLE_MSG_TO_IMG = False
+    config.ENABLE_COMMAND_TO_IMG = False
 
 permission_check_func:Callable[[Matcher, MessageEvent, Bot, str, str], Awaitable[Tuple[bool,str]]] = None
 is_progress:bool = False
@@ -197,10 +203,14 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
     )
 
     if res:
-        if res.get('msg'):
-            await identity.send(res.get('msg'))  # 如果有返回消息则发送
+        if res.get('msg'):     # 如果有返回消息则发送
+            if config.ENABLE_COMMAND_TO_IMG:
+                img = await text_to_img(res.get('msg'))
+                await identity.send(MessageSegment.image(img))
+            else:
+                await identity.send(res.get('msg'))  
         elif res.get('error'):
-            await identity.finish(f"执行命令时出现错误: {res.get('error')}")  # 如果有返回错误则发送
+            await identity.finish(f"执行命令时出现错误: {res.get('error')}")  # 如果有返回错误则发送s
 
     else:
         await identity.finish("输入的命令好像有点问题呢... 请检查下再试试吧！ ╮(>_<)╭")
@@ -657,7 +667,11 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
             if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply.strip()):
                 if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号文本: {reply.strip()}，跳过发送...")
                 continue
-            await matcher.send(reply.strip())
+            if config.ENABLE_MSG_TO_IMG:
+                img = await text_to_img(reply.strip())
+                await matcher.send(MessageSegment.image(img))
+            else:
+                await matcher.send(reply.strip())
         else:
             for key in reply:   # 遍历回复内容类型字典
                 if key == 'text' and reply.get(key) and reply.get(key).strip(): # 发送文本
