@@ -507,6 +507,8 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 wake_up = True
                 break
 
+    current_preset_key = chat.get_chat_preset_key()
+
     # 判断是否需要回复
     if (    # 如果不是 bot 相关的信息，则直接返回
         wake_up or \
@@ -532,6 +534,10 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     # 记录对用户的对话信息
     await chat.update_chat_history_row_for_user(sender=sender_name, msg=trigger_text, userid=trigger_userid, username=sender_name, require_summary=False)
 
+    if chat.get_chat_preset_key() != current_preset_key:
+        logger.warning(f'等待OpenAI请求返回的过程中人格预设由[{current_preset_key}]切换为[{chat.get_chat_preset_key()}],当前消息不再继续响应.1')
+        return
+    
     # 主动聊天参与逻辑 *待定方案
     # 达到一定兴趣阈值后，开始进行一次启动发言准备 收集特定条数的对话历史作为发言参考
     # 启动发言后，一段时间内兴趣值逐渐下降，如果随后被呼叫，则兴趣值提升
@@ -563,6 +569,10 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
     # 输出对话原始响应结果
     if config.DEBUG_LEVEL > 0: logger.info(f"原始回应: {raw_res}")
+
+    if chat.get_chat_preset_key() != current_preset_key:
+        logger.warning(f'等待OpenAI请求返回的过程中人格预设由[{current_preset_key}]切换为[{chat.get_chat_preset_key()}],当前消息不再继续响应.1')
+        return
 
     # 用于存储最终回复顺序内容的列表
     reply_list = []
