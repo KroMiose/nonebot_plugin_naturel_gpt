@@ -104,8 +104,10 @@ class Config(BaseModel, extra=Extra.ignore):
     """是否启用扩展"""
     NG_TO_ME: bool
     """响应命令是否需要@bot"""
-    NG_TEXT_TO_IMG: bool
-    """是否将文本转换为图片"""
+    ENABLE_COMMAND_TO_IMG: bool
+    """是否将rg相关指令转换为图片"""
+    ENABLE_MSG_TO_IMG: bool
+    """是否将机器人的回复转换成图片"""
 
     MEMORY_ACTIVE: bool
     """是否启用记忆功能"""
@@ -212,7 +214,8 @@ CONFIG_TEMPLATE = {
     'NG_BLOCK_OTHERS': False,    # 是否阻止其他插件响应
     'NG_ENABLE_EXT': True,      # 是否启用扩展
     'NG_TO_ME':False,           # 响应命令是否需要@bot
-    'NG_TEXT_TO_IMG': False,    # 是否将文字转换为图片
+    'ENABLE_COMMAND_TO_IMG': True,    #是否将rg相关指令转换为图片
+    'ENABLE_MSG_TO_IMG': False,     #是否将机器人的回复转换成图片
 
     'MEMORY_ACTIVE': True,  # 是否启用记忆功能
     'MEMORY_MAX_LENGTH': 16,  # 记忆最大条数

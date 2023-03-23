@@ -19,7 +19,12 @@ from .persistent_data_manager import PersistentDataManager
 from .Extension import Extension, global_extensions
 from .openai_func import TextGenerator
 from .command_func import CommandManager, cmd
-from .text_func import text_to_img
+try:
+    import nonebot_plugin_htmlrender
+    from .text_func import text_to_img
+except:
+    config.ENABLE_MSG_TO_IMG = False
+    config.ENABLE_COMMAND_TO_IMG = False
 
 permission_check_func:Callable[[Matcher, MessageEvent, Bot, str, str], Awaitable[Tuple[bool,str]]] = None
 is_progress:bool = False
@@ -199,7 +204,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
 
     if res:
         if res.get('msg'):     # 如果有返回消息则发送
-            if config.NG_TEXT_TO_IMG:
+            if config.ENABLE_COMMAND_TO_IMG:
                 img = await text_to_img(res.get('msg'))
                 await identity.send(MessageSegment.image(img))
             else:
@@ -662,7 +667,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
             if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply.strip()):
                 if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号文本: {reply.strip()}，跳过发送...")
                 continue
-            if config.NG_TEXT_TO_IMG:
+            if config.ENABLE_MSG_TO_IMG:
                 img = await text_to_img(reply.strip())
                 await matcher.send(MessageSegment.image(img))
             else:
