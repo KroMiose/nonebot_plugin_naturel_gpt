@@ -139,7 +139,7 @@ CONFIG_TEMPLATE = {
         'sk-xxxxxxxxxxxxx',
         'sk-xxxxxxxxxxxxx',
     ],
-    "OPENAI_TIMEOUT": 30,   # OpenAI 请求超时时间
+    "OPENAI_TIMEOUT": 60,   # OpenAI 请求超时时间
     "PRESETS": {
         "白羽": {
             'preset_key': '白羽',  # 人格名称

@@ -561,6 +561,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
             f.write(f"prompt 模板: \n{log_prompt_template}\n")
         logger.info(f"对话 prompt 模板已保存到日志文件: {chat_key}.{time.strftime('%Y-%m-%d %H-%M-%S')}.prompt.log")
 
+    time_before_request = time.time()
     tg = TextGenerator.instance
     raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.get_chat_preset_key(), 'sender_name': sender_name})  # 生成对话结果
     if not success:  # 如果生成对话结果失败，则直接返回
@@ -570,8 +571,12 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     # 输出对话原始响应结果
     if config.DEBUG_LEVEL > 0: logger.info(f"原始回应: {raw_res}")
 
+    if time.time() - time_before_request > config.OPENAI_TIMEOUT:
+        logger.warning(f'OpenAI响应超过timeout值[{config.OPENAI_TIMEOUT}]，停止处理')
+        return
+
     if chat.get_chat_preset_key() != current_preset_key:
-        logger.warning(f'等待OpenAI请求返回的过程中人格预设由[{current_preset_key}]切换为[{chat.get_chat_preset_key()}],当前消息不再继续响应.2')
+        logger.warning(f'等待OpenAI响应返回的过程中人格预设由[{current_preset_key}]切换为[{chat.get_chat_preset_key()}],当前消息不再继续处理.2')
         return
 
     # 用于存储最终回复顺序内容的列表
