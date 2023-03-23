@@ -571,7 +571,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     if config.DEBUG_LEVEL > 0: logger.info(f"原始回应: {raw_res}")
 
     if chat.get_chat_preset_key() != current_preset_key:
-        logger.warning(f'等待OpenAI请求返回的过程中人格预设由[{current_preset_key}]切换为[{chat.get_chat_preset_key()}],当前消息不再继续响应.1')
+        logger.warning(f'等待OpenAI请求返回的过程中人格预设由[{current_preset_key}]切换为[{chat.get_chat_preset_key()}],当前消息不再继续响应.2')
         return
 
     # 用于存储最终回复顺序内容的列表
