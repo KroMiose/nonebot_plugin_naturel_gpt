@@ -1,4 +1,5 @@
 from nonebot.log import logger
+import nonebot_plugin_htmlrender
 
 TEXT_FUNC_ENABLE = True
 try:
@@ -42,6 +43,10 @@ def cos_sim(sentence1:str, sentence2:str) -> float:
 
     # 计算向量的余弦值
     return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+
+async def text_to_img(text):
+    img = await nonebot_plugin_htmlrender.text_to_pic(text)
+    return img
 
 if __name__ == '__main__':
     # 计算两个句子的相似度
