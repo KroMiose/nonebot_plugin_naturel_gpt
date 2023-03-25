@@ -1,17 +1,14 @@
-from typing import Generic, Type, TypeVar
+from typing import Type, TypeVar, Generic
 
 T = TypeVar("T", bound="Singleton")
 
-
 class Singleton_Meta(type):
     @property
-    def instance(cls: Type[T]) -> T:
+    def instance(cls:Type[T]) -> T:
         return cls()
-
-
+    
 class Singleton(Generic[T], metaclass=Singleton_Meta):
     """单例类，通过instance属性访问唯一实例"""
-
     _instance = None
 
     def __new__(cls, *args, **kwargs):
