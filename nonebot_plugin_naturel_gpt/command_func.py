@@ -117,13 +117,15 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
                 f"=======================\n"
                 f"+ 使用预设: rg set <预设名> <-global?>\n"
                 f"+ 查询预设: rg query <预设名>\n"
-                f"+ 编辑预设: rg update <预设名> <人格信息> <-global?>\n"
+                f"+ 编辑预设: rg edit <预设名> <人格信息> <-global?>\n"
                 f"+ 添加预设: rg new <预设名> <人格信息> <-global?>\n"
-                f"+ 删除预设(管理): rg del <预设名> <-global?>\n"
-                f"+ 开关会话(管理): rg <on/off> <-global?>\n"
-                f"+ 重置会话(管理): rg <重置/reset> <-global?>\n"
-                f"+ 查询会话(管理): rg <会话/chats>\n"
-                f"+ 扩展信息(管理): rg <扩展/ext>\n"
+                f"+ 删除预设: rg del <预设名> <-global?>\n"
+                f"+ 开关会话: rg <on/off> <-global?>\n"
+                f"+ 重置会话: rg <重置/reset> <-global?>\n"
+                f"+ 查询会话(超管): rg <会话/chats>\n"
+                f"+ 扩展信息(超管): rg <扩展/ext>\n"
+                f"* -global 参数表示是否全局设置(仅超管可用)\n"
+                f"* 更多帮助请访问: NG指令文档\n"
                 f"Tip: <人格信息> 是一段第三人称的人设说明(建议不超过200字)\n"
             )
         }
@@ -133,12 +135,6 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
                 f"会话: {chat.get_chat_key()} [{'启用' if chat.is_enable else '禁用'}]\n"
                 f"当前可用人格预设有:\n"
                 f"{presets_show_text}\n"
-                f"=======================\n"
-                f"+ 使用预设: rg set <预设名>\n"
-                f"+ 查询预设: rg query <预设名>\n"
-                f"+ 编辑预设: rg edit <预设名> <人格信息>\n"
-                f"+ 添加预设: rg new <预设名> <人格信息>\n"
-                f"Tip: <人格信息> 是一段第三人称的人设说明(不超过200字, 不包含空格)\n"
             )
         }
 
@@ -326,7 +322,12 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     ext_info:str = ''
     for ext in global_extensions.values():
         ext_info += f"  {ext.generate_short_description()}"
-    return {'msg': f"已加载的扩展:\n{ext_info}"}
+    return {'msg': (
+            f"已加载的扩展:\n{ext_info}"
+            f"=======================\n"
+            f"+ 下载扩展: rg ext add <扩展名>\n"
+            f"+ 删除扩展: rg ext del <扩展名>\n"
+        )}
 
 @cmd.register(route='rg/ext/add', params=['ext_name'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):

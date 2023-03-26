@@ -116,7 +116,7 @@
 | FORBIDDEN_USERS               | array | 黑名单用户id，以字符串列表方式填入         | ['']                           | 黑名单中的用户消息不会被记录和响应设                                                 |
 | UNLOCK_CONTENT_LIMIT          | bool  | 是否解锁内容限制                           | False                          | 可能导致 OpenAi 账号风险，请自行承担后果                                             |
 | OPENAI_PROXY_SERVER           | str   | 请求OpenAI的代理服务器                     | ''                             | 填写示例 '127.0.0.1:1234' 或 'username:password@127.0.0.1:1234'                      |
-| \_\_DEBUG\_\_                 | bool  | 是否开启DEBUG输出                          | False                          | 开启可查看prompt模板输出                                                             |
+| DEBUG_LEVEL                 | int  | DEBUG等级                          | 0                          | 等级越高debug信息越详细                                                             |
 
 </code> </pre> </details>
 
