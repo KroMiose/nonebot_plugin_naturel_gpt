@@ -29,16 +29,26 @@ class CustomExtension(Extension):
             arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值}
         """
         custom_config:dict = self.get_custom_config()  # 获取yaml中的配置信息
+
+        # 从custom_config中获取参数
+        notify_type = custom_config.get("notify_type", 1)
         
         # 从arg_dict中获取参数
         setting_text = arg_dict["setting_text"]
 
         if not setting_text:
             raise Exception("缺少参数: setting_text")
+        
+        if notify_type == 2:
+            show_text =  f"[evolution] 已将人格预设修改为: |\n    {setting_text}"
+        elif notify_type == 1:
+            show_text =  f"[evolution] 人格预设更新完成~"
+        elif notify_type == 0:
+            show_text = None
 
         # 返回的信息将会被发送到会话中
         return {
-            "text": f"[evolution] 已将人格预设修改为: |\n    {setting_text}",
+            "text": show_text,
             "preset": setting_text,
         }
 
