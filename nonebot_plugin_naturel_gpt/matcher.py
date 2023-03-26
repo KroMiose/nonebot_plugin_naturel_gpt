@@ -470,6 +470,11 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 elif key == 'timer' and reply.get(key):  # 定时器
                     logger.info(f"设置定时器: {reply.get(key)}")
                     loop_data['timer'] = reply.get(key)
+                elif key == 'preset' and reply.get(key):  # 更新对话预设
+                    if PersistentDataManager.instance.update_preset(chat_key=chat.get_chat_key(), preset_key=chat.get_chat_preset_key(), bot_self_introl=reply.get(key)):
+                        logger.info(f"更新对话预设: {reply.get(key)} 成功")
+                    else:
+                        logger.warning(f"更新对话预设: {reply.get(key)} 失败")
 
                 res_times -= 1
                 if res_times < 1:  # 如果回复次数超过限制，则跳出循环
