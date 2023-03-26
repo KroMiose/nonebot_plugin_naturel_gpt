@@ -9,7 +9,7 @@ ext_config:dict = {
     },
     # 扩展的描述信息，用于提示ai理解扩展的功能 *必填* 尽量简短 使用英文更节省token
     # 如果bot无法理解扩展的功能，可适当添加使用示例 格式: /#扩展名&参数1&...&参数n#/
-    "description": "Search for keywords on the Internet and wait for the results. Use when you need to get real-time information or uncertain answers. After calling this extension, you need to stop responding and wait for the search results before continuing to respond. (usage in response: /#search&keyword#/))",
+    "description": "Search for keywords on the Internet and wait for the results. Use when you need to get real-time information or uncertain answers. (usage in response: /#search&keyword#/))",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
     # 每次消息回复中最大调用次数，不填则默认为99
@@ -20,6 +20,8 @@ ext_config:dict = {
     "version": "0.0.2",
     # 扩展简介
     "intro": "让机器人openai能上网搜索",
+    # 调用时是否打断响应 启用后将会在调用后截断后续响应内容
+    "interrupt": True,
 }
 
 class CustomExtension(Extension):

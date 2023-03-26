@@ -341,6 +341,20 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     # 用于存储最终回复顺序内容的列表
     reply_list = []
 
+    # 预检一次响应内容，如果响应内容中包含了需要打断的扩展调用指令，则直接截断原始响应中该扩展调用指令后的内容
+    pre_check_calls = re.findall(r"/#(.+?)#/", raw_res, re.S)
+    if pre_check_calls:
+        for call_str in pre_check_calls:
+            ext_name, *ext_args = call_str.split('&')
+            ext_name = ext_name.strip().lower()
+            if ext_name in global_extensions and global_extensions[ext_name].get_config().get('interrupt', False):
+                # 获取该扩展调用指令结束在原始响应中的位置
+                call_end_pos = raw_res.find(f"/#{call_str}#/") + len(f"/#{call_str}#/")
+                # 截断原始响应内容
+                raw_res = raw_res[:call_end_pos]
+                if config.DEBUG_LEVEL > 0: logger.warning(f"检测到需要打断的扩展调用指令: {call_str}, 已截断原始响应内容")
+                break
+
     # 提取markdown格式的代码块
     code_blocks = re.findall(r"```(.+?)```", raw_res, re.S)
     # 提取后去除所有markdown格式的代码块，剩余部分为对话结果
