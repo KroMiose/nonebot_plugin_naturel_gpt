@@ -50,19 +50,24 @@ async def default_permission_check_func(matcher:Matcher, event: MessageEvent, bo
 async def gen_chat_text(event: MessageEvent, bot:Bot) -> str:
     """生成合适的会话消息内容(eg. 将cq at 解析为真实的名字)"""
     if not isinstance(event, GroupMessageEvent):
-        return event.get_plaintext()
+        return event.get_plaintext(), False
     else:
+        wake_up = False
         msg = ''
         for seg in event.message:
             if seg.is_text():
                 msg += seg.data.get('text', '')
             elif seg.type == 'at':
                 qq = seg.data.get('qq', None)
-                if qq:    
-                    user_name = await get_user_name(event=event, bot=bot,user_id=int(qq))
-                    if user_name:
-                        msg += user_name # at segment 后面跟的消息前面一般会有个空格，不知保留是否对chatgpt对话有影响
-        return msg
+                if qq:
+                    if qq == 'all':
+                        msg += '@ 全体成员'
+                        wake_up = True
+                    else:
+                        user_name = await get_user_name(event=event, bot=bot,user_id=int(qq))
+                        if user_name:
+                            msg += user_name # at segment 后面跟的消息前面一般会有个空格，不知保留是否对chatgpt对话有影响
+        return msg, wake_up
     
 async def get_user_name(event: Union[MessageEvent, GroupIncreaseNoticeEvent], bot:Bot, user_id:int) -> str:
     """获取QQ用户名，优先群名片"""

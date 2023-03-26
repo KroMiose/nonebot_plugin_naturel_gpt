@@ -96,16 +96,18 @@ async def handler(matcher_:Matcher, event: MessageEvent, bot:Bot) -> None:
     else:
         logger.info("未知消息来源: " + event.get_session_id())
         return
+    
+    chat_text, wake_up = await gen_chat_text(event=event, bot=bot)
 
     # 进行消息响应
     await do_msg_response(
         event.get_user_id(),
-        await gen_chat_text(event=event, bot=bot),
-        event.is_tome(),
+        chat_text,
+        event.is_tome() or wake_up,
         matcher,
         chat_type,
         chat_key,
-        sender_name
+        sender_name,
     )
 
 
