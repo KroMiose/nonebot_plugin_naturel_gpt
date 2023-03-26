@@ -343,7 +343,7 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     ext_file_path = f"{config.NG_EXT_PATH}{ext_name}"   # 扩展文件存储路径
     # 从 github 下载扩展
     try:
-        with open(ext_file_path, 'w') as f:
+        with open(ext_file_path, 'w', encoding='utf-8') as f:
             code = requests.get(f"{ext_base_url}/{ext_name}", timeout=10)
             if code.text.startswith('404: Not Found'):
                 return {'msg': f"下载扩展失败: 未找到扩展 {ext_name}"}
