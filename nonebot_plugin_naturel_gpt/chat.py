@@ -1,13 +1,13 @@
 ﻿import copy
 import time
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from nonebot import logger
 from . import Extension
 
 from .text_func import compare_text
 from .config import *
 from .openai_func import TextGenerator
-from .persistent_data_manager import ImpressionData, PersistentDataManager, ChatData, PresetData
+from .persistent_data_manager import ImpressionData, ChatData, PresetData
 from .Extension import Extension, global_extensions
 
 # 会话类
@@ -23,10 +23,12 @@ class Chat:
     chat_attitude = 0           # 对话态度
     silence_time = 0            # 沉默时长
 
-    def __init__(self, chat_key:str, preset_key:str = ''):
-        self._chat_data = PersistentDataManager.instance.get_chat_data(chat_key=chat_key) # 当前对话预设
+    def __init__(self, chat_data:ChatData, preset_key:str = ''):
+        if not isinstance(chat_data, ChatData):
+            raise Exception(f'chat_data 参数不是ChatData类型,实际类型为:{type(chat_data).__name__}')
+        self._chat_data = chat_data # 当前对话预设
         self._chat_preset_dicts = self._chat_data.preset_datas
-        self._chat_key = chat_key    # 对话标识
+        self._chat_key = chat_data.chat_key    # 对话标识
         preset_key = preset_key or self._chat_data.active_preset # 参数没有设置时尝试查找上次使用的preset
         if not preset_key:  # 如果没有预设，选择默认预设
             for (pk, preset) in self._chat_preset_dicts.items():
@@ -128,19 +130,6 @@ class Chat:
                 if config.DEBUG_LEVEL > 0: logger.info(f"记忆 {mem_key} 相似度 {compare_score} 超过阈值 {config.CHAT_MEMORY_ENHANCE_THRESHOLD}, 增强记忆")
                 return True
         return False
-
-    def change_presettings(self, preset_key:str) -> bool:
-        """修改对话预设"""
-        if preset_key not in self._chat_preset_dicts:    # 如果聊天预设字典中没有该预设，则从全局预设字典中拷贝一个
-            preset_config = config.PRESETS.get(preset_key, None)
-            if not preset_config:
-                return False
-            PersistentDataManager.instance.add_preset_from_config(self._chat_key, preset_key, preset_config)
-            if config.DEBUG_LEVEL > 0: logger.info(f"从全局预设中拷贝预设 {preset_key} 到聊天预设字典")
-        self._chat_data.active_preset = preset_key
-        self._chat_preset = self._chat_preset_dicts[preset_key]
-        self._preset_key = preset_key
-        return True
 
     def get_chat_prompt_template(self, userid:str = None)-> str:
         """对话 prompt 模板生成"""
@@ -270,6 +259,9 @@ class Chat:
             )},
         ]
 
+
+    # region --------------------以下为基本信息获取函数和属性--------------------
+
     def get_chat_key(self) ->str:
         """获取当前会话 chat_key"""
         return self._chat_key
@@ -279,51 +271,133 @@ class Chat:
         return self._preset_key
     
     @property
+    def chat_key(self) ->str:
+        """获取当前会话 chat_key"""
+        return self._chat_key
+
+    @property
+    def preset_key(self) -> str:
+        """获取当前对话bot的预设键"""
+        return self._preset_key
+    
+    @property
+    def is_using_default_preset(self) -> bool:
+        """当前使用的预设是否是默认预设"""
+        return self._chat_preset.is_default
+    
+    @property
     def is_enable(self):
         """当前会话是否已启用"""
         return self._chat_data.is_enable
-
-    def toggle_chat(self, enabled:bool=True) -> None:
-        """开关当前会话"""
-        self._chat_data.is_enable = enabled
 
     @property
     def enable_auto_switch_identity(self):
         """当前会话是否已启用自动切换人格"""
         return self._chat_data.enable_auto_switch_identity
 
-    def toggle_auto_switch(self, enabled:bool=True) -> None:
-        """开关当前会话自动切换人格"""
-        self._chat_data.enable_auto_switch_identity = enabled
-
     def generate_description(self):
         """获取当前会话描述"""
         return f"[{'启用' if self.is_enable else '禁用'}] 会话: {self._chat_key[:-6]+('*'*6)} 预设: {self.get_chat_preset_key()}\n"
     
     @property
-    def chat_preset(self)->PresetData:
-        """获取当前chat_preset"""
+    def chat_data(self) -> ChatData:
+        """获取chat_data, 请慎重操作"""
+        return self._chat_data
+    
+    @property
+    def active_preset(self)->PresetData:
+        """获取当前正在使用的chat_preset, 请慎重操作"""
         return self._chat_preset
     
     @property
-    def chat_preset_dict_keys(self)->List[str]:
+    def preset_keys(self)->List[str]:
         """获取当前会话的所有预设名称列表"""
-        return self._chat_preset_dicts.keys()
+        return list(self._chat_preset_dicts.keys())
     
-    def reset_chat_preset(self, preset_key:str):
+    # endregion 
+
+
+    # region --------------------以下为数据获取和处理相关功能--------------------
+
+    def toggle_chat(self, enabled:bool=True) -> None:
+        """开关当前会话"""
+        self._chat_data.is_enable = enabled
+
+    def toggle_auto_switch(self, enabled:bool=True) -> None:
+        """开关当前会话自动切换人格"""
+        self._chat_data.enable_auto_switch_identity = enabled
+    
+    def change_presettings(self, preset_key:str) -> Tuple[bool, str]:
+        """修改对话预设"""
+        if preset_key not in self._chat_preset_dicts:    # 如果聊天预设字典中没有该预设，则从全局预设字典中拷贝一个
+            preset_config = config.PRESETS.get(preset_key, None)
+            if not preset_config:
+                return (False, '预设不存在')
+            self.add_preset_from_config(preset_key, preset_config)
+            if config.DEBUG_LEVEL > 0: logger.info(f"从全局预设中拷贝预设 {preset_key} 到聊天预设字典")
+        self._chat_data.active_preset = preset_key
+        self._chat_preset = self._chat_preset_dicts[preset_key]
+        self._preset_key = preset_key
+        return (True, None)
+    
+    def add_preset(self, preset_key:str, bot_self_introl: str) -> Tuple[bool, str]:
+        """给指定chat_key添加新人格"""
+        if preset_key in self._chat_preset_dicts:
+            return (False, '同名预设已存在')
+
+        self._chat_preset_dicts[preset_key] = PresetData(preset_key=preset_key, bot_self_introl=bot_self_introl)
+        return (True, None)
+    
+    def add_preset_from_config(self, preset_key:str, preset_config: PresetConfig) -> Tuple[bool, str]:
+        """给指定chat_key添加新人格, config_preset为config中的全局配置"""
+        if preset_key in self._chat_preset_dicts:
+            return (False, '同名预设已存在')
+
+        self._chat_preset_dicts[preset_key] = PresetData.create_from_config(preset_config)
+        # 更新默认值
+        if preset_config.is_default:
+            for v in self._chat_preset_dicts.values():
+                v.is_default = v.preset_key == preset_key
+        return (True, None)
+    
+    def del_preset(self, preset_key:str) -> Tuple[bool, str]:
+        """删除指定chat_key的指定人格预设(允许删除系统人格)"""
+        if len(self._chat_preset_dicts) <= 1:
+            return (False, '当前会话只有一个预设，不允许删除')
+        if preset_key not in self._chat_preset_dicts:
+            return (False, f'当前会话不存在预设 [{preset_key}]')
+        
+        default_preset_key = [preset for preset in self._chat_preset_dicts.values() if preset.is_default][0].preset_key
+
+        if preset_key == default_preset_key:
+            return (False, '默认预设不允许删除')
+        
+        if self._preset_key == preset_key:
+            # 删除当前正在使用的preset时切换到默认预设
+            self.change_presettings(default_preset_key)
+        del self._chat_preset_dicts[preset_key]
+        return (True, None)
+    
+    def update_preset(self, preset_key:str, bot_self_introl: str) -> Tuple[bool, str]:
+        """修改指定chat_key人格预设"""
+        if preset_key not in self._chat_preset_dicts:
+            return (False, f'预设 [{preset_key}] 不存在')
+        
+        self._chat_preset_dicts[preset_key].bot_self_introl = bot_self_introl
+        return (True, None)
+    
+    def reset_preset(self, preset_key:str) -> Tuple[int, str]:
         """重置指定预设，将丢失对用户的对话历史和印象数据"""
-        PersistentDataManager.instance.reset_preset(self._chat_key, preset_key)
-
-    def reset_chat(self):
-        """重置当前会话所有预设，将丢失性格或历史数据"""
-        PersistentDataManager.instance.reset_chat(self._chat_key)
+        preset_config = config.PRESETS.get(preset_key, None)
+        
+        if preset_key not in self._chat_preset_dicts:
+            return (False, f'预设 [{preset_key}] 不存在')
+        self._chat_preset_dicts[preset_key].reset_to_default(preset_config)
+        return (True, None)
     
-
-global_chat_dict:Dict[str, Chat] = {}
-"""进程中存在的所有聊天Session"""
-
-def create_all_chat_object():
-    """创建所有的已有Chat对象"""
-    for k in PersistentDataManager.instance.get_all_chat_keys():
-        if k not in global_chat_dict:
-            global_chat_dict[k] = Chat(k)
+    def reset_chat(self) -> Tuple[bool, str]:
+        """重置当前会话所有预设，将丢失性格或历史数据"""
+        self._chat_data.reset()
+        return (True, None)
+    
+    # endregion

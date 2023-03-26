@@ -81,9 +81,13 @@ class ChatData:
 
 class PersistentDataManager(Singleton["PersistentDataManager"]):
     """用户聊天(群，私聊)持久化数据管理器"""
+
+    # chat相关数据和行为请通过调用Chat/ChatManager类相关函数实现，禁止直接操纵本类数据, 否则会丢失数据同步
+
     _datas:Dict[str, ChatData] = {}
     _last_save_data_time:float
     _file_path:str
+    _inited:bool
 
     def load_from_file(self, file_path:str):
         """使用pickle从文件中载入数据"""
@@ -100,37 +104,13 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
             logger.info("找不到历史数据，初始化成功")
-        
-        """-------------------数据版本兼容开始-------------------"""
-        # 兼容 bot_name 字段的pickle数据，下个版本将取消兼容
-        for v in self._datas.values():
-            for v2 in v.preset_datas.values():
-                if (not hasattr(v2, 'preset_key')) and hasattr(v2, 'bot_name'):
-                    setattr(v2, 'preset_key', getattr(v2, 'bot_name'))
-                    delattr(v2, 'bot_name')
-        
-        # 兼容聊天记录人格分离版本的数据，将 active_preset 的聊天记录复制到ChatData内
-        for v in self._datas.values():
-            if not hasattr(v, 'chat_history'):
-                chat_history = []
-                setattr(v, 'chat_history', chat_history)
-                setattr(v, 'chat_summarized', '')
-
-                preset_data = v.preset_datas.get(v.active_preset, None)
-                if preset_data:
-                    preset_chat_history:List[str] = getattr(preset_data, 'chat_history')
-                    preset_summary = getattr(preset_data, 'chat_summarized')
-                    for item in preset_chat_history:
-                        chat_history.append(item)
-                    setattr(v, 'chat_summarized', preset_summary)
-                
-                for v2 in v.preset_datas.values():
-                    delattr(v2, 'chat_history')
-                    delattr(v2, 'chat_summarized')
-        
-        """-------------------数据版本兼容结束-------------------"""
 
         self._last_save_data_time = time.time()
+        self._inited = True
+
+    @property
+    def is_inited(self) -> bool:
+        return self._inited
 
     def save_to_file(self):
         """使用pickle将用户数据保存到文件"""
@@ -142,16 +122,19 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         self._last_save_data_time = time.time()
         logger.info("数据保存成功")
 
-    def get_all_chat_keys(self):
-        """返回所有的chat_key"""
-        return self._datas.keys()
+    def get_all_chat_keys(self) -> List[str]:
+        """获取所有的chat_key"""
+        return list(self._datas.keys())
+    
+    def get_all_chat_datas(self) -> List[ChatData]:
+        """获取所有的ChatData"""
+        return list(self._datas.values())
 
     def get_preset_names(self, chat_key:str):
         """获取指定chat_key的人格名称列表"""
         return self._datas[chat_key].preset_datas.keys() if chat_key in self._datas else []
 
-
-    def get_chat_data(self, chat_key:str) -> ChatData:
+    def get_or_create_chat_data(self, chat_key:str) -> ChatData:
         """获取指定chat_key的聊天数据, 不存在时从配置模板的预设列表自动创建"""
 
         if chat_key in self._datas:
@@ -164,151 +147,4 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
             
             self._datas[chat_key] = chat_data
             return chat_data
-    
-    def get_presets(self, chat_key:str) -> Dict[str, PresetData]:
-        """获取指定chat_key的人格数据集合, 不存在时从配置模板的预设列表自动创建"""
 
-        chat_data = self.get_chat_data(chat_key=chat_key)
-        return chat_data.preset_datas
-        
-    def get_active_preset_name(self, chat_key:str) ->str:
-        """获取指定chat_key当前preset_name"""
-        if chat_key in self._datas:
-            return self._datas[chat_key].active_preset
-        else:
-            return None
-        
-    def add_preset(self, chat_key:str, preset_key:str, bot_self_introl: str) -> bool:
-        """给指定chat_key添加新人格"""
-        presets = self.get_presets(chat_key)
-        if preset_key in presets:
-            return False
-
-        presets[preset_key] = PresetData(preset_key=preset_key, bot_self_introl=bot_self_introl)
-        return True
-    
-    def add_preset_for_all(self, preset_key:str, bot_self_introl: str) -> Tuple[int, int]:
-        """将预设添加到所有的会话中, 返回值为(成功数量，失败数量)"""
-        success_cnt = 0
-        fail_cnt = 0
-        for chat_key in self.get_all_chat_keys():
-            if(self.add_preset(chat_key=chat_key,preset_key=preset_key, bot_self_introl=bot_self_introl)):
-                success_cnt += 1
-            else:
-                fail_cnt += 1
-        return (success_cnt, fail_cnt)
-    
-    def add_preset_from_config(self, chat_key:str, preset_key:str, preset_config: PresetConfig) -> bool:
-        """给指定chat_key添加新人格, config_preset为config中的全局配置"""
-        presets = self.get_presets(chat_key)
-        if preset_key in presets:
-            return False
-
-        presets[preset_key] = PresetData.create_from_config(preset_config)
-        # 更新默认值
-        if preset_config.is_default:
-            for v in presets.values():
-                v.is_default = v.preset_key == preset_key
-        return True
-    
-    def update_preset(self, chat_key:str, preset_key:str, bot_self_introl: str) -> bool:
-        """修改指定chat_key人格预设"""
-        presets = self.get_presets(chat_key)
-        if preset_key not in presets:
-            return False
-        
-        presets[preset_key].bot_self_introl = bot_self_introl
-        return True
-    
-    def update_preset_for_all(self, preset_key:str, bot_self_introl: str) -> Tuple[int, int]:
-        """修改所有会话的人格预设, 返回值为(成功数量，失败数量)"""
-        success_cnt = 0
-        fail_cnt = 0
-        for chat_key in self.get_all_chat_keys():
-            if(self.update_preset(chat_key=chat_key,preset_key=preset_key, bot_self_introl=bot_self_introl)):
-                success_cnt += 1
-            else:
-                fail_cnt += 1
-        return (success_cnt, fail_cnt)
-
-    def del_preset(self, chat_key:str, preset_key:str) -> bool:
-        """删除指定chat_key的指定性格(允许删除系统人格)"""
-        chat_data = self.get_chat_data(chat_key)
-        presets = chat_data.preset_datas
-        if preset_key not in presets:
-            return False
-        
-        if presets[preset_key].is_default: # 默认预设不允许删除
-            return False
-        
-        if chat_data.active_preset == preset_key: # 当前正在使用的预设不允许删除(后续可以改成先让Chat强制更改为默认预设再删除)
-            return False
-        
-        del presets[preset_key]
-        return True
-    
-    def del_preset_for_all(self, preset_key:str) -> Tuple[int, int]:
-        """删除所有会话的指定预设， 返回值为(成功数量，失败数量)"""
-        success_cnt = 0
-        fail_cnt = 0
-        for chat_key in self.get_all_chat_keys():
-            if self._datas[chat_key].active_preset == chat_key: # 正在使用的 preset 不允许删除
-                fail_cnt += 1
-                continue
-            if(self.del_preset(chat_key=chat_key,preset_key=preset_key)):
-                success_cnt += 1
-            else:
-                fail_cnt += 1
-        return (success_cnt, fail_cnt)
-    
-    def reset_preset(self, chat_key:str, preset_key:str) -> bool:
-        """重置指定会话系统预设的人格设定, 如果是系统预设名将还原默认人格设定"""
-        preset_config = config.PRESETS.get(preset_key, None)
-        
-        preset_datas = self.get_presets(chat_key)
-        if preset_key not in preset_datas:
-            return False
-        preset_datas[preset_key].reset_to_default(preset_config)
-        return True
-    
-    def reset_preset_for_all(self, preset_key:str) -> Tuple[int, int]:
-        """重置所有会话的指定预设，返回值为(成功数量，失败数量)"""
-        success_cnt = 0
-        fail_cnt = 0
-        for chat_key in self.get_all_chat_keys():
-            if(self.reset_preset(chat_key=chat_key,preset_key=preset_key)):
-                success_cnt += 1
-            else:
-                fail_cnt += 1
-        return (success_cnt, fail_cnt)
-    
-    def reset_chat(self, chat_key:str) -> bool:
-        """重置当前会话所有预设，将丢失性格或历史数据"""
-        chat_data = self.get_chat_data(chat_key=chat_key)
-        chat_data.reset()
-        return True
-    
-    def reset_chat_for_all(self) -> Tuple[int, int]:
-        """重置所有会话，返回值为(成功数量，失败数量)"""
-        success_cnt = 0
-        fail_cnt = 0
-        for chat_key in self.get_all_chat_keys():
-            if(self.reset_chat(chat_key=chat_key)):
-                success_cnt += 1
-            else:
-                fail_cnt += 1
-        return (success_cnt, fail_cnt)
-
-    def update_all_system_identity_presets():
-        """配置文件更新时将新的人格数据同步到已有chat_key中"""
-        pass
-
-    def clear_all_chat_summary(self):
-        """清除所有的聊天摘要"""
-        for user_data in self._datas.values():
-            for preset_data in user_data.preset_datas.values():
-                preset_data.chat_summarized = ''
-
-    def load_from_old_format():
-        """从旧格式载入数据"""
-        pass
