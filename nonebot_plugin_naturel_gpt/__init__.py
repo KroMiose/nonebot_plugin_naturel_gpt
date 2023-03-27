@@ -13,8 +13,9 @@ global_config = get_driver().config
 from .openai_func import TextGenerator
 from .Extension import load_extensions
 from .persistent_data_manager import PersistentDataManager
+from .chat_manager import ChatManager
 from . import matcher
-from . import chat
+
 
 
 global_data_path = f"{config.NG_DATA_PATH}naturel_gpt.pkl"
@@ -28,7 +29,7 @@ set_permission_check_func(utils.default_permission_check_func)
 
 """ ======== 读取历史记忆数据 ======== """
 PersistentDataManager.instance.load_from_file(global_data_path)
-chat.create_all_chat_object() # 启动时创建所有的已有Chat对象，以便被 -all 相关指令控制
+ChatManager.instance.create_all_chat_object() # 启动时创建所有的已有Chat对象，以便被 -all 相关指令控制
 
 # 读取ApiKeys
 api_keys = config.OPENAI_API_KEYS
@@ -37,7 +38,7 @@ logger.info(f"共读取到 {len(api_keys)} 个API Key")
 # 检查聊天摘要功能是否开启 未开启则清空所有聊天摘要
 if not config.CHAT_ENABLE_SUMMARY_CHAT:
     logger.warning("聊天摘要功能已关闭，将自动清理历史聊天摘要数据")
-    PersistentDataManager.instance.clear_all_chat_summary()
+    ChatManager.instance.clear_all_chat_summary()
 
 """ ======== 初始化对话文本生成器 ======== """
 TextGenerator.instance.init(api_keys=api_keys, config={

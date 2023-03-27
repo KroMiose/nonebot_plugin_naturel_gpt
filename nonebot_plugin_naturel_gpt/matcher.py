@@ -14,8 +14,9 @@ from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, PrivateMessa
 
 from .config import *
 from .utils import *
-from .chat import Chat, global_chat_dict
+from .chat import Chat
 from .persistent_data_manager import PersistentDataManager
+from .chat_manager import ChatManager
 from .Extension import Extension, global_extensions
 from .openai_func import TextGenerator
 from .command_func import CommandManager, cmd
@@ -177,15 +178,8 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
         logger.info("未知消息来源: " + event.get_session_id())
         return
 
-    # 判断是否已经存在对话
-    if chat_key in global_chat_dict:
-        if config.DEBUG_LEVEL > 0: logger.info(f"已存在对话 {chat_key} - 继续对话")
-    else:
-        if config.DEBUG_LEVEL > 0: logger.info("不存在对话 - 创建新对话")
-        # 创建新对话
-        global_chat_dict[chat_key] = Chat(chat_key)
-    chat:Chat = global_chat_dict[chat_key]
-    chat_presets_dict = PersistentDataManager.instance.get_presets(chat_key)
+    chat:Chat = ChatManager.instance.get_or_create_chat(chat_key=chat_key)
+    chat_presets_dict = chat.chat_data.preset_datas
 
     raw_cmd:str = arg.extract_plain_text()
     if config.DEBUG_LEVEL > 0: logger.info(f"接收到指令: {raw_cmd} | 来源: {chat_key}")
@@ -225,16 +219,10 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
 
 
 """ ======== 消息响应方法 ======== """
-# 消息响应方法
 async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, matcher: Matcher, chat_type: str, chat_key: str, sender_name: str = None, wake_up: bool = False, loop_times=0, loop_data={}):
-    # 判断是否已经存在对话
-    if chat_key in global_chat_dict:
-        if config.DEBUG_LEVEL > 0: logger.info(f"已存在对话 {chat_key} - 继续对话")
-    else:
-        if config.DEBUG_LEVEL > 0: logger.info("不存在对话 - 创建新对话")
-        # 创建新对话
-        global_chat_dict[chat_key] = Chat(chat_key)
-    chat:Chat = global_chat_dict[chat_key]
+    """消息响应方法"""
+
+    chat:Chat = ChatManager.instance.get_or_create_chat(chat_key=chat_key)
 
     # 判断对话是否被禁用
     if not chat.is_enable:
@@ -259,8 +247,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
     # 其它人格唤醒判断
     if chat.get_chat_preset_key().lower() not in trigger_text.lower() and chat.enable_auto_switch_identity:
-        presets_dict = PersistentDataManager.instance.get_presets(chat_key)
-        for preset_key in presets_dict:
+        for preset_key in chat.preset_keys:
             if preset_key.lower() in trigger_text.lower():
                 chat.change_presettings(preset_key)
                 logger.info(f"检测到 {preset_key} 的唤醒词，切换到 {preset_key} 的人格")
@@ -473,7 +460,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                     logger.info(f"设置定时器: {reply.get(key)}")
                     loop_data['timer'] = reply.get(key)
                 elif key == 'preset' and reply.get(key):  # 更新对话预设
-                    if PersistentDataManager.instance.update_preset(chat_key=chat.get_chat_key(), preset_key=chat.get_chat_preset_key(), bot_self_introl=reply.get(key)):
+                    if chat.update_preset(preset_key=chat.preset_key, bot_self_introl=reply.get(key))[0]:
                         logger.info(f"更新对话预设: {reply.get(key)} 成功")
                     else:
                         logger.warning(f"更新对话预设: {reply.get(key)} 失败")

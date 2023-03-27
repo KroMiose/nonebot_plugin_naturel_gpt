@@ -108,6 +108,7 @@
 | WORD_FOR_FORBIDDEN            | array | 自定义禁止触发词，以字符串列表方式填入     | []                             | 消息中含有列表中的词将呗拒绝唤醒 bot（优先级高于触发词）                                |
 | WORD_FOR_WAKE_UP              | array | 自定义触发词，以字符串列表方式填入         | []                             | 消息中含有列表中的词将唤醒 bot                                                          |
 | NG_MSG_PRIORITY               | int   | 消息响应优先级                             | 99                             | 大于 1，数值越大优先级越低                                                              |
+| NG_TO_ME                      | bool  | 响应命令是否需要@bot                        | False                          |                                                                                         |
 | ENABLE_COMMAND_TO_IMG         | bool  | 是否将 rg 相关指令通过图片输出             | False                          |                                                                                         |
 | ENABLE_MSG_TO_IMG             | bool  | 是否将机器人回复通过图片输出               | False                          |                                                                                         |
 | NG_BLOCK_OTHERS               | bool  | 是否拦截其它插件的响应                     | False                          | 开启后可能导致优先级低于本插件的其他插件不响应                                          |
