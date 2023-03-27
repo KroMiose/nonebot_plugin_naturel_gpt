@@ -341,7 +341,7 @@ class Chat:
         return (True, None)
     
     def add_preset(self, preset_key:str, bot_self_introl: str) -> Tuple[bool, str]:
-        """给指定chat_key添加新人格"""
+        """添加新人格"""
         if preset_key in self._chat_preset_dicts:
             return (False, '同名预设已存在')
 
@@ -349,7 +349,7 @@ class Chat:
         return (True, None)
     
     def add_preset_from_config(self, preset_key:str, preset_config: PresetConfig) -> Tuple[bool, str]:
-        """给指定chat_key添加新人格, config_preset为config中的全局配置"""
+        """从配置添加新人格, config_preset为config中的全局配置"""
         if preset_key in self._chat_preset_dicts:
             return (False, '同名预设已存在')
 
@@ -361,7 +361,7 @@ class Chat:
         return (True, None)
     
     def del_preset(self, preset_key:str) -> Tuple[bool, str]:
-        """删除指定chat_key的指定人格预设(允许删除系统人格)"""
+        """删除指定人格预设(允许删除系统人格)"""
         if len(self._chat_preset_dicts) <= 1:
             return (False, '当前会话只有一个预设，不允许删除')
         if preset_key not in self._chat_preset_dicts:
@@ -379,12 +379,32 @@ class Chat:
         return (True, None)
     
     def update_preset(self, preset_key:str, bot_self_introl: str) -> Tuple[bool, str]:
-        """修改指定chat_key人格预设"""
+        """修改指定人格预设"""
         if preset_key not in self._chat_preset_dicts:
             return (False, f'预设 [{preset_key}] 不存在')
         
         self._chat_preset_dicts[preset_key].bot_self_introl = bot_self_introl
         return (True, None)
+    
+    def rename_preset(self, old_preset_key:str, new_preset_key: str) -> Tuple[bool, str]:
+        """改名指定预设, 对话历史将全部丢失！"""
+        if old_preset_key not in self._chat_preset_dicts:
+            return (False, '原预设名不存在')
+        
+        if new_preset_key in self._chat_preset_dicts:
+            return (False, '目标预设名已存在')
+        
+        old_preset_data = self._chat_preset_dicts[old_preset_key]
+        if old_preset_data.is_default:
+            return (False, '默认预设不允许改名')
+        
+        bot_self_introl = old_preset_data.bot_self_introl
+        success, err_msg = self.del_preset(old_preset_key)
+        if not success:
+            return (False, err_msg)
+        
+        success, err_msg = self.add_preset(new_preset_key, bot_self_introl)
+        return (success, err_msg)
     
     def reset_preset(self, preset_key:str) -> Tuple[int, str]:
         """重置指定预设，将丢失对用户的对话历史和印象数据"""

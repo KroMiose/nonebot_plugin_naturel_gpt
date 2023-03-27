@@ -71,6 +71,16 @@ class ChatManager(Singleton["ChatManager"]):
                 fail_cnt += 1
         return (success_cnt, fail_cnt)
     
+    def rename_preset_for_all(self, old_preset_key:str, new_preset_key: str) -> Tuple[int, int]:
+        """改名所有会话指定预设, 对话历史将全部丢失！"""
+        success_cnt = fail_cnt = 0
+        for chat in self._chat_dict.values():
+            if(chat.rename_preset(old_preset_key=old_preset_key, new_preset_key=new_preset_key)[0]):
+                success_cnt += 1
+            else:
+                fail_cnt += 1
+        return (success_cnt, fail_cnt)
+    
     def add_preset_for_all(self, preset_key:str, bot_self_introl: str) -> Tuple[int, int]:
         """将预设添加到所有的会话中, 返回值为(成功数量，失败数量)"""
         success_cnt = fail_cnt = 0

@@ -120,11 +120,13 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
                 f"+ 编辑预设: rg edit <预设名> <人格信息> <-global?>\n"
                 f"+ 添加预设: rg new <预设名> <人格信息> <-global?>\n"
                 f"+ 删除预设: rg del <预设名> <-global?>\n"
+                f"+ 改名预设: rg rename <原预设名> <新预设名> <-global?>\n"
                 f"+ 开关会话: rg <on/off> <-global?>\n"
-                f"+ 重置会话: rg <重置/reset> <-global?>\n"
-                f"+ 查询会话(超管): rg <会话/chats>\n"
-                f"+ 扩展信息(超管): rg <扩展/ext>\n"
+                f"+ 重置会话: rg reset <-global?>\n"
+                f"+ 查询会话(超管): rg chats\n"
+                f"+ 扩展信息(超管): rg ext\n"
                 f"* -global 参数表示是否全局设置(仅超管可用)\n"
+                f"* 改名/重命名预设将丢失所有会话历史！\n"
                 f"* 更多帮助请访问: NG指令文档\n"
                 f"Tip: <人格信息> 是一段第三人称的人设说明(建议不超过200字)\n"
             )
@@ -207,9 +209,8 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     bot_self_introl = param_dict.get('preset_intro', '')
     
     if option_dict.get('global'):   # 全局应用
-        if option_dict.get('global'):   # 全局应用
-            success_cnt, fail_cnt = ChatManager.instance.update_preset_for_all(preset_key=target_preset_key, bot_self_introl=bot_self_introl)
-            return {'msg': f"编辑预设: {target_preset_key} (￣▽￣)-ok! (所有会话) 成功:{success_cnt}，失败:{fail_cnt}", 'is_progress': True}
+        success_cnt, fail_cnt = ChatManager.instance.update_preset_for_all(preset_key=target_preset_key, bot_self_introl=bot_self_introl)
+        return {'msg': f"编辑预设: {target_preset_key} (￣▽￣)-ok! (所有会话) 成功:{success_cnt}，失败:{fail_cnt}", 'is_progress': True}
     elif option_dict.get('target'): # 指定会话应用
         target_chat_key = option_dict.get('target')
         target_chat = ChatManager.instance.get_chat(chat_key=target_chat_key)
@@ -232,9 +233,8 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     target_preset_key = param_dict['preset_key']
 
     if option_dict.get('global'):   # 全局应用
-        if option_dict.get('global'):   # 全局应用
-            success_cnt, fail_cnt = ChatManager.instance.del_preset_for_all(preset_key=target_preset_key)
-            return {'msg': f"删除预设: {target_preset_key} (￣▽￣)-ok! (所有会话) 成功:{success_cnt}，失败:{fail_cnt}", 'is_progress': True}
+        success_cnt, fail_cnt = ChatManager.instance.del_preset_for_all(preset_key=target_preset_key)
+        return {'msg': f"删除预设: {target_preset_key} (￣▽￣)-ok! (所有会话) 成功:{success_cnt}，失败:{fail_cnt}", 'is_progress': True}
     elif option_dict.get('target'): # 指定会话应用
         target_chat_key = option_dict.get('target')
         target_chat = ChatManager.instance.get_chat(chat_key=target_chat_key)
@@ -251,14 +251,37 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
             return {'msg': f"删除预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
         else:
             return {'msg': f"删除预设: {target_preset_key} 错误 ＞﹏＜!\n{err_msg}", 'is_progress': True}
+        
+@cmd.register(route='rg/rename', params=['old_preset_key', 'new_preset_key'])
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    target_old_preset_key = param_dict['old_preset_key']
+    target_new_preset_key = param_dict['new_preset_key']
+
+    if option_dict.get('global'):   # 全局应用
+        success_cnt, fail_cnt = ChatManager.instance.rename_preset_for_all(old_preset_key=target_old_preset_key, new_preset_key=target_new_preset_key)
+        return {'msg': f"重命名预设: {target_old_preset_key} (￣▽￣)-ok! (所有会话) 成功:{success_cnt}，失败:{fail_cnt}", 'is_progress': True}
+    elif option_dict.get('target'): # 指定会话应用
+        target_chat_key = option_dict.get('target')
+        target_chat = ChatManager.instance.get_chat(chat_key=target_chat_key)
+        if not target_chat:
+            return {'msg': f"会话: {target_chat_key} 不存在! (；′⌒`)"}
+        success, err_msg = target_chat.rename_preset(old_preset_key=target_old_preset_key, new_preset_key=target_new_preset_key)
+        if success:
+            return {'msg': f"重命名预设: {target_old_preset_key} (￣▽￣)-ok! (会话: {target_chat_key})", 'is_progress': True}
+        else:
+            return {'msg': f"重命名预设: {target_old_preset_key} (会话: {target_chat_key}) 错误 ＞﹏＜!\n{err_msg}", 'is_progress': True}
+    else:   # 当前会话应用
+        success, err_msg = chat.rename_preset(old_preset_key=target_old_preset_key, new_preset_key=target_new_preset_key)
+        if success:
+            return {'msg': f"重命名预设: {target_old_preset_key} (￣▽￣)-ok!", 'is_progress': True}
+        else:
+            return {'msg': f"重命名预设: {target_old_preset_key} 错误 ＞﹏＜!\n{err_msg}", 'is_progress': True}
 
 @cmd.register(route='rg/reset')
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
-
     if option_dict.get('global'):   # 全局应用
-        if option_dict.get('global'):   # 全局应用
-            success_cnt, fail_cnt = ChatManager.instance.reset_chat_for_all()
-            return {'msg': f"重置会话(￣▽￣)-ok! (所有会话) 成功:{success_cnt}，失败:{fail_cnt}", 'is_progress': True}
+        success_cnt, fail_cnt = ChatManager.instance.reset_chat_for_all()
+        return {'msg': f"重置会话(￣▽￣)-ok! (所有会话) 成功:{success_cnt}，失败:{fail_cnt}", 'is_progress': True}
     elif option_dict.get('target'): # 指定会话应用
         target_chat_key = option_dict.get('target')
         target_chat = ChatManager.instance.get_chat(chat_key=target_chat_key)
