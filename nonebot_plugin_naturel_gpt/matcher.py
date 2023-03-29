@@ -226,7 +226,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
     # 判断对话是否被禁用
     if not chat.is_enable:
-        logger.info("对话已被禁用，跳过处理...")
+        if config.DEBUG_LEVEL > 1: logger.info("对话已被禁用，跳过处理...")
         return
 
     # 检测是否包含违禁词
@@ -272,9 +272,9 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     else:
         if config.CHAT_ENABLE_RECORD_ORTHER:
             await chat.update_chat_history_row(sender=sender_name, msg=trigger_text, require_summary=False)
-            logger.info("不是 bot 相关的信息，记录但不进行回复")
+            if config.DEBUG_LEVEL > 1: logger.info("不是 bot 相关的信息，记录但不进行回复")
         else:
-            logger.info("不是 bot 相关的信息，不进行回复")
+            if config.DEBUG_LEVEL > 1: logger.info("不是 bot 相关的信息，不进行回复")
         return
     
     wake_up = False # 进入对话流程，重置唤醒状态
