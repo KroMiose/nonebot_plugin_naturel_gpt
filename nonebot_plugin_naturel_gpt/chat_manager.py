@@ -41,7 +41,7 @@ class ChatManager(Singleton["ChatManager"]):
         """通过chat_key获取一个Chat对象，不存在时自动创建一个"""
         # 判断是否已经存在对话
         if chat_key in self._chat_dict:
-            if config.DEBUG_LEVEL > 0: logger.info(f"已存在对话 {chat_key} - 继续对话")
+            if config.DEBUG_LEVEL > 1: logger.info(f"已存在对话 {chat_key} - 继续对话")
         else:
             if config.DEBUG_LEVEL > 0: logger.info("不存在对话 - 创建新对话")
             # 创建新对话
