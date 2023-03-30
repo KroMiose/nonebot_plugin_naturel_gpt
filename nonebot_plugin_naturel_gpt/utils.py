@@ -61,12 +61,12 @@ async def gen_chat_text(event: MessageEvent, bot:Bot) -> str:
                 qq = seg.data.get('qq', None)
                 if qq:
                     if qq == 'all':
-                        msg += '@ 全体成员'
+                        msg += '@全体成员'
                         wake_up = True
                     else:
                         user_name = await get_user_name(event=event, bot=bot,user_id=int(qq))
                         if user_name:
-                            msg += user_name # at segment 后面跟的消息前面一般会有个空格，不知保留是否对chatgpt对话有影响
+                            msg += f'@{user_name}' # 保持给bot看到的内容与真实用户看到的一致
         return msg, wake_up
     
 async def get_user_name(event: Union[MessageEvent, GroupIncreaseNoticeEvent], bot:Bot, user_id:int) -> str:
