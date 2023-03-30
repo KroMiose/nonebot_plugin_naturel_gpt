@@ -200,7 +200,7 @@ class TextGenerator(Singleton["TextGenerator"]):
     # 生成对话模板
     @staticmethod
     def generate_msg_template(sender:str, msg: str, time_str: str='') -> str:
-        return f"{time_str}{sender}: {msg}\n"
+        return f"{time_str}{sender}: {msg}"
 
     # 计算字符串的token数量
     @staticmethod
