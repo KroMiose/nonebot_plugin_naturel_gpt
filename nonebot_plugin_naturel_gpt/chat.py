@@ -44,7 +44,7 @@ class Chat:
         tg = TextGenerator.instance
         messageunit = tg.generate_msg_template(sender=sender, msg=msg, time_str=f"[{time.strftime('%H:%M:%S %p', time.localtime())}] ")
         self._chat_data.chat_history.append(messageunit)
-        if config.DEBUG_LEVEL > 0: logger.info(f"[会话: {self._chat_key}]添加对话历史行: {messageunit}  |  当前对话历史行数: {len(self._chat_data.chat_history)}")
+        if config.DEBUG_LEVEL > 0: logger.info(f"[会话: {self._chat_key}]添加对话历史行: {messageunit}\n  |  当前对话历史行数: {len(self._chat_data.chat_history)}")
         self._last_msg_time = time.time()   # 更新上次对话时间
         while len(self._chat_data.chat_history) > config.CHAT_MEMORY_MAX_LENGTH * 2:    # 保证对话历史不超过最大长度的两倍
             self._chat_data.chat_history.pop(0)
@@ -78,7 +78,7 @@ class Chat:
         tg = TextGenerator.instance
         messageunit = tg.generate_msg_template(sender=sender, msg=msg)
         impression_data.chat_history.append(messageunit)
-        if config.DEBUG_LEVEL > 0: logger.info(f"添加对话历史行: {messageunit}  |  当前对话历史行数: {len(impression_data.chat_history)}")
+        if config.DEBUG_LEVEL > 0: logger.info(f"添加对话历史行: {messageunit}\n  |  当前对话历史行数: {len(impression_data.chat_history)}")
         # 保证对话历史不超过最大长度
         if len(impression_data.chat_history) > config.USER_MEMORY_SUMMARY_THRESHOLD and require_summary:
             prev_summarized = f"Last impression:{impression_data.chat_impression}\n\n"
@@ -172,11 +172,11 @@ class Chat:
 
         # 对话历史
         offset = 0
-        chat_history:str = '\n\n'.join(self._chat_data.chat_history[-(config.CHAT_MEMORY_SHORT_LENGTH + offset):])  # 从对话历史中截取短期对话
+        chat_history:str = '\n\n\n'.join(self._chat_data.chat_history[-(config.CHAT_MEMORY_SHORT_LENGTH + offset):])  # 从对话历史中截取短期对话
         tg = TextGenerator.instance
         while tg.cal_token_count(chat_history) > config.CHAT_HISTORY_MAX_TOKENS:
             offset += 1 # 如果对话历史过长，则逐行删除对话历史
-            chat_history = '\n\n'.join(self._chat_data.chat_history[-(config.CHAT_MEMORY_SHORT_LENGTH + offset):])
+            chat_history = '\n\n\n'.join(self._chat_data.chat_history[-(config.CHAT_MEMORY_SHORT_LENGTH + offset):])
             if offset > 99: # 如果对话历史删除执行出现问题，为了避免死循环，则只保留最后一条对话
                 chat_history = self._chat_data.chat_history[-1]
                 break
