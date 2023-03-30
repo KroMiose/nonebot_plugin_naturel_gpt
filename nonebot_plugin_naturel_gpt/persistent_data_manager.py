@@ -5,6 +5,7 @@ from typing import Set, Dict, List, Tuple, overload
 from dataclasses import dataclass, field
 
 from nonebot import logger
+import yaml
 from .singleton import Singleton
 from .config import config, PresetConfig
 
@@ -105,7 +106,12 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
 
             logger.info("找不到历史数据，初始化成功")
 
-        self._last_save_data_time = time.time()
+        self._last_save_data_time = 0
+
+        # DEBUG 时立即保存以生成yml文件
+        if config.DEBUG_LEVEL > 0:
+            self.save_to_file()
+
         self._inited = True
 
     @property
@@ -119,6 +125,13 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
         # 保存到pickle文件
         with open(self._file_path, 'wb') as f:
             pickle.dump(self._datas, f)
+        
+        # 开启DEBUG后同时生成一个yml文件用于方便查看内容(生成yml文件耗时较长，不建议非DEBUG时生成)
+        if config.DEBUG_LEVEL > 0:
+            debug_file_path = os.path.splitext(self._file_path)[0] + '_debug.yml'
+            with open(debug_file_path, 'w', encoding='utf-8') as f:
+                yaml.dump(self._datas, f, allow_unicode=True, sort_keys=False)
+        
         self._last_save_data_time = time.time()
         logger.info("数据保存成功")
 
