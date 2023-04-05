@@ -1,5 +1,5 @@
 from .Extension import Extension
-import requests
+import requests, time
 
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config:dict = {
@@ -13,11 +13,11 @@ ext_config:dict = {
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
     # 每次消息回复中最大调用次数，不填则默认为99
-    "max_call_times_per_msg": 5,
+    "max_call_times_per_msg": 1,
     # 作者信息
     "author": "CCYellowStar",
     # 版本
-    "version": "0.0.2",
+    "version": "0.0.3",
     # 扩展简介
     "intro": "让机器人openai能上网搜索",
     # 调用时是否打断响应 启用后将会在调用后截断后续响应内容
@@ -34,13 +34,14 @@ class CustomExtension(Extension):
         custom_config:dict = self.get_custom_config()  # 获取yaml中的配置信息
         proxy = custom_config.get('proxy', '')
         max_results = custom_config.get('max_results', 3)
+
         if proxy:
             if not proxy.startswith('http'):
                 proxy = 'http://' + proxy        
         # 从arg_dict中获取参数
         keyword = arg_dict.get('keyword', None)
 
-        if keyword is None:
+        if keyword is None or keyword == self._last_keyword or time.time() - self._last_call_time < 10:
             return {}
 
         headers = {
@@ -65,6 +66,8 @@ class CustomExtension(Extension):
                 'voice': None,  # 语音url
             }
         # 返回的信息将会被发送到会话中
+        self._last_keyword = keyword
+        self._last_call_time = time.time()
         return {
             'text': f'[ext_search] 搜索: {keyword} [完成]',
             'notify': {
@@ -76,3 +79,5 @@ class CustomExtension(Extension):
 
     def __init__(self, custom_config: dict):
         super().__init__(ext_config.copy(), custom_config)
+        self._last_keyword = None
+        self._last_call_time = 0

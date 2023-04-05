@@ -195,6 +195,15 @@
     - `-global`: (可选\* 启用则应用到所有会话)
   - 返回数据示例: {code: 200, msg: (是否成功), data: (是否成功)}
 
+#### 人格更名
+
+- 指令: `rg rename <options?> <old_preset_key> <new_preset_key>`
+  - 功能: 修改会话人格名
+  - 可选项:
+    - `-target <chat_key>`: (可选\* 默认当前会话)
+    - `-global`: (可选\* 启用则应用到所有会话)
+  - 返回数据示例: {code: 200, msg: (是否成功), data: (是否成功)}
+
 #### 人格查询
 
 - 指令: `rg query <options?> <preset_key>`
@@ -528,6 +537,18 @@ class CustomExtension(Extension):
 </code></pre> </details>
 
 ## 🎢 更新日志
+
+## [2023/4/6] v2.0.5
+
+- 解析消息中的@时保持与用户看到的一致 (感谢 @Misaka-Mikoto-Tech 提供 pr)
+- 优化日志输出的 DEBUG_LEVEL 限制 (感谢 @Misaka-Mikoto-Tech 提供 pr)
+- 优化聊天消息prompt的换行生成逻辑 (感谢 @Misaka-Mikoto-Tech 提供 pr)
+- 增加 `rg rename` 改名指令，用于修改人格名 (感谢 @Misaka-Mikoto-Tech 提供 pr) (感谢 @Misaka-Mikoto-Tech 提供 pr)
+- 解析消息中的@时保持与用户看到的一致 (感谢 @Misaka-Mikoto-Tech 提供 pr)
+- patch logger使插件名称显示为中文 (感谢 @chenxuan353 提供 pr)
+- 添加记忆文件(原.pkl)使用JSON读取与保存功能 (与原pickle兼容) (感谢 @chenxuan353 提供 pr)
+- 优化部分代码类型注解 (感谢 @chenxuan353 提供 pr)
+- 搜索扩展(ext_search.py) 优化，禁止bot短时间内反复搜索和搜索重复内容
 
 ## [2023/3/26] v2.0.4
 
