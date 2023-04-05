@@ -1,7 +1,7 @@
 ﻿import copy
 import time
 from typing import Dict, List, Tuple
-from nonebot import logger
+from .logger import logger
 from . import Extension
 
 from .text_func import compare_text

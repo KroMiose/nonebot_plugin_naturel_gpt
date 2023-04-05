@@ -8,7 +8,7 @@ import traceback
 from typing import Awaitable, List, Dict, Callable, Optional, Set, Tuple
 from nonebot import get_driver
 from nonebot import on_command, on_message, on_notice
-from nonebot.log import logger
+from .logger import logger
 from nonebot.params import CommandArg, Matcher, Event
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, PrivateMessageEvent, GroupMessageEvent, MessageSegment, GroupIncreaseNoticeEvent
 

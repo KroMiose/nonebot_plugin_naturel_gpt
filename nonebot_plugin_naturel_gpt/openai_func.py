@@ -1,4 +1,4 @@
-from nonebot.log import logger
+from .logger import logger
 from nonebot.utils import run_sync
 
 import os
