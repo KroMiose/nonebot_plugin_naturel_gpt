@@ -2,7 +2,7 @@
 import nonebot
 from pydantic import BaseModel, Extra
 from nonebot import get_driver
-from nonebot.log import logger
+from .logger import logger
 import yaml
 from pathlib import Path
 
@@ -76,6 +76,8 @@ class Config(BaseModel, extra=Extra.ignore):
     CHAT_SUMMARY_INTERVAL: int
     """长期对话记忆间隔"""
 
+    NG_DATA_PICKLE: bool
+    """是否强制使用pickle，默认使用json"""
     NG_DATA_PATH: str
     """数据文件目录"""
     NG_EXT_PATH: str
@@ -144,6 +146,7 @@ CONFIG_TEMPLATE = {
         'sk-xxxxxxxxxxxxx',
     ],
     "OPENAI_TIMEOUT": 60,   # OpenAI 请求超时时间
+    'OPENAI_PROXY_SERVER': '',  # 请求OpenAI的代理服务器
     "PRESETS": {
         "白羽": {
             'preset_key': '白羽',  # 人格名称
@@ -198,6 +201,7 @@ CONFIG_TEMPLATE = {
     'CHAT_MEMORY_MAX_LENGTH': 16,   # 长期对话记忆长度
     'CHAT_SUMMARY_INTERVAL': 10,  # 长期对话记忆间隔
 
+    'NG_DATA_PICKLE': False,  # 强制使用pickle
     'NG_DATA_PATH': "./data/naturel_gpt/",  # 数据文件目录
     'NG_EXT_PATH': "./data/naturel_gpt/extensions/",  # 扩展目录
     'NG_LOG_PATH': "./data/naturel_gpt/logs/",  # 扩展目录
@@ -225,7 +229,6 @@ CONFIG_TEMPLATE = {
     'NG_ENABLE_MSG_SPLIT': True,   # 是否启用消息分割
     'NG_ENABLE_AWAKE_IDENTITIES': True, # 是否允许自动唤醒其它人格
 
-    'OPENAI_PROXY_SERVER': '',  # 请求OpenAI的代理服务器
     'UNLOCK_CONTENT_LIMIT': False,  # 解锁内容限制
 
     'NG_EXT_LOAD_LIST': [{
@@ -242,7 +245,7 @@ CONFIG_TEMPLATE = {
 driver = get_driver()
 global_config = GlobalConfig.parse_obj(driver.config)
 config_path = global_config.ng_config_path
-config:Config = None
+config:Config = None # type: ignore
 
 def get_config() ->Config:
     """获取config数据（为了能够reload建议使用此函数获取对象）"""

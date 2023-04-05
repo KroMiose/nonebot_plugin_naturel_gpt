@@ -1,6 +1,6 @@
 from typing import Awaitable, Callable, Tuple
 from nonebot import get_driver
-from nonebot.log import logger
+from .logger import logger
 from nonebot.params import Matcher
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent
 
@@ -17,9 +17,6 @@ from .chat_manager import ChatManager
 from . import matcher
 
 
-
-global_data_path = f"{config.NG_DATA_PATH}naturel_gpt.pkl"
-
 def set_permission_check_func(callback:Callable[[Matcher, MessageEvent, Bot, str, str], Awaitable[Tuple[bool,str]]]):
     """设置Matcher的权限检查函数"""
     matcher.permission_check_func = callback
@@ -28,7 +25,7 @@ def set_permission_check_func(callback:Callable[[Matcher, MessageEvent, Bot, str
 set_permission_check_func(utils.default_permission_check_func)
 
 """ ======== 读取历史记忆数据 ======== """
-PersistentDataManager.instance.load_from_file(global_data_path)
+PersistentDataManager.instance.load_from_file()
 ChatManager.instance.create_all_chat_object() # 启动时创建所有的已有Chat对象，以便被 -all 相关指令控制
 
 # 读取ApiKeys

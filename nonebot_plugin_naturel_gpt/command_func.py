@@ -1,4 +1,4 @@
-from nonebot.log import logger
+from .logger import logger
 from .chat import Chat
 from .chat_manager import ChatManager
 from .Extension import Extension, global_extensions, load_extensions
