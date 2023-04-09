@@ -4,18 +4,20 @@ import requests
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config:dict = {
     "name": "AnimePic",   # 扩展名称，用于标识扩展
-    "arguments": {},
-    "description": "send 1 random anime picture. (not parameters! usage in response: /#AnimePic#/)",
+    "arguments": {      
+        "tag": "str",   # 关键字
+    },
+    "description": "send 1 specified tag anime picture. (usage in response: /#AnimePic&萝莉#/)",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": ["图", "pic", "Pic", "再", "还", "涩", "色"],
     # 每次消息回复中最大调用次数，不填则默认为99
     "max_call_times_per_msg": 3,
     # 作者信息
-    "author": "KroMiose",
+    "author": "CCYellowStar",
     # 版本
     "version": "0.0.1",
     # 扩展简介
-    "intro": "发送随机二次元图片",
+    "intro": "发送指定tag二次元图片",
 }
 
 class CustomExtension(Extension):
@@ -26,10 +28,22 @@ class CustomExtension(Extension):
             arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值(类型为str)}
         """
         custom_config:dict = self.get_custom_config()  # 获取yaml中的配置信息
+        r18 = int(custom_config.get('r18', 0)) #添加r18参数 0为否，1为是，2为混合
+        tag = arg_dict.get('tag', None)
 
-        url = "https://api.ixiaowai.cn/api/api.php?return=json"
-        img_src = requests.get(url, verify=False, timeout=10).json().get("imgurl", None)
-
+        url = f"https://api.lolicon.app/setu/v2?tag={tag}&r18={r18}"
+        res = requests.get(url, verify=False, timeout=10)
+        data=res.json()
+        if not data["error"]:
+            if data["data"]:
+                data = data["data"][0]
+                img_src = data["urls"]["original"]
+            else:
+                return {
+                    'text': f"[来自扩展] 没有这个tag的图片...",
+                    'image': None,  # 图片url
+                    'voice': None,  # 语音url
+                }
         if img_src is None:
             return {
                 'text': f"[来自扩展] 发送图片错误或超时...",

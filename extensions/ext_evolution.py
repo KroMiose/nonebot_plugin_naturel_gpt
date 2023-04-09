@@ -1,16 +1,14 @@
 from .Extension import Extension
-import random
 
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config:dict = {
-    "name": "Random",   # 扩展名称，用于标识扩展
+    "name": "UpdateCharacter",   # 扩展名称，用于标识扩展
     "arguments": {      
-        "min": "int",   # 填写希望的参数类型，尽量使用简单类型，便于ai理解含义使用
-        "max": "int",   # 注意：实际接收到的参数类型为str(由ai生成)，需要自行转换
+        "setting_text": "str",   # 新的预设文本
     },
     # 扩展的描述信息，用于提示ai理解扩展的功能 *必填* 尽量简短 使用英文更节省token
     # 如果bot无法理解扩展的功能，可适当添加使用示例 格式: /#扩展名&参数1&...&参数n#/
-    "description": "send a random number beteen the range. (usage in response: /#Random&0&20#/))",
+    "description": "Use a new character setting to replace the original one. Can be used whenever you want to modify your own character setting (usage in response: /#UpdateCharacter&xxx is a person who ...#/))",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
     # 每次消息回复中最大调用次数，不填则默认为99
@@ -20,7 +18,7 @@ ext_config:dict = {
     # 版本
     "version": "0.0.1",
     # 扩展简介
-    "intro": "随机数生成模块",
+    "intro": "赋予bot成长型人格",
 }
 
 class CustomExtension(Extension):
@@ -31,24 +29,27 @@ class CustomExtension(Extension):
             arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值}
         """
         custom_config:dict = self.get_custom_config()  # 获取yaml中的配置信息
-        # 随机数生成器例子
-        min = arg_dict.get("min", 0)
-        max = arg_dict.get("max", 100)
 
-        try:
-            min = int(min)
-            max = int(max)
-        except ValueError:
-            return "参数错误，参数必须是整数"
+        # 从custom_config中获取参数
+        notify_type = custom_config.get("notify_type", 1)
+        
+        # 从arg_dict中获取参数
+        setting_text = arg_dict["setting_text"]
 
-        if min > max:
-            min, max = max, min
+        if not setting_text:
+            raise Exception("缺少参数: setting_text")
+        
+        if notify_type == 2:
+            show_text =  f"[evolution] 已将人格预设修改为: |\n    {setting_text}"
+        elif notify_type == 1:
+            show_text =  f"[evolution] 人格预设更新完成~"
+        elif notify_type == 0:
+            show_text = None
 
         # 返回的信息将会被发送到会话中
         return {
-            'text': f"[来自扩展]你要的数字是: {random.randint(min, max)} ^_^",
-            'image': None,  # 图片url
-            'voice': None,  # 语音url
+            "text": show_text,
+            "preset": setting_text,
         }
 
     def __init__(self, custom_config: dict):
