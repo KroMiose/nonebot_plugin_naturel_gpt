@@ -67,7 +67,7 @@ class TextGenerator(Singleton["TextGenerator"]):
     def get_chat_response(self, key:str, prompt, custom:dict = {}):
         openai.api_key = key
         try:
-            if self.config['model'].startswith('gpt-3.5-turbo'):
+            if self.config['model'].startswith('gpt-3.5-turbo') or self.config['model'].startswith('gpt-4'):
                 response = openai.ChatCompletion.create(
                     model=self.config['model'],
                     messages=prompt if isinstance(prompt, list) else [  # 如果是列表则直接使用，否则按照以下格式转换
