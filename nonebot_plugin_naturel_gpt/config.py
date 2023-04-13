@@ -136,6 +136,12 @@ class Config(BaseModel, extra=Extra.ignore):
     NG_CHECK_USER_NAME_HYPHEN:bool # 如果用户名中包含连字符，ChatGPT会将前半部分识别为名字，但一般情况下后半部分才是我们想被称呼的名字, eg. 策划-李华
     """检查用户名中的连字符"""
 
+    ENABLE_MC_CONNECT: bool
+    """是否启用MC服务器连接"""
+
+    MC_COMMAND_PREFIX: List[str]
+    """MC服务器人格指令前缀"""
+
     DEBUG_LEVEL: int
     """debug level, [0, 1, 2, 3], 0 为关闭，等级越高debug信息越详细"""
 
@@ -238,6 +244,9 @@ CONFIG_TEMPLATE = {
     }],     # 加载的扩展列表
 
     'NG_CHECK_USER_NAME_HYPHEN': False, # 检查用户名中的连字符
+
+    'ENABLE_MC_CONNECT': False,  # 是否启用MC服务器
+    'MC_COMMAND_PREFIX': ['!', '！'],  # MC服务器指令前缀
 
     'DEBUG_LEVEL': 0  # debug level, [0, 1, 2], 0 为关闭，等级越高debug信息越详细
 }

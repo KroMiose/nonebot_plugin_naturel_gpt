@@ -131,7 +131,7 @@ class Chat:
                 return True
         return False
 
-    def get_chat_prompt_template(self, userid:str = None)-> str:
+    def get_chat_prompt_template(self, userid:str = None, chat_type:str = '')-> str:
         """对话 prompt 模板生成"""
         # 印象描述
         impression_text = f"[impression]\n{self._chat_preset.chat_impressions[userid].chat_impression}\n\n" \
@@ -229,11 +229,19 @@ class Chat:
         #     f"\n{chat_history}\n{self.chat_presets['preset_key']}:"
         # )
 
+        # 在 MC 服务器下 prompt 支持
+        MC_prompt = (
+            f"You are now in a Minecraft game server."
+        ) if chat_type == 'server' else ''
+        chat_history_title = (
+            "Minecraft game server chat log"
+        ) if chat_type == 'server' else "Chat History"
+
         # 返回对话 prompt 模板
         return [
             {'role': 'system', 'content': ( # 系统消息
                 # f"You must strictly follow the user's instructions to give {self.chat_presets['preset_key']}'s response."
-                f"You must follow the user's instructions to play the specified role in the first person and give the response information according to the changed role. If necessary, you can generate a reply in the specified format to call the extension function."
+                f"{MC_prompt}You must follow the user's instructions to play the specified role in the first person and give the response information according to the changed role. If necessary, you can generate a reply in the specified format to call the extension function."
                 f"\n{extension_text}"
                 f"\n{res_rule_prompt}"
             )},
@@ -254,7 +262,7 @@ class Chat:
             {'role': 'user', 'content': (   # 用户消息(实际场景)
                 f"[Character setting]\n{self._chat_preset.bot_self_introl}\n\n"
                 f"{memory}{impression_text}{summary}"
-                f"\n[Chat History (current time: {time.strftime('%Y-%m-%d %H:%M:%S %A')})]\n"
+                f"\n[{chat_history_title} (current time: {time.strftime('%Y-%m-%d %H:%M:%S %A')})]\n"
                 f"\n{chat_history}\n\n{self._chat_preset.preset_key}:(Generate the response content of {self._chat_preset.preset_key}, excluding '{self._chat_preset.preset_key}:', Do not generate any reply from anyone else.)"
             )},
         ]
