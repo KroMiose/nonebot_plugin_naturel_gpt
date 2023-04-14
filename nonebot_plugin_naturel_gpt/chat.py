@@ -185,7 +185,12 @@ class Chat:
         summary = f"\n\n[Summary]: {self._chat_data.chat_summarized}" if self._chat_data.chat_summarized else ''  # 如果有对话历史摘要，则添加摘要
 
         # 扩展描述
-        ext_descs = ''.join([global_extensions[ek].generate_description(chat_history) for ek in global_extensions.keys()])
+        if chat_type != 'server':   # 如果是聊天模式，则显示所有支持聊天的扩展
+            # ext_descs = ''.join([global_extensions[ek].generate_description(chat_history) for ek in global_extensions.keys()])
+            ext_descs = ''.join([global_extensions[ek].generate_description(chat_history) for ek in global_extensions.keys() if 'chat' in global_extensions[ek].get_config().get('available', ['chat'])])
+        else:   # 如果是MC服务器，则只显示服务器扩展
+            ext_descs = ''.join([global_extensions[ek].generate_description(chat_history) for ek in global_extensions.keys() if 'server' in global_extensions[ek].get_config().get('available', ['server'])])
+
         # 扩展使用示例
         extension_text = (
             f"[Extension functions: You can use the following extension functions. The extension module can be invoked multiple times in a single response.]\n"

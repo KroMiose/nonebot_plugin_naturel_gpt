@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "nonebot-plugin-naturel-gpt"
+version = "2.1.0"
+description = "一个基于NoneBot框架的Ai聊天插件，对接OpenAi文本生成接口"
+authors = ["KroMiose"]
+license = "Apache License 2.0"
+readme = "README.md"
+packages = [{include = "nonebot_plugin_naturel_gpt"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+nonebot2 = "^2.0.0rc3"
+openai = ">=0.27.0"
+transformers = "^4.26.0"
+nonebot-adapter-onebot = "^2.2.1"
+jieba = "^0.42.1"
+numpy = "^1.21.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -20,10 +20,12 @@ from .chat_manager import ChatManager
 from .Extension import Extension, global_extensions
 from .openai_func import TextGenerator
 from .command_func import CommandManager, cmd
+
 try:
     import nonebot_plugin_htmlrender
     from .text_func import text_to_img
 except:
+    logger.warning('未安装 nonebot_plugin_htmlrender 插件，无法使用 text_to_img')
     config.ENABLE_MSG_TO_IMG = False
     config.ENABLE_COMMAND_TO_IMG = False
 
@@ -31,9 +33,11 @@ if config.ENABLE_MC_CONNECT:
     try:
         from nonebot.adapters.spigot import Bot as SpigotBot
         from nonebot.adapters.spigot import Event as SpigotEvent
+        from .MCrcon.mcrcon import MCRcon   # fork from: https://github.com/Uncaught-Exceptions/MCRcon
     except:
         logger.warning('未安装 nonebot_plugin_spigot 适配器，无法使用 SpigotBot')
         config.ENABLE_MC_CONNECT = False
+
 
 permission_check_func:Callable[[Matcher, MessageEvent, Bot, str, str], Awaitable[Tuple[bool,str]]] = None
 is_progress:bool = False
@@ -296,25 +300,28 @@ if config.ENABLE_MC_CONNECT:
         except Exception as e:
             logger.warning(f"[MC: {server_from}] 正则提取消息内容失败: {e} 跳过处理...")
             return
+        
+        wake_up = False
 
         if event_name == 'Join':
             notice_text = f'{user_name} 加入了服务器!'
+            wake_up = True
         elif event_name == 'Quit':
             notice_text = f'{user_name} 离开了服务器!'
-            return
         elif event_name == 'Death':
             notice_text = f'{user_name} 死于意外!'
+            wake_up = True
 
         # 进行消息响应
         await do_msg_response(
             user_name,
             notice_text,
-            event.is_tome(),
+            False,
             mc_notice_matcher,
             chat_type,
             chat_key,
             '[Minecraft Server]',
-            True
+            wake_up
         )
 
 
@@ -590,20 +597,24 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 await matcher.send(f"{reply_prefix}{reply.strip()}")
         else:
             for key in reply:   # 遍历回复内容类型字典
-                if key == 'text' and reply.get(key) and reply.get(key).strip(): # 发送文本
+                if key == 'text' and reply.get(key) and reply.get(key).strip(): # 发送普通文本
                     # 判断文本内容是否为纯符号(包括空格，换行、英文标点、中文标点)并且长度为1
                     if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply.get(key).strip()):
                         if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号文本: {reply.get(key).strip()}，跳过发送...")
                         continue
                     await matcher.send(f"{reply_prefix}{reply.get(key).strip()}")
+
                 elif key == 'image' and reply.get(key): # 发送图片
                     await matcher.send(MessageSegment.image(file=reply.get(key, '')))
                     logger.info(f"回复图片消息: {reply.get(key)}")
+
                 elif key == 'voice' and reply.get(key): # 发送语音
                     logger.info(f"回复语音消息: {reply.get(key)}")
                     await matcher.send(Message(MessageSegment.record(file=reply.get(key), cache=0)))
+
                 elif key == 'code_block' and reply.get(key):  # 发送代码块
                     await matcher.send(Message(reply.get(key).strip()))
+
                 elif key == 'memory' and reply.get(key):  # 记忆存储
                     logger.info(f"存储记忆: {reply.get(key)}")
                     chat.set_memory(reply.get(key).get('key'), reply.get(key).get('value'))
@@ -612,22 +623,34 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                             await matcher.send(f"[debug]: 记住了 {reply.get(key).get('key')} = {reply.get(key).get('value')}")
                         elif reply.get(key).get('key') and reply.get(key).get('value') is None:
                             await matcher.send(f"[debug]: 忘记了 {reply.get(key).get('key')}")
+
                 elif key == 'notify' and reply.get(key):  # 通知消息
                     if 'sender' in reply.get(key) and 'msg' in reply.get(key):
                         loop_data['notify'] = reply.get(key)
                     else:
                         logger.warning(f"通知消息格式错误: {reply.get(key)}")
+
                 elif key == 'wake_up' and reply.get(key):  # 重新调用对话
                     logger.info(f"重新调用对话: {reply.get(key)}")
                     wake_up = reply.get(key)
+
                 elif key == 'timer' and reply.get(key):  # 定时器
                     logger.info(f"设置定时器: {reply.get(key)}")
                     loop_data['timer'] = reply.get(key)
+
                 elif key == 'preset' and reply.get(key):  # 更新对话预设
                     if chat.update_preset(preset_key=chat.preset_key, bot_self_introl=reply.get(key))[0]:
                         logger.info(f"更新对话预设: {reply.get(key)} 成功")
                     else:
                         logger.warning(f"更新对话预设: {reply.get(key)} 失败")
+
+                elif key == 'rcon' and reply.get(key):  # RCON指令
+                    try:
+                        with MCRcon(config.MC_RCON_HOST, config.MC_RCON_PASSWORD, int(config.MC_RCON_PORT), timeout=10) as mcr:
+                            resp = mcr.command(reply.get(key))
+                            logger.info(f"发送MC-RCON指令: {reply.get(key)} | 响应: {resp}")
+                    except:
+                        logger.warning(f"发送MC-RCON指令: {reply.get(key)} 失败")
 
                 res_times -= 1
                 if res_times < 1:  # 如果回复次数超过限制，则跳出循环

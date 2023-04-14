@@ -142,6 +142,15 @@ class Config(BaseModel, extra=Extra.ignore):
     MC_COMMAND_PREFIX: List[str]
     """MC服务器人格指令前缀"""
 
+    MC_RCON_HOST: str
+    """MC服务器RCON地址"""
+
+    MC_RCON_PORT: int
+    """MC服务器RCON端口"""
+
+    MC_RCON_PASSWORD: str
+    """MC服务器RCON密码"""
+
     DEBUG_LEVEL: int
     """debug level, [0, 1, 2, 3], 0 为关闭，等级越高debug信息越详细"""
 
@@ -247,6 +256,10 @@ CONFIG_TEMPLATE = {
 
     'ENABLE_MC_CONNECT': False,  # 是否启用MC服务器
     'MC_COMMAND_PREFIX': ['!', '！'],  # MC服务器指令前缀
+    'MC_RCON_HOST': '127.0.0.1',  # MC服务器RCON地址
+    'MC_RCON_PORT': 25575,  # MC服务器RCON端口
+    'MC_RCON_PASSWORD': '',  # MC服务器RCON密码
+
 
     'DEBUG_LEVEL': 0  # debug level, [0, 1, 2], 0 为关闭，等级越高debug信息越详细
 }
