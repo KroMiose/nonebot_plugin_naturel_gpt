@@ -5,21 +5,23 @@ import re
 import time
 import os
 import traceback
-from typing import Awaitable, List, Dict, Callable, Optional, Set, Tuple
-from nonebot import get_driver
+from typing import Awaitable, List, Dict, Callable, Optional, Set, Tuple, Type
 from nonebot import on_command, on_message, on_notice
 from .logger import logger
-from nonebot.params import CommandArg, Matcher, Event
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, PrivateMessageEvent, GroupMessageEvent, MessageSegment, GroupIncreaseNoticeEvent
+from nonebot.params import CommandArg
+from nonebot.matcher import Matcher
+from nonebot.adapters import Bot
+from nonebot.adapters.onebot.v11 import Message, MessageEvent, PrivateMessageEvent, GroupMessageEvent, MessageSegment, GroupIncreaseNoticeEvent
 
 from .config import *
 from .utils import *
 from .chat import Chat
 from .persistent_data_manager import PersistentDataManager
 from .chat_manager import ChatManager
-from .Extension import Extension, global_extensions
+from .Extension import global_extensions
 from .openai_func import TextGenerator
-from .command_func import CommandManager, cmd
+from .command_func import cmd
+from .MCrcon.mcrcon import MCRcon   # fork from: https://github.com/Uncaught-Exceptions/MCRcon
 
 try:
     import nonebot_plugin_htmlrender
@@ -29,17 +31,8 @@ except:
     config.ENABLE_MSG_TO_IMG = False
     config.ENABLE_COMMAND_TO_IMG = False
 
-if config.ENABLE_MC_CONNECT:
-    try:
-        from nonebot.adapters.spigot import Bot as SpigotBot
-        from nonebot.adapters.spigot import Event as SpigotEvent
-        from .MCrcon.mcrcon import MCRcon   # fork from: https://github.com/Uncaught-Exceptions/MCRcon
-    except:
-        logger.warning('未安装 nonebot_plugin_spigot 适配器，无法使用 SpigotBot')
-        config.ENABLE_MC_CONNECT = False
 
-
-permission_check_func:Callable[[Matcher, MessageEvent, Bot, str, str], Awaitable[Tuple[bool,str]]] = None
+permission_check_func:Callable[[Matcher, Event, Bot, Optional[str], str], Awaitable[Tuple[bool,Optional[str]]]]
 is_progress:bool = False
 
 msg_sent_set:Set[str] = set() # bot 自己发送的消息
@@ -55,7 +48,7 @@ async def handle_group_message_sent(bot: Bot, exception: Optional[Exception], ap
 
 """ ======== 注册消息响应器 ======== """
 # 注册qq消息响应器 收到任意消息时触发
-matcher:Matcher = on_message(priority=config.NG_MSG_PRIORITY, block=config.NG_BLOCK_OTHERS)
+matcher:Type[Matcher] = on_message(priority=config.NG_MSG_PRIORITY, block=config.NG_BLOCK_OTHERS)
 @matcher.handle()
 async def handler(matcher_:Matcher, event: MessageEvent, bot:Bot) -> None:
     global msg_sent_set
@@ -70,7 +63,7 @@ async def handler(matcher_:Matcher, event: MessageEvent, bot:Bot) -> None:
         msg_sent_set.clear()
     
     # 处理消息前先检查权限
-    (permit_success, _) = await permission_check_func(matcher=matcher_, event=event, bot=bot, cmd=None, type='message')
+    (permit_success, _) = await permission_check_func(matcher_, event, bot, None, 'message')
     if not permit_success:
         return
     
@@ -124,113 +117,9 @@ async def handler(matcher_:Matcher, event: MessageEvent, bot:Bot) -> None:
         sender_name,
     )
 
-# 注册MC消息响应器
-if config.ENABLE_MC_CONNECT:
-    mc_matcher:Matcher = on_message(priority=config.NG_MSG_PRIORITY-2, block=False)
-    @mc_matcher.handle()
-    async def handler(matcher_:Matcher, event: SpigotEvent, bot:SpigotBot) -> None:
-        # 处理消息前先检查权限
-        (permit_success, _) = await permission_check_func(matcher=matcher_, event=event, bot=bot, cmd=None, type='message')
-        if not permit_success:
-            return
-
-        try:
-            ejson_dict = json.loads(event.json())
-            server_from = event.server_name
-            sender_name = ejson_dict['player']['nickname']
-            chat_text = str(event.get_message())
-        except Exception as e:
-            logger.warning(f"[MC: {server_from}] 获取消息发送者信息失败: {e} 跳过处理...")
-            return
-
-        # 判断用户账号是否被屏蔽
-        if sender_name in config.FORBIDDEN_USERS:
-            if config.DEBUG_LEVEL > 0: logger.info(f"用户 {sender_name} 被屏蔽，拒绝处理消息")
-            return
-
-        resTmplate = (  # 测试用，获取消息的相关信息
-            f"收到消息: {chat_text}"
-            f"\n消息描述: {event.get_event_description()}"
-            f"\n发送者: {sender_name}"
-            f"\n消息来源: {server_from}"
-            f"\nJSON: {event.json()}"
-        )
-        if config.DEBUG_LEVEL > 1: logger.info(resTmplate)
-
-        # 如果是忽略前缀 或者 消息为空，则跳过处理
-        if chat_text.strip().startswith(config.IGNORE_PREFIX) or not chat_text:   
-            if config.DEBUG_LEVEL > 1: logger.info("忽略前缀或消息为空，跳过处理...") # 纯图片消息也会被判定为空消息
-            return
-
-        # 判断消息来源
-        if isinstance(event, SpigotEvent):
-            chat_key = 'MC_Server_' + server_from
-            chat_type = 'server'
-        else:
-            if config.DEBUG_LEVEL > 0: logger.info("未知消息来源: " + event.get_session_id())
-            return
-
-        #region 指令处理分支 (由于Spigot适配器似乎不支持指令，所以整合进消息响应流)
-        command_prefix_check = False
-        for prefix in config.MC_COMMAND_PREFIX:
-            if chat_text.startswith(prefix):
-                command_prefix_check = True
-                raw_cmd = chat_text[len(prefix):].strip()
-                break
-
-        if command_prefix_check:
-            global is_progress  # 是否产生编辑进度
-            is_progress = False
-            if config.DEBUG_LEVEL > 0: logger.info(f"接收到指令: {raw_cmd} | 来源: {chat_key} (MC) | 发送者: {sender_name})")
-            # 判断是否是禁止使用的用户
-            if sender_name in config.FORBIDDEN_USERS:
-                await mc_matcher.finish(f"您的账号({sender_name})已被禁用，请联系管理员。")
-
-            chat:Chat = ChatManager.instance.get_or_create_chat(chat_key=chat_key)
-            chat_presets_dict = chat.chat_data.preset_datas
-
-            # 执行命令前先检查权限
-            if sender_name not in config.ADMIN_USERID:
-                await mc_matcher.finish("对不起！你没有权限进行此操作 ＞﹏＜")
-
-            # 执行命令
-            res = cmd.execute(
-                chat=chat,
-                command=raw_cmd,
-                chat_presets_dict=chat_presets_dict,
-            )
-
-            if res:
-                if res.get('msg'):     # 如果有返回消息则发送
-                    await mc_matcher.send(res.get('msg'))  
-                elif res.get('error'):
-                    await mc_matcher.finish(f"执行命令时出现错误: {res.get('error')}")  # 如果有返回错误则发送s
-
-            else:
-                await mc_matcher.finish("输入的命令好像有点问题呢... 请检查下再试试吧！ ╮(>_<)╭")
-
-            if res.get('is_progress'): # 如果有编辑进度，进行数据保存
-                # 更新所有全局预设到会话预设中
-                if config.DEBUG_LEVEL > 0: logger.info(f"用户: {sender_name} 进行了人格预设编辑: {cmd}")
-                PersistentDataManager.instance.save_to_file()  # 保存数据
-            return
-        #endregion
-
-        # 进行消息响应
-        await do_msg_response(
-            sender_name,
-            chat_text,
-            event.is_tome(),
-            mc_matcher,
-            chat_type,
-            chat_key,
-            sender_name,
-        )
-
-
 """ ======== 注册通知响应器 ======== """
 # 欢迎新成员通知响应器
-welcome:Matcher = on_notice(priority=20, block=False)
+welcome:Type[Matcher] = on_notice(priority=20, block=False)
 @welcome.handle()  # 监听 welcom
 async def _(matcher_:Matcher, event: GroupIncreaseNoticeEvent, bot:Bot):  # event: GroupIncreaseNoticeEvent  群成员增加事件
     if config.DEBUG_LEVEL > 0: logger.info(f"收到通知: {event}")
@@ -239,7 +128,7 @@ async def _(matcher_:Matcher, event: GroupIncreaseNoticeEvent, bot:Bot):  # even
         return
     
     # 处理通知前先检查权限
-    (permit_success, _) = await permission_check_func(matcher=matcher_, event=event,bot=bot,cmd=None,type='notice')
+    (permit_success, _) = await permission_check_func(matcher_, event, bot,None,'notice')
     if not permit_success:
         return
 
@@ -259,7 +148,7 @@ async def _(matcher_:Matcher, event: GroupIncreaseNoticeEvent, bot:Bot):  # even
     )
     if config.DEBUG_LEVEL > 0: logger.info(resTmplate)
 
-    user_name = await get_user_name(event=event, bot=bot, user_id=event.get_user_id()) or f'qq:{event.get_user_id()}'
+    user_name = await get_user_name(event=event, bot=bot, user_id=int(event.get_user_id())) or f'qq:{event.get_user_id()}'
 
     # 进行消息响应
     await do_msg_response(
@@ -273,61 +162,9 @@ async def _(matcher_:Matcher, event: GroupIncreaseNoticeEvent, bot:Bot):  # even
         True
     )
 
-# 注册MC通知响应器
-if config.ENABLE_MC_CONNECT:
-    mc_notice_matcher:Matcher = on_notice(priority=20, block=False)
-    @mc_notice_matcher.handle()
-    async def handler(matcher_:Matcher, event: SpigotEvent, bot:SpigotBot) -> None:
-        try:
-            server_from = event.server_name
-            event_description = event.get_event_description()
-        except Exception as e:
-            logger.warning(f"[MC: {server_from}] 获取消息发送者信息失败: {e} 跳过处理...")
-            return
-
-        # 判断消息来源
-        if isinstance(event, SpigotEvent):
-            chat_key = 'MC_Server_' + server_from
-            chat_type = 'server'
-        else:
-            if config.DEBUG_LEVEL > 0: logger.info("未知消息来源: " + event.get_session_id())
-            return
-        
-        # 使用正则从消息："Notice {event_name} from {user_name}@[Server:{self.server_name}]: {event_name}" 中提取出玩家名和事件名(Join/Leave)
-        try:
-            event_name = event_description.split(']:')[1].strip()
-            user_name = re.search(r'from (.+?)@', event_description).group(1)
-        except Exception as e:
-            logger.warning(f"[MC: {server_from}] 正则提取消息内容失败: {e} 跳过处理...")
-            return
-        
-        wake_up = False
-
-        if event_name == 'Join':
-            notice_text = f'玩家: "{user_name}" 加入了服务器!'
-            wake_up = True
-        elif event_name == 'Quit':
-            notice_text = f'玩家: "{user_name}" 离开了服务器!'
-        elif event_name == 'Death':
-            notice_text = f'玩家: "{user_name}" 死于意外!'
-            wake_up = True
-
-        # 进行消息响应
-        await do_msg_response(
-            user_name,
-            notice_text,
-            False,
-            mc_notice_matcher,
-            chat_type,
-            chat_key,
-            '[Minecraft Server]',
-            wake_up
-        )
-
-
 """ ======== 注册指令响应器 ======== """
 # QQ:人格设定指令 用于设定人格的相关参数
-identity:Matcher = on_command("identity", aliases={"人格设定", "人格", "rg"}, rule=to_me(), priority=config.NG_MSG_PRIORITY - 1, block=True)
+identity:Type[Matcher] = on_command("identity", aliases={"人格设定", "人格", "rg"}, rule=to_me(), priority=config.NG_MSG_PRIORITY - 1, block=True)
 @identity.handle()
 async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = CommandArg()):
     global is_progress  # 是否产生编辑进度
@@ -351,10 +188,10 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
     raw_cmd:str = arg.extract_plain_text()
     if config.DEBUG_LEVEL > 0: logger.info(f"接收到指令: {raw_cmd} | 来源: {chat_key}")
     
-    presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == chat.get_chat_preset_key() else k}' for k in chat_presets_dict.keys()])
+    presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == chat.preset_key else k}' for k in chat_presets_dict.keys()])
 
     # 执行命令前先检查权限
-    (permit_success, permit_msg) = await permission_check_func(matcher=matcher_, event=event,bot=bot,cmd=raw_cmd,type='cmd')
+    (permit_success, permit_msg) = await permission_check_func(matcher_, event,bot,raw_cmd,'cmd')
     if not permit_success:
         await identity.finish(permit_msg if permit_msg else "对不起！你没有权限进行此操作 ＞﹏＜")
 
@@ -371,7 +208,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
                 img = await text_to_img(res.get('msg'))
                 await identity.send(MessageSegment.image(img))
             else:
-                await identity.send(res.get('msg'))  
+                await identity.send(str(res.get('msg')))
         elif res.get('error'):
             await identity.finish(f"执行命令时出现错误: {res.get('error')}")  # 如果有返回错误则发送s
 
@@ -386,9 +223,10 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
 
 
 """ ======== 消息响应方法 ======== """
-async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, matcher: Matcher, chat_type: str, chat_key: str, sender_name: str = None, wake_up: bool = False, loop_times=0, loop_data={}):
+async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, matcher: Type[Matcher], chat_type: str, chat_key: str, sender_name: Optional[str] = None, wake_up: bool = False, loop_times=0, loop_data={}):
     """消息响应方法"""
 
+    sender_name = sender_name or 'anonymous'
     chat:Chat = ChatManager.instance.get_or_create_chat(chat_key=chat_key)
 
     # 判断对话是否被禁用
@@ -413,7 +251,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         wake_up = True
 
     # 其它人格唤醒判断
-    if chat.get_chat_preset_key().lower() not in trigger_text.lower() and chat.enable_auto_switch_identity:
+    if chat.preset_key.lower() not in trigger_text.lower() and chat.enable_auto_switch_identity:
         for preset_key in chat.preset_keys:
             if preset_key.lower() in trigger_text.lower():
                 chat.change_presettings(preset_key)
@@ -423,18 +261,18 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 wake_up = True
                 break
 
-    current_preset_key = chat.get_chat_preset_key()
+    current_preset_key = chat.preset_key
 
     # 判断是否需要回复
     if (    # 如果不是 bot 相关的信息，则直接返回
         wake_up or \
-        (config.REPLY_ON_NAME_MENTION and (chat.get_chat_preset_key().lower() in trigger_text.lower())) or \
+        (config.REPLY_ON_NAME_MENTION and (chat.preset_key.lower() in trigger_text.lower())) or \
         (config.REPLY_ON_AT and is_tome)
     ):
         # 更新全局对话历史记录
         # chat.update_chat_history_row(sender=sender_name, msg=trigger_text, require_summary=True)
         await chat.update_chat_history_row(sender=sender_name,
-                                    msg=f"@{chat.get_chat_preset_key()} {trigger_text}" if is_tome and chat_type=='group' else trigger_text,
+                                    msg=f"@{chat.preset_key} {trigger_text}" if is_tome and chat_type=='group' else trigger_text,
                                     require_summary=False)
         logger.info("符合 bot 发言条件，进行回复...")
     else:
@@ -450,8 +288,8 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     # 记录对用户的对话信息
     await chat.update_chat_history_row_for_user(sender=sender_name, msg=trigger_text, userid=trigger_userid, username=sender_name, require_summary=False)
 
-    if chat.get_chat_preset_key() != current_preset_key:
-        if config.DEBUG_LEVEL > 0: logger.warning(f'等待OpenAI请求返回的过程中人格预设由[{current_preset_key}]切换为[{chat.get_chat_preset_key()}],当前消息不再继续响应.1')
+    if chat.preset_key != current_preset_key:
+        if config.DEBUG_LEVEL > 0: logger.warning(f'等待OpenAI请求返回的过程中人格预设由[{current_preset_key}]切换为[{chat.preset_key}],当前消息不再继续响应.1')
         return
     
     # 主动聊天参与逻辑 *待定方案
@@ -479,7 +317,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
     time_before_request = time.time()
     tg = TextGenerator.instance
-    raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.get_chat_preset_key(), 'sender_name': sender_name})  # 生成对话结果
+    raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.preset_key, 'sender_name': sender_name})  # 生成对话结果
     if not success:  # 如果生成对话结果失败，则直接返回
         logger.warning("生成对话结果失败，跳过处理...")
         await matcher.finish(raw_res)
@@ -491,12 +329,12 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         logger.warning(f'OpenAI响应超过timeout值[{config.OPENAI_TIMEOUT}]，停止处理')
         return
 
-    if chat.get_chat_preset_key() != current_preset_key:
-        if config.DEBUG_LEVEL > 0: logger.warning(f'等待OpenAI响应返回的过程中人格预设由[{current_preset_key}]切换为[{chat.get_chat_preset_key()}],当前消息不再继续处理.2')
+    if chat.preset_key != current_preset_key:
+        if config.DEBUG_LEVEL > 0: logger.warning(f'等待OpenAI响应返回的过程中人格预设由[{current_preset_key}]切换为[{chat.preset_key}],当前消息不再继续处理.2')
         return
 
     # 用于存储最终回复顺序内容的列表
-    reply_list = []
+    reply_list:List[Union[str, dict]] = []
 
     # 预检一次响应内容，如果响应内容中包含了需要打断的扩展调用指令，则直接截断原始响应中该扩展调用指令后的内容
     pre_check_calls = re.findall(r"/#(.+?)#/", raw_res, re.S)
@@ -524,7 +362,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     if config.NG_ENABLE_MSG_SPLIT:
         # 提取后去除所有扩展调用指令并切分信息，剩余部分为对话结果 多行匹配
         talk_res = re.sub(r"/.?#(.+?)#.?/", '*;', talk_res)
-        reply_list = talk_res.split('*;')
+        reply_list.extend(talk_res.split('*;'))
     else:
         # 提取后去除所有扩展调用指令，剩余部分为对话结果 多行匹配
         talk_res = re.sub(r"/.?#(.+?)#.?/", '', talk_res)
@@ -544,16 +382,18 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
             # 提取出扩展调用指令中的参数为字典
             ext_args_dict:dict = {}
             # 按照参数顺序依次提取参数值
-            for arg_name in global_extensions[ext_name].get_config().get('arguments').keys():
-                if len(ext_args) > 0:
-                    ext_args_dict[arg_name] = ext_args.pop(0)
-                else:
-                    ext_args_dict[arg_name] = None
+            arguments = global_extensions[ext_name].get_config().get('arguments')
+            if arguments and isinstance(arguments, dict):
+                for arg_name in arguments.keys():
+                    if len(ext_args) > 0:
+                        ext_args_dict[arg_name] = ext_args.pop(0)
+                    else:
+                        ext_args_dict[arg_name] = None
 
             logger.info(f"检测到扩展调用指令: {ext_name} {ext_args_dict} | 正在调用扩展模块...")
             try:    # 调用扩展的call方法
-                ext_res:dict = await global_extensions[ext_name].call(ext_args_dict, {
-                    'bot_name': chat.get_chat_preset_key(),
+                ext_res = await global_extensions[ext_name].call(ext_args_dict, {
+                    'bot_name': chat.preset_key,
                     'user_send_raw_text': trigger_text,
                     'bot_send_raw_text': raw_res
                 })
@@ -564,7 +404,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
             except Exception as e:
                 logger.error(f"调用扩展 {ext_name} 时发生错误: {e}")
                 if config.DEBUG_LEVEL > 0: logger.error(f"[扩展 {ext_name}] 错误详情: {traceback.format_exc()}")
-                ext_res = None
+                ext_res = {}
                 # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
                 raw_res = re.sub(r"/.?#(.+?)#.?/", '', raw_res)
         else:
@@ -579,83 +419,94 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     if config.DEBUG_LEVEL > 0: logger.info(f"回复序列内容: {reply_list}")
 
     # 回复前缀
-    reply_prefix = f'<{chat.get_chat_preset_key()}> ' if (chat_type == 'server') else ''
+    reply_prefix = f'<{chat.preset_key}> ' if (chat_type == 'server') else ''
 
     res_times = config.NG_MAX_RESPONSE_PER_MSG  # 获取每条消息最大回复次数
     # 根据回复内容列表逐条发送回复
     for idx, reply in enumerate(reply_list):
         # 判断回复内容是否为str
-        if isinstance(reply, str) and reply.strip():
+        if isinstance(reply, str):
             # 判断文本内容是否为纯符号(包括空格，换行、英文标点、中文标点)并且长度小于3
-            if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply.strip()):
-                if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号文本: {reply.strip()}，跳过发送...")
+            reply_text = str(reply).strip()
+            if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply_text):
+                if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号文本: {reply_text}，跳过发送...")
                 continue
             if config.ENABLE_MSG_TO_IMG:
-                img = await text_to_img(reply.strip())
+                img = await text_to_img(reply_text)
                 await matcher.send(MessageSegment.image(img))
             else:
-                await matcher.send(f"{reply_prefix}{reply.strip()}")
-        else:
+                await matcher.send(f"{reply_prefix}{reply_text}")
+        elif isinstance(reply, dict):
             for key in reply:   # 遍历回复内容类型字典
-                if key == 'text' and reply.get(key) and reply.get(key).strip(): # 发送普通文本
+                if not reply.get(key):
+                    continue
+                
+                reply_content = reply.get(key)
+                reply_text = str(reply_content).strip() if isinstance(reply_content, str) else ''
+                if key == 'text': # 发送普通文本
                     # 判断文本内容是否为纯符号(包括空格，换行、英文标点、中文标点)并且长度为1
-                    if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply.get(key).strip()):
-                        if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号文本: {reply.get(key).strip()}，跳过发送...")
+                    if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply_text):
+                        if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号文本: {reply_text}，跳过发送...")
                         continue
-                    await matcher.send(f"{reply_prefix}{reply.get(key).strip()}")
+                    await matcher.send(f"{reply_prefix}{reply_text}")
 
-                elif key == 'image' and reply.get(key): # 发送图片
-                    await matcher.send(MessageSegment.image(file=reply.get(key, '')))
-                    logger.info(f"回复图片消息: {reply.get(key)}")
+                elif key == 'image': # 发送图片
+                    await matcher.send(MessageSegment.image(file=reply_content or ''))
+                    logger.info(f"回复图片消息: {reply_content}")
 
-                elif key == 'voice' and reply.get(key): # 发送语音
-                    logger.info(f"回复语音消息: {reply.get(key)}")
-                    await matcher.send(Message(MessageSegment.record(file=reply.get(key), cache=0)))
+                elif key == 'voice': # 发送语音
+                    logger.info(f"回复语音消息: {reply_content}")
+                    await matcher.send(Message(MessageSegment.record(file=reply_content, cache=False))) # type: ignore
 
-                elif key == 'code_block' and reply.get(key):  # 发送代码块
-                    await matcher.send(Message(reply.get(key).strip()))
+                elif key == 'code_block':  # 发送代码块
+                    await matcher.send(Message(reply_text))
 
-                elif key == 'memory' and reply.get(key):  # 记忆存储
-                    logger.info(f"存储记忆: {reply.get(key)}")
-                    chat.set_memory(reply.get(key).get('key'), reply.get(key).get('value'))
-                    if config.DEBUG_LEVEL > 0:
-                        if reply.get(key).get('key') and reply.get(key).get('value'):
-                            await matcher.send(f"[debug]: 记住了 {reply.get(key).get('key')} = {reply.get(key).get('value')}")
-                        elif reply.get(key).get('key') and reply.get(key).get('value') is None:
-                            await matcher.send(f"[debug]: 忘记了 {reply.get(key).get('key')}")
+                elif key == 'memory':  # 记忆存储
+                    logger.info(f"存储记忆: {reply_content}")
+                    if isinstance(reply_content, dict):
+                        memory:Dict[str, str] = reply_content
+                        chat.set_memory(memory.get('key', ''), memory.get('value', ''))
+                        if config.DEBUG_LEVEL > 0:
+                            if memory.get('key') and memory.get('value'):
+                                await matcher.send(f"[debug]: 记住了 {memory.get('key')} = {memory.get('value')}")
+                            elif memory.get('key') and memory.get('value') is None:
+                                await matcher.send(f"[debug]: 忘记了 {memory.get('key')}")
 
-                elif key == 'notify' and reply.get(key):  # 通知消息
-                    if 'sender' in reply.get(key) and 'msg' in reply.get(key):
-                        loop_data['notify'] = reply.get(key)
+                elif key == 'notify':  # 通知消息
+                    if isinstance(reply_content, dict):
+                        if 'sender' in reply_content and 'msg' in reply_content:
+                            loop_data['notify'] = reply_content
+                        else:
+                            logger.warning(f"通知消息格式错误: {reply_content}")
+
+                elif key == 'wake_up':  # 重新调用对话
+                    logger.info(f"重新调用对话: {reply_content}")
+                    wake_up = bool(reply_content)
+
+                elif key == 'timer':  # 定时器
+                    logger.info(f"设置定时器: {reply_content}")
+                    loop_data['timer'] = reply_content
+
+                elif key == 'preset':  # 更新对话预设
+                    if chat.update_preset(preset_key=chat.preset_key, bot_self_introl=reply_text):
+                        logger.info(f"更新对话预设: {chat.preset_key} 成功")
                     else:
-                        logger.warning(f"通知消息格式错误: {reply.get(key)}")
+                        logger.warning(f"更新对话预设: {chat.preset_key} 失败")
 
-                elif key == 'wake_up' and reply.get(key):  # 重新调用对话
-                    logger.info(f"重新调用对话: {reply.get(key)}")
-                    wake_up = reply.get(key)
-
-                elif key == 'timer' and reply.get(key):  # 定时器
-                    logger.info(f"设置定时器: {reply.get(key)}")
-                    loop_data['timer'] = reply.get(key)
-
-                elif key == 'preset' and reply.get(key):  # 更新对话预设
-                    if chat.update_preset(preset_key=chat.preset_key, bot_self_introl=reply.get(key))[0]:
-                        logger.info(f"更新对话预设: {reply.get(key)} 成功")
-                    else:
-                        logger.warning(f"更新对话预设: {reply.get(key)} 失败")
-
-                elif key == 'rcon' and reply.get(key):  # RCON指令
+                elif key == 'rcon':  # RCON指令
                     try:
                         with MCRcon(config.MC_RCON_HOST, config.MC_RCON_PASSWORD, int(config.MC_RCON_PORT), timeout=10) as mcr:
-                            resp = mcr.command(reply.get(key))
-                            await chat.update_chat_history_row(sender="[Minecraft Rcon]", msg=f"Executing \"{reply.get(key)}\"... Result: {resp}", require_summary=False)  # 更新全局对话历史记录
-                            logger.info(f"发送MC-RCON指令: {reply.get(key)} | 响应: {resp}")
+                            resp = mcr.command(reply_content)
+                            await chat.update_chat_history_row(sender="[Minecraft Rcon]", msg=f"Executing \"{reply_content}\"... Result: {resp}", require_summary=False)  # 更新全局对话历史记录
+                            logger.info(f"发送MC-RCON指令: {reply_content} | 响应: {resp}")
                     except:
-                        logger.warning(f"发送MC-RCON指令: {reply.get(key)} 失败")
+                        logger.warning(f"发送MC-RCON指令: {reply_content} 失败")
 
                 res_times -= 1
                 if res_times < 1:  # 如果回复次数超过限制，则跳出循环
                     break
+        else:
+            logger.error(f'unknown reply type:{type(reply)}, content:{reply}')
         await asyncio.sleep(1.5)  # 每条回复之间间隔1.5秒
 
     cost_token = tg.cal_token_count(str(prompt_template) + raw_res)  # 计算对话结果的 token 数量
@@ -664,9 +515,9 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         time.sleep(0.1)
 
     if config.DEBUG_LEVEL > 0: logger.info(f"token消耗: {cost_token} | 对话响应: \"{raw_res}\"")
-    await chat.update_chat_history_row(sender=chat.get_chat_preset_key(), msg=raw_res, require_summary=True)  # 更新全局对话历史记录
+    await chat.update_chat_history_row(sender=chat.preset_key, msg=raw_res, require_summary=True)  # 更新全局对话历史记录
     # 更新对用户的对话信息
-    await chat.update_chat_history_row_for_user(sender=chat.get_chat_preset_key(), msg=raw_res, userid=trigger_userid, username=sender_name, require_summary=True)
+    await chat.update_chat_history_row_for_user(sender=chat.preset_key, msg=raw_res, userid=trigger_userid, username=sender_name, require_summary=True)
     PersistentDataManager.instance.save_to_file()  # 保存数据
     if config.DEBUG_LEVEL > 0: logger.info(f"对话响应完成 | 耗时: {time.time() - sta_time}s")
     

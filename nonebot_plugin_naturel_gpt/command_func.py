@@ -1,3 +1,4 @@
+from typing import Optional
 from .logger import logger
 from .chat import Chat
 from .chat_manager import ChatManager
@@ -38,7 +39,7 @@ class CommandManager:
             return func
         return wrapper
 
-    def execute(self, chat:Chat, command:str, chat_presets_dict:dict) -> dict:
+    def execute(self, chat:Chat, command:str, chat_presets_dict:dict) -> Optional[dict]:
         """执行指令"""
         option_dict, param_dict, target_route = self.resolve_command(command)
         logger.info(f'执行命令: "{command}";  指令匹配路由: {target_route}')
@@ -47,7 +48,7 @@ class CommandManager:
                 return self.command_router[target_route]['func'](option_dict, param_dict, chat, chat_presets_dict)
             except Exception as e:
                 return {'error': e}
-        return False
+        return None
 
     def submit_commands(self):
         """提交指令注册 *在所有指令注册完成后调用*"""
@@ -109,7 +110,7 @@ cmd:CommandManager = CommandManager()
 """ 注册指令 """
 @cmd.register(route='rg')
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
-    presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == chat.get_chat_preset_key() else k}' for k in chat_presets_dict.keys()])
+    presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == chat.preset_key else k}' for k in chat_presets_dict.keys()])
     if option_dict.get('admin'):
         return {
             'msg': (
@@ -135,7 +136,7 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     else:
         return {
             'msg': (
-                f"会话: {chat.get_chat_key()} [{'启用' if chat.is_enable else '禁用'}]\n"
+                f"会话: {chat.chat_key} [{'启用' if chat.is_enable else '禁用'}]\n"
                 f"当前可用人格预设有:\n"
                 f"{presets_show_text}\n"
             )
@@ -306,8 +307,11 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     elif option_dict.get('target'):
         target_chat_key = option_dict.get('target')
         target_chat = ChatManager.instance.get_chat(chat_key=target_chat_key)
-        target_chat.toggle_chat(enabled=True)
-        return {'msg': f"启用会话: {target_chat_key} (￣▽￣)-ok!"}
+        if target_chat:
+            target_chat.toggle_chat(enabled=True)
+            return {'msg': f"启用会话: {target_chat_key} (￣▽￣)-ok!"}
+        else:
+            return {'error': f"找不到会话: {target_chat_key}"}
     else:
         chat.toggle_chat(enabled=True)
         return {'msg': f"启用当前会话 (￣▽￣)-ok!"}
@@ -320,8 +324,11 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     elif option_dict.get('target'):
         target_chat_key = option_dict.get('target')
         target_chat = ChatManager.instance.get_chat(chat_key=target_chat_key)
-        target_chat.toggle_chat(enabled=False)
-        return {'msg': f"禁用会话: {target_chat_key} (￣▽￣)-ok!"}
+        if target_chat:
+            target_chat.toggle_chat(enabled=False)
+            return {'msg': f"禁用会话: {target_chat_key} (￣▽￣)-ok!"}
+        else:
+            return {'error': f"找不到会话: {target_chat_key}"}
     else:
         chat.toggle_chat(enabled=False)
         return {'msg': f"禁用当前会话 (￣▽￣)-ok!"}
@@ -334,8 +341,11 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     elif option_dict.get('target'):
         target_chat_key = option_dict.get('target')
         target_chat = ChatManager.instance.get_chat(chat_key=target_chat_key)
-        target_chat.toggle_auto_switch(enabled=False)
-        return {'msg': f"锁定会话: {target_chat_key} (￣▽￣)-ok!"}
+        if target_chat:
+            target_chat.toggle_auto_switch(enabled=False)
+            return {'msg': f"锁定会话: {target_chat_key} (￣▽￣)-ok!"}
+        else:
+            return {'error': f"找不到会话: {target_chat_key}"}
     else:
         chat.toggle_auto_switch(enabled=False)
         return {'msg': f"锁定当前会话 (￣▽￣)-ok!"}
@@ -348,8 +358,11 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     elif option_dict.get('target'):
         target_chat_key = option_dict.get('target')
         target_chat = ChatManager.instance.get_chat(chat_key=target_chat_key)
-        target_chat.toggle_auto_switch(enabled=True)
-        return {'msg': f"解锁会话: {target_chat_key} (￣▽￣)-ok!"}
+        if target_chat:
+            target_chat.toggle_auto_switch(enabled=True)
+            return {'msg': f"解锁会话: {target_chat_key} (￣▽￣)-ok!"}
+        else:
+            return {'error': f"找不到会话: {target_chat_key}"}
     else:
         chat.toggle_auto_switch(enabled=True)
         return {'msg': f"解锁当前会话 (￣▽￣)-ok!"}

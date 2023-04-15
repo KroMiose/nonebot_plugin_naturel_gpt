@@ -42,15 +42,15 @@ class CustomExtension(Extension):
         cache_path=custom_config.get("cache_path","./data/ng_paint")
         
         # 从arg_dict中获取参数
-        content = arg_dict.get('content', None)
+        content = arg_dict.get('content', '')
         
-        openai.proxies ={'http':proxy}
+        openai.proxy ={'http':proxy}
         response = openai.Image.create(
           prompt= content + ',' + style ,
           n=1,
           size=f"{custom_size}x{custom_size}"
         )
-        image_url = response['data'][0]['url']
+        image_url = response['data'][0]['url'] # type: ignore
         res = response
 
         # 先定义一个本地下载并重名名的函数

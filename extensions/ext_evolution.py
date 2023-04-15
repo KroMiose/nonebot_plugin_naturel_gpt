@@ -39,6 +39,7 @@ class CustomExtension(Extension):
         if not setting_text:
             raise Exception("缺少参数: setting_text")
         
+        show_text = None
         if notify_type == 2:
             show_text =  f"[evolution] 已将人格预设修改为: |\n    {setting_text}"
         elif notify_type == 1:

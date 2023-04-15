@@ -3,12 +3,24 @@ import time
 import os
 import sys
 import shutil
-from typing import Any, Dict
+import nonebot
+from typing import TYPE_CHECKING, Any, Dict, Type, Union
 
-from nonebot import logger
+if TYPE_CHECKING:
+    from loguru import Record
+
+
+def __path(record: "Record"):
+    record["name"] = "NG聊天扩展"
+
+
+logger = nonebot.logger.bind()
+logger = logger.patch(__path)
+
 
 # 扩展插件基类
 class Extension:
+
     def __init__(self, ext_config, custom_config):
         self._ext_config = ext_config
         self._custom_config = custom_config
@@ -17,7 +29,7 @@ class Extension:
         """ 扩展运行 """
         raise NotImplementedError
 
-    async def call(self, arg_dict, ctx_data) -> dict:
+    async def call(self, arg_dict, ctx_data) -> Union[str, dict]:
         """ 调用扩展 """
         self._call_time -= 1
         if self._call_time < 0:
@@ -35,7 +47,10 @@ class Extension:
                     break
             else:
                 return ""
-        args_desc:str = "; ".join([f"{k}:{v}" for k, v in self._ext_config.get('arguments', {}).items()])
+        args_desc: str = "; ".join([
+            f"{k}:{v}"
+            for k, v in self._ext_config.get('arguments', {}).items()
+        ])
         args_desc = 'no args' if args_desc == '' else args_desc
         return f"- {self._ext_config['name']}: {args_desc} ({self._ext_config['description']})\n"
 
@@ -55,13 +70,14 @@ class Extension:
         """ 重置调用次数 """
         self._call_time = self._ext_config.get('max_call_times_per_msg', 99)
 
-def load_extensions(config:Dict[str, Any]) -> None:
+
+def load_extensions(config: Dict[str, Any]) -> None:
     """加载扩展模块"""
     global global_extensions
     global_extensions.clear()
     if not config.get('NG_ENABLE_EXT'):
         return
-    
+
     ext_path = config['NG_EXT_PATH']
     abs_ext_path = os.path.abspath(ext_path)
 
@@ -81,41 +97,58 @@ def load_extensions(config:Dict[str, Any]) -> None:
             f.write('')
 
     # 根据 Extension 文件 生成 Extension.py 并覆盖到扩展模块路径和 ext_cache 文件夹下
-    with open(os.path.join(os.path.dirname(__file__), 'Extension.py'), 'r', encoding='utf-8') as f:
+    with open(os.path.join(os.path.dirname(__file__), 'Extension.py'),
+              'r',
+              encoding='utf-8') as f:
         ext_file = f.read()
     with open(f'{ext_path}Extension.py', 'w', encoding='utf-8') as f:
         f.write(ext_file)
     with open(f'ext_cache/Extension.py', 'w', encoding='utf-8') as f:
         f.write(ext_file)
 
-    sys.path.append(os.getcwd()) # 不加这一行在 docker 下会找不到 ext_cache
+    sys.path.append(os.getcwd())  # 不加这一行在 docker 下会找不到 ext_cache
 
-    for tmpExt in config['NG_EXT_LOAD_LIST']:   # 遍历扩展模块列表
+    for tmpExt in config['NG_EXT_LOAD_LIST']:  # 遍历扩展模块列表
         if tmpExt.get('IS_ACTIVE') and tmpExt.get('EXT_NAME'):
             logger.info(f"正在从加载扩展模块 \"{tmpExt.get('EXT_NAME')}\" ...")
             try:
                 file_name = tmpExt.get("EXT_NAME") + '.py'  # 扩展模块文件名
 
                 # 复制扩展模块文件到ext_cache文件夹下
-                shutil.copyfile(f'{ext_path}{file_name}', f'ext_cache/{file_name}')
+                shutil.copyfile(f'{ext_path}{file_name}',
+                                f'ext_cache/{file_name}')
                 time.sleep(0.3)  # 等待文件复制完成
                 # 从 ext_cache 文件夹下导入扩展模块
-                CustomExtension:Extension = getattr(importlib.import_module(f'ext_cache.{tmpExt.get("EXT_NAME")}'), 'CustomExtension')
+                CustomExtension: type = getattr( # Type[CustomExtension]
+                    importlib.import_module(
+                        f'ext_cache.{tmpExt.get("EXT_NAME")}'),
+                    'CustomExtension')
                 time.sleep(0.3)  # 等待文件导入完成
 
-                ext_config_dict = tmpExt.get("EXT_CONFIG") if isinstance(tmpExt.get("EXT_CONFIG"), dict) else {}
-                ext = CustomExtension(ext_config_dict)  # 加载扩展模块并实例化
-                global_extensions[ext.get_config().get('name').lower()] = ext  # 将扩展模块添加到全局扩展模块字典中
+                ext_config_dict = tmpExt.get("EXT_CONFIG") if isinstance(
+                    tmpExt.get("EXT_CONFIG"), dict) else {}
+
+                # 加载扩展模块并实例化
+                ext = CustomExtension(ext_config_dict)
+                # 将扩展模块添加到全局扩展模块字典中
+                global_extensions[ext.get_config().get('name').lower()] = ext
                 logger.info(f"加载扩展模块 {tmpExt.get('EXT_NAME')} 成功！")
             except Exception as e:
-                logger.error(f"加载扩展模块 \"{tmpExt.get('EXT_NAME')}\" 失败 | 原因: {e}")
+                logger.error(
+                    f"加载扩展模块 \"{tmpExt.get('EXT_NAME')}\" 失败 | 原因: {e}")
 
 
-global_extensions:Dict[str, Extension] = {}  # 用于存储所有扩展的字典
+global_extensions: Dict[str, Extension] = {}  # 用于存储所有扩展的字典
 
 if __name__ == '__main__':
     import os, shutil
     # 复制 Extension.py 到 ../extensions/ 目录下
-    shutil.copyfile(os.path.join(os.path.dirname(__file__), 'Extension.py'), os.path.join(os.path.dirname(__file__), '..', 'extensions', 'Extension.py'))
+    shutil.copyfile(
+        os.path.join(os.path.dirname(__file__), 'Extension.py'),
+        os.path.join(os.path.dirname(__file__), '..', 'extensions',
+                     'Extension.py'))
     # 复制 Extension.py 到 ../share_exts/ 目录下
-    shutil.copyfile(os.path.join(os.path.dirname(__file__), 'Extension.py'), os.path.join(os.path.dirname(__file__), '..', 'share_exts', 'Extension.py'))
+    shutil.copyfile(
+        os.path.join(os.path.dirname(__file__), 'Extension.py'),
+        os.path.join(os.path.dirname(__file__), '..', 'share_exts',
+                     'Extension.py'))

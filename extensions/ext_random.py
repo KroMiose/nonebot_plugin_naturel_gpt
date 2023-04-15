@@ -1,3 +1,4 @@
+from typing import Union
 from .Extension import Extension
 import random
 
@@ -24,7 +25,7 @@ ext_config:dict = {
 }
 
 class CustomExtension(Extension):
-    async def call(self, arg_dict: dict, ctx_data: dict) -> dict:
+    async def call(self, arg_dict: dict, ctx_data: dict) -> Union[dict, str]:
         """ 当扩展被调用时执行的函数 *由扩展自行实现*
         
         参数:

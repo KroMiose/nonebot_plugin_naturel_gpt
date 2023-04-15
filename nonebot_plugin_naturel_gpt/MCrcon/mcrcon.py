@@ -86,7 +86,7 @@ class MCRcon(object):
         if platform.system() != "Windows":
             signal.alarm(self.timeout)
         data = b""
-        while len(data) < length:
+        while len(data) < length and self.socket:
             data += self.socket.recv(length - len(data))
         if platform.system() != "Windows":
             signal.alarm(0)
