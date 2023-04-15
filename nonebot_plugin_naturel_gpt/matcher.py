@@ -648,6 +648,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                     try:
                         with MCRcon(config.MC_RCON_HOST, config.MC_RCON_PASSWORD, int(config.MC_RCON_PORT), timeout=10) as mcr:
                             resp = mcr.command(reply.get(key))
+                            await chat.update_chat_history_row(sender="[Minecraft Rcon]", msg=f"Executing \"{reply.get(key)}\"... Result: {resp}", require_summary=False)  # 更新全局对话历史记录
                             logger.info(f"发送MC-RCON指令: {reply.get(key)} | 响应: {resp}")
                     except:
                         logger.warning(f"发送MC-RCON指令: {reply.get(key)} 失败")

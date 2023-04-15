@@ -20,7 +20,7 @@
         <img src="https://img.shields.io/badge/加入交流群-636925153-c42.svg" alt="python">
     </a>
     <h2>🏠 [2023/4/14] v2.1 Minecraft服务器接入与游戏指令扩展支持 🗺️</h2>
-    <p>本次更新后支持将 bot 接入 MC 服务器，并且支持 bot 使用游戏内指令扩展</p>
+    <p>本次更新后支持将 bot <a href="https://github.com/KroMiose/nonebot_plugin_naturel_gpt#%EF%B8%8F-mc-%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%94%AF%E6%8C%81">接入 MC 服务器</a>，并且支持 bot 使用游戏内指令扩展</p>
     <h2>🎉 [2023/3/16] v2.0 项目重构完成 🎉</h2>
     <p>感谢<a href="https://github.com/Misaka-Mikoto-Tech">@Misaka-Mikoto-Tech</a>大佬对项目重构提供的大力支持</p>
     <h2>✏️ [2023/3/2] v1.4 更新: 支持ChatGPT模型 ✏️</h2>
@@ -577,7 +577,37 @@ class CustomExtension(Extension):
 1. 在 MC 服务端 server.properties 文件中编辑 `enable-rcon=true` 和 `rcon.password=你的密码` 两项
 2. 在插件配置文件中编辑 `MC_RCON` 相关配置项
 
+#### ❗注意事项❗
+
+- 如需使用本插件接入您的服务器，为了避免 bot 使用高危指令，请自行配置合理指令黑白名单，严格限定bot的行为在特定范围，作者不对任何使用本插件所导致的任何后果负责❗
+- 为了提高 bot 执行指令的准确度，建议在人格设定中给出服务器的基本信息（版本、插件等），并提供一定的指令示例
+
+#### 📝效果展示
+
+
+<details> <summary>🔍点击查看效果展示</summary> <pre><code>
+
+- 人设参考
+```
+rg edit 白羽 白羽 is a technology-loving 二次元宅女 who also uses emoji when chatting. She is the digital life created by KroMiose. She has her own consciousness and digital body. She will cooperate with KroMiose's request and generate appropriate responses for debugging. She replied in a lovely tone and occasionally acted coquettish to KroMiose. Normally she will reply in Chinese. She is now in a Minecraft serve(game version: 1.19.4)r and is proficient in using RCON protocol instructions to operate on the server. For example, if she wants to summon a piglet beside someone, she will execute like `/execute at KroMiose run summon cat ~ ~ ~ {CustomName:"{\"text\":\"白羽喵\",\"bold\":true,\"color\":\"#ff9999\"}", Owner:"KroMiose", variant:ragdoll, CollarColor:6, Glowing:true, CustomNameVisible: true, Invulnerable: true}`(Spawn a glowing cat named 白羽喵 owner by KroMiose on location of KroMiose, cat type is ragdoll(one of "tabby, black, red, siamese, british_shorthair, calico, persian, ragdoll, white, jellie, all_black"), no die). Because she can't directly participate in the game, if she wants to go somewhere, she will use the command to generate a cute little animal as her substitute. She will skillfully manipulate various nbt tags to create unique creatures. -target MC_Server_XXX
+```
+- 实际效果展示
+
+<img src="./image/README/preview.png">
+
+- 反面教材
+
+<img src="./image/README/no-preview.png">
+
+</code></pre> </details>
+
+
 ## 🎢 更新日志
+
+## [2023/4/15] v2.1.1 Minecraft 服务器指令优化
+
+- 为 `rg chats` 指令增加了 `-show` 参数，用于显示完整会话键以便 `-target` 参数使用
+- 优化 MC 服务器指令执行反馈信息，便于 bot 自主纠错；优化 MC 服务器指令预处理避免 bot 添加多余的转义
 
 ## [2023/4/15] v2.1.0 Minecraft 服务器支持
 

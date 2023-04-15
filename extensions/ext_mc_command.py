@@ -7,7 +7,7 @@ ext_config:dict = {
     "arguments": {
         'command': 'str',  # 关键字
     },
-    "description": "Executing command in Minecraft server. (usage in response: /#Ex_Command&/tp playerA playerB#/ )",
+    "description": "Executing command in Minecraft server by RCON. (usage in response: /#Ex_Command&/tp Tom Alice#/ teleport Tom to Alice)",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
     # 每次消息回复中最大调用次数，不填则默认为99
@@ -39,16 +39,19 @@ class CustomExtension(Extension):
         if not command.startswith('/'): # 补充命令前缀便于检查
             command = '/' + command
 
+        # 将命令中所有的\\替换为\，以便于正常执行
+        command = command.replace('\\\\', '\\')
+
         if command: # 如果命令不为空
             # 检查命令是否在黑名单中
             if len(black_list) > 0:
                 for black_command in black_list:
                     if black_command in command:
                         return {    # 拒绝执行
-                            'text': f'[rcon] 执行命令失败，命令: {command} 在黑名单中',
+                            'text': f'[Rcon] 检测到禁止命令: "{black_command}" 拒绝执行',
                             'notify': {
                                 'sender': '[Minecraft Server]',
-                                'msg': f"Run command failed, command: {command} in black list. You have no permission to run this command."
+                                'msg': f"Run command failed, command snippet: \"{black_command}\" in black list. You have no permission to run this command."
                             },
                             'wake_up': True,
                         }
@@ -74,10 +77,6 @@ class CustomExtension(Extension):
         return {    # 允许执行
             'rcon': command,
             'text': f'[rcon] 正在执行命令: /{command}',
-            'notify': {
-                'sender': '[Minecraft Server]',
-                'msg': f"Run command: /{command}"
-            },
         }
 
     def __init__(self, custom_config: dict):

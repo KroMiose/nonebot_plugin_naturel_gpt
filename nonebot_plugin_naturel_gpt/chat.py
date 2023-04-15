@@ -308,9 +308,12 @@ class Chat:
         """当前会话是否已启用自动切换人格"""
         return self._chat_data.enable_auto_switch_identity
 
-    def generate_description(self):
+    def generate_description(self, hide_chat_key:bool=False) -> str:
         """获取当前会话描述"""
-        return f"[{'启用' if self.is_enable else '禁用'}] 会话: {self._chat_key[:-6]+('*'*6)} 预设: {self.get_chat_preset_key()}\n"
+        if hide_chat_key:
+            return f"[{'启用' if self.is_enable else '禁用'}] 会话: {self._chat_key[:-6]+('*'*6)} 预设: {self.get_chat_preset_key()}\n"
+        else:
+            return f"[{'启用' if self.is_enable else '禁用'}] 会话: {self._chat_key} 预设: {self.get_chat_preset_key()}\n"
     
     @property
     def chat_data(self) -> ChatData:

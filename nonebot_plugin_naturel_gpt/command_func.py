@@ -17,6 +17,7 @@ option_type = {
     'deep': bool,
     'to_default': bool,
     'default': str,
+    'show': bool,
 }
 
 class CommandManager:
@@ -415,7 +416,7 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     chat_info:str = ''
     for chat in ChatManager.instance.get_all_chats():
-        chat_info += f"+ {chat.generate_description()}"
+        chat_info += f"+ {chat.generate_description(not option_dict.get('show'))}"
     return {'msg': f"当前已加载的会话:\n{chat_info}"}
 
 
