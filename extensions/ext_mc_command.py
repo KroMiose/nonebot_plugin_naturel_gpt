@@ -3,11 +3,11 @@ import requests
 
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config:dict = {
-    "name": "Ex_Command",   # 扩展名称，用于标识扩展
+    "name": "rcon",   # 扩展名称，用于标识扩展
     "arguments": {
         'command': 'str',  # 关键字
     },
-    "description": "Executing command in Minecraft server by RCON. (usage in response: /#Ex_Command&/tp Tom Alice#/ teleport Tom to Alice)",
+    "description": "Using Rcon to execute Minecraft server commands. (usage in response: /#rcon&/tp Tom Alice#/ teleport Tom to Alice)",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
     # 每次消息回复中最大调用次数，不填则默认为99
