@@ -1,5 +1,6 @@
 from .Extension import Extension
 import requests
+import requests.utils
 
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config:dict = {
@@ -40,7 +41,8 @@ class CustomExtension(Extension):
         if U is None:
             return {}
         else:
-            quote = requests.utils.quote(U)
+            quote = requests.utils.quote(U) # type: ignore
+            # quote = requests.utils.requote_uri(U) # TODO pylance 提示 quote 成员不存在，是否应该改为这个？
 
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63'

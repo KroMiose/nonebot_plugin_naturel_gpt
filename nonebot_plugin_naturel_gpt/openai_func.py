@@ -1,3 +1,4 @@
+from typing import Tuple, overload
 from .logger import logger
 from nonebot.utils import run_sync
 
@@ -28,10 +29,10 @@ class TextGenerator(Singleton["TextGenerator"]):
                 proxy = 'http://' + proxy
         openai.proxy = proxy
     
-    # 获取文本生成
     @run_sync
-    def get_response(self, prompt, type: str = 'chat', custom: dict = {}) -> str:
-        # return 'testing...'
+    def get_response(self, prompt, type: str = 'chat', custom: dict = {}) -> Tuple[str, bool]:
+        """获取文本生成"""
+        res, success = ('', False)
         for _ in range(len(self.api_keys)):
             if type == 'chat':
                 res, success = self.get_chat_response(self.api_keys[self.key_index], prompt, custom)
@@ -39,6 +40,8 @@ class TextGenerator(Singleton["TextGenerator"]):
                 res, success = self.get_summarize_response(self.api_keys[self.key_index], prompt, custom)
             elif type == 'impression':
                 res, success = self.get_impression_response(self.api_keys[self.key_index], prompt, custom)
+            else:
+                res, success = (f'未知类型:{type}', False)
             if success:
                 return res, True
 
@@ -63,8 +66,8 @@ class TextGenerator(Singleton["TextGenerator"]):
         logger.error("请求 OpenAi 发生错误，请检查 Api Key 是否正确或者查看控制台相关日志")
         return res, False
 
-    # 对话文本生成
-    def get_chat_response(self, key:str, prompt, custom:dict = {}):
+    def get_chat_response(self, key:str, prompt, custom:dict = {})->Tuple[str, bool]:
+        """对话文本生成"""
         openai.api_key = key
         try:
             if self.config['model'].startswith('gpt-3.5-turbo') or self.config['model'].startswith('gpt-4'):
@@ -82,8 +85,8 @@ class TextGenerator(Singleton["TextGenerator"]):
                     timeout=self.config.get('timeout', 30),
                     stop=[f"\n{custom.get('bot_name', 'AI')}:", f"\n{custom.get('sender_name', 'Human')}:"]
                 )
-                res = ''
-                for choice in response.choices:
+                res:str = ''
+                for choice in response.choices: # type: ignore
                     res += choice.message.content
                 res = res.strip()
                 # 去掉头尾引号（如果有）
@@ -110,13 +113,13 @@ class TextGenerator(Singleton["TextGenerator"]):
                     presence_penalty=self.config['presence_penalty'],
                     stop=[f"\n{custom.get('bot_name', 'AI')}:", f"\n{custom.get('sender_name', 'Human')}:"]
                 )
-                res = response['choices'][0]['text'].strip()
+                res = response['choices'][0]['text'].strip() # type: ignore
             return res, True
         except Exception as e:
             return f"请求 OpenAi Api 时发生错误: {e}", False
 
-    # 总结文本生成
-    def get_summarize_response(self, key:str, prompt:str, custom:dict = {}):
+    def get_summarize_response(self, key:str, prompt:str, custom:dict = {})->Tuple[str, bool]:
+        """总结文本生成"""
         openai.api_key = key
         try:
             if self.config['model'].startswith('gpt-3.5-turbo'):
@@ -133,7 +136,7 @@ class TextGenerator(Singleton["TextGenerator"]):
                     timeout=self.config.get('timeout', 30),
                 )
                 res = ''
-                for choice in response.choices:
+                for choice in response.choices: # type: ignore
                     res += choice.message.content
                 res = res.strip()
                 # 去掉头尾引号（如果有）
@@ -151,13 +154,13 @@ class TextGenerator(Singleton["TextGenerator"]):
                     frequency_penalty=0,
                     presence_penalty=0
                 )
-                res = response['choices'][0]['text'].strip()
+                res = response['choices'][0]['text'].strip() # type: ignore
             return res, True
         except Exception as e:
             return f"请求 OpenAi Api 时发生错误: {e}", False
 
-    # 印象文本生成
-    def get_impression_response(self, key:str, prompt:str, custom:dict = {}):
+    def get_impression_response(self, key:str, prompt:str, custom:dict = {})->Tuple[str, bool]:
+        """印象文本生成"""
         openai.api_key = key
         try:
             if self.config['model'].startswith('gpt-3.5-turbo'):
@@ -174,7 +177,7 @@ class TextGenerator(Singleton["TextGenerator"]):
                     timeout=self.config.get('timeout', 30),
                 )
                 res = ''
-                for choice in response.choices:
+                for choice in response.choices: # type: ignore
                     res += choice.message.content
                 res = res.strip()
                 # 去掉头尾引号（如果有）
@@ -192,19 +195,19 @@ class TextGenerator(Singleton["TextGenerator"]):
                     frequency_penalty=0,
                     presence_penalty=0
                 )
-                res = response['choices'][0]['text'].strip()
+                res = response['choices'][0]['text'].strip() # type: ignore
             return res, True
         except Exception as e:
             return f"请求 OpenAi Api 时发生错误: {e}", False
 
-    # 生成对话模板
     @staticmethod
     def generate_msg_template(sender:str, msg: str, time_str: str='') -> str:
+        """生成对话模板"""
         return f"{time_str}{sender}: {msg}"
 
-    # 计算字符串的token数量
     @staticmethod
     def cal_token_count(msg: str) -> int:
+        """计算字符串的token数量"""
         try:
             return len(tokenizer.encode(msg))
         except:

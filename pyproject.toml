@@ -17,6 +17,9 @@ jieba = "^0.42.1"
 numpy = "^1.21.3"
 
 
+
+[tool.nonebot]
+adapters = [{name = "Spigot", module_name = "nonebot.adapters.spigot", project_link = "nonebot-adapter-spigot", desc = "MineCraft通信适配"}]
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

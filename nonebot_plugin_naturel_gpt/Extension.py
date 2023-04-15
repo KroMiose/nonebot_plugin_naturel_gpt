@@ -4,7 +4,7 @@ import os
 import sys
 import shutil
 import nonebot
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Type, Union
 
 if TYPE_CHECKING:
     from loguru import Record
@@ -29,7 +29,7 @@ class Extension:
         """ 扩展运行 """
         raise NotImplementedError
 
-    async def call(self, arg_dict, ctx_data) -> dict:
+    async def call(self, arg_dict, ctx_data) -> Union[str, dict]:
         """ 调用扩展 """
         self._call_time -= 1
         if self._call_time < 0:
@@ -119,7 +119,7 @@ def load_extensions(config: Dict[str, Any]) -> None:
                                 f'ext_cache/{file_name}')
                 time.sleep(0.3)  # 等待文件复制完成
                 # 从 ext_cache 文件夹下导入扩展模块
-                CustomExtension: Extension = getattr(
+                CustomExtension: type = getattr( # Type[CustomExtension]
                     importlib.import_module(
                         f'ext_cache.{tmpExt.get("EXT_NAME")}'),
                     'CustomExtension')
@@ -129,7 +129,7 @@ def load_extensions(config: Dict[str, Any]) -> None:
                     tmpExt.get("EXT_CONFIG"), dict) else {}
 
                 # 加载扩展模块并实例化
-                ext = CustomExtension(ext_config_dict)  # type: ignore
+                ext = CustomExtension(ext_config_dict)
                 # 将扩展模块添加到全局扩展模块字典中
                 global_extensions[ext.get_config().get('name').lower()] = ext
                 logger.info(f"加载扩展模块 {tmpExt.get('EXT_NAME')} 成功！")
