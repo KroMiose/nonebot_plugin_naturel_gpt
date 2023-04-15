@@ -34,6 +34,7 @@ class CustomExtension(Extension):
         url = f"https://api.lolicon.app/setu/v2?tag={tag}&r18={r18}"
         res = requests.get(url, verify=False, timeout=10)
         data=res.json()
+        img_src = None
         if not data["error"]:
             if data["data"]:
                 data = data["data"][0]

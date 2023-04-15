@@ -89,7 +89,7 @@ class CustomExtension(Extension):
             secret_key = tencentcloud_common_secretkey
             if version_info[0] > 2:
                 sign_str = bytes(sign_str, "utf-8")
-                secret_key = bytes(secret_key, "utf-8")
+                secret_key = bytes(secret_key, "utf-8") # TODO else 是否应该直接 return? 下一行的new 函数并不接受 str 类型的参数
             hashed = new(secret_key, sign_str, sha1)
             signature = b2a_base64(hashed.digest())[:-1]
             if version_info[0] > 2:

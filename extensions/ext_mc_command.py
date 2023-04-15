@@ -31,7 +31,7 @@ class CustomExtension(Extension):
         """
         custom_config:dict = self.get_custom_config()  # 获取yaml中的配置信息
 
-        command = arg_dict.get('command', [])   # 命令
+        command = arg_dict.get('command', '')   # 命令
 
         white_list = custom_config.get('match_white_list', [])    # 白名单 留空则不限制
         black_list = custom_config.get('match_black_list', [])    # 黑名单 留空则不限制 优先级高于白名单
