@@ -6,7 +6,6 @@ import time
 import os
 import traceback
 from typing import Awaitable, List, Dict, Callable, Optional, Set, Tuple, Type
-from nonebot import get_driver
 from nonebot import on_command, on_message, on_notice
 from .logger import logger
 from nonebot.params import CommandArg
@@ -19,9 +18,9 @@ from .utils import *
 from .chat import Chat
 from .persistent_data_manager import PersistentDataManager
 from .chat_manager import ChatManager
-from .Extension import Extension, global_extensions
+from .Extension import global_extensions
 from .openai_func import TextGenerator
-from .command_func import CommandManager, cmd
+from .command_func import cmd
 from .MCrcon.mcrcon import MCRcon   # fork from: https://github.com/Uncaught-Exceptions/MCRcon
 
 try:

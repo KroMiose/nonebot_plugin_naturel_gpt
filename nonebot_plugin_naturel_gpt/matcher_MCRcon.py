@@ -1,10 +1,5 @@
-﻿import asyncio
-import json
-import random
+﻿import json
 import re
-import time
-import os
-import traceback
 from typing import Type
 from nonebot import on_message, on_notice
 from .logger import logger
@@ -18,19 +13,10 @@ from .chat_manager import ChatManager
 from .command_func import cmd
 from .matcher import *
 
-try:
-    import nonebot_plugin_htmlrender
-    from .text_func import text_to_img
-except:
-    logger.warning('未安装 nonebot_plugin_htmlrender 插件，无法使用 text_to_img')
-    config.ENABLE_MSG_TO_IMG = False
-    config.ENABLE_COMMAND_TO_IMG = False
-
 if not config.ENABLE_MC_CONNECT:
     try:
         from nonebot.adapters.spigot.bot import Bot as SpigotBot
         from nonebot.adapters.spigot.event import Event as SpigotEvent
-        from .MCrcon.mcrcon import MCRcon   # fork from: https://github.com/Uncaught-Exceptions/MCRcon
     except:
         logger.warning('未安装 nonebot_plugin_spigot 适配器，无法使用 SpigotBot')
         config.ENABLE_MC_CONNECT = False
@@ -38,7 +24,6 @@ if not config.ENABLE_MC_CONNECT:
 if config.ENABLE_MC_CONNECT:
     from nonebot.adapters.spigot.bot import Bot as SpigotBot
     from nonebot.adapters.spigot.event import Event as SpigotEvent
-    from .MCrcon.mcrcon import MCRcon   # fork from: https://github.com/Uncaught-Exceptions/MCRcon
     
     # 注册MC消息响应器
     mc_matcher:Type[Matcher] = on_message(priority=config.NG_MSG_PRIORITY-2, block=False)
