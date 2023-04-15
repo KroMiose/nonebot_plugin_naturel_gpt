@@ -304,12 +304,12 @@ if config.ENABLE_MC_CONNECT:
         wake_up = False
 
         if event_name == 'Join':
-            notice_text = f'{user_name} 加入了服务器!'
+            notice_text = f'玩家: "{user_name}" 加入了服务器!'
             wake_up = True
         elif event_name == 'Quit':
-            notice_text = f'{user_name} 离开了服务器!'
+            notice_text = f'玩家: "{user_name}" 离开了服务器!'
         elif event_name == 'Death':
-            notice_text = f'{user_name} 死于意外!'
+            notice_text = f'玩家: "{user_name}" 死于意外!'
             wake_up = True
 
         # 进行消息响应
