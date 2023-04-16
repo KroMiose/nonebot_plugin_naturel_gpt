@@ -1,5 +1,4 @@
 ﻿import asyncio
-import json
 import random
 import re
 import time
@@ -10,7 +9,7 @@ from nonebot import on_command, on_message, on_notice
 from .logger import logger
 from nonebot.params import CommandArg
 from nonebot.matcher import Matcher
-from nonebot.adapters import Bot
+from nonebot.adapters import Bot, Event
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, PrivateMessageEvent, GroupMessageEvent, MessageSegment, GroupIncreaseNoticeEvent
 
 from .config import *
@@ -30,7 +29,6 @@ except:
     logger.warning('未安装 nonebot_plugin_htmlrender 插件，无法使用 text_to_img')
     config.ENABLE_MSG_TO_IMG = False
     config.ENABLE_COMMAND_TO_IMG = False
-
 
 permission_check_func:Callable[[Matcher, Event, Bot, Optional[str], str], Awaitable[Tuple[bool,Optional[str]]]]
 is_progress:bool = False
