@@ -3,11 +3,11 @@ import requests
 
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config:dict = {
-    "name": "rcon",   # 扩展名称，用于标识扩展
+    "name": "RunCommand",   # 扩展名称，用于标识扩展
     "arguments": {
         'command': 'str',  # 关键字
     },
-    "description": "Using Rcon to execute Minecraft server commands. (usage in response: /#rcon&/tp Tom Alice#/ teleport Tom to Alice)",
+    "description": "Using Rcon to execute Minecraft server commands. (usage in response: /#RunCommand&/tp Tom Alice#/ teleport Tom to Alice)",
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": [],
     # 每次消息回复中最大调用次数，不填则默认为99
@@ -76,7 +76,7 @@ class CustomExtension(Extension):
 
         return {    # 允许执行
             'rcon': command,
-            'text': f'[rcon] 正在执行命令: /{command}',
+            'text': f'[Rcon] 正在执行命令: /{command}',
         }
 
     def __init__(self, custom_config: dict):

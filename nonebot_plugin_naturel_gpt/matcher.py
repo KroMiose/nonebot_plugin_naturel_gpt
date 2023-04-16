@@ -434,8 +434,8 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         if isinstance(reply, str):
             # 判断文本内容是否为纯符号(包括空格，换行、英文标点、中文标点)并且长度小于3
             reply_text = str(reply).strip()
-            if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply_text):
-                if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号文本: {reply_text}，跳过发送...")
+            if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply_text) or len(reply_text) < 1:
+                if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号或空文本: {reply_text}，跳过发送...")
                 continue
             if config.ENABLE_MSG_TO_IMG:
                 img = await text_to_img(reply_text)
@@ -453,6 +453,8 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                     # 判断文本内容是否为纯符号(包括空格，换行、英文标点、中文标点)并且长度为1
                     if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply_text):
                         if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号文本: {reply_text}，跳过发送...")
+                        continue
+                    if not reply_text.strip():
                         continue
                     await matcher.send(f"{reply_prefix}{reply_text}")
 
@@ -494,7 +496,14 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                     loop_data['timer'] = reply_content
 
                 elif key == 'preset':  # 更新对话预设
-                    if chat.update_preset(preset_key=chat.preset_key, bot_self_introl=reply_text):
+                    original_preset = chat.active_preset.bot_self_introl[:]
+                    origin_snippet = reply_content.get('origin')
+                    new_snippet = reply_content.get('new')
+                    if origin_snippet == '[empty]': # 如果原始内容为空，则直接追加新内容
+                        new_bot_self_introl = f"{original_preset}; {new_snippet}"
+                    else:   # 否则替换原始内容
+                        new_bot_self_introl = original_preset.replace(origin_snippet, new_snippet)
+                    if chat.update_preset(preset_key=chat.preset_key, bot_self_introl=new_bot_self_introl):
                         logger.info(f"更新对话预设: {chat.preset_key} 成功")
                     else:
                         logger.warning(f"更新对话预设: {chat.preset_key} 失败")
