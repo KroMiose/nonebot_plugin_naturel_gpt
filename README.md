@@ -617,7 +617,7 @@ rg edit 白羽 白羽 is a technology-loving 二次元宅女 who also uses emoji
 
 ## 🎢 更新日志
 
-## [2023/4/17] v2.1.2 响应节流功能 | 逻辑优化
+## [2023/4/17] v2.1.3 响应节流功能 | 逻辑优化
 
 - 增加了 bot 响应节流功能，可配置节流时间范围，短时间内的大量消息只会在最后一条响应一次
 - 消除 pylance 提示的所有类型注解错误提示，进行模块拆分优化 (感谢 @Misaka-Mikoto-Tech 提供 pr)
@@ -625,6 +625,7 @@ rg edit 白羽 白羽 is a technology-loving 二次元宅女 who also uses emoji
 - 为所有 图片/语音 相关扩展指定了生效会话类型，避免在 MC 服务器中执行指令时出现错误
 - 修正 MC 服务器下 bot 错误断句导致发送空消息的问题
 - 修改了进化(ext_evolution)扩展执行逻辑，仅允许 bot 部分更新人设
+- 修正节流逻辑错误，避免 bot 无法响应消息的问题
 
 ## [2023/4/15] v2.1.1 Minecraft 服务器指令优化
 
