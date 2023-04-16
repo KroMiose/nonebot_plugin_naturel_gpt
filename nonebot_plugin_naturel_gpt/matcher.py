@@ -523,6 +523,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     if wake_up and loop_times < 3:
         if 'timer' in loop_data and 'notify' in loop_data:  # 如果存在定时器和通知消息，将其作为触发消息再次调用对话
             time_diff = loop_data['timer']
+            loop_data.pop('timer')  # 移除timer
             if time_diff > 0:
                 if config.DEBUG_LEVEL > 0: logger.info(f"等待 {time_diff}s 后再次调用对话...")
                 await asyncio.sleep(time_diff)

@@ -13,6 +13,9 @@ from .chat_manager import ChatManager
 from .command_func import cmd
 from .matcher import *
 
+
+permission_check_func:Callable[[Matcher, Event, Bot, Optional[str], str], Awaitable[Tuple[bool,Optional[str]]]]
+
 if config.ENABLE_MC_CONNECT:
     try:
         from nonebot.adapters.spigot.bot import Bot as SpigotBot
@@ -29,11 +32,6 @@ if config.ENABLE_MC_CONNECT:
     mc_matcher:Type[Matcher] = on_message(priority=config.NG_MSG_PRIORITY-2, block=False)
     @mc_matcher.handle()
     async def _(matcher_:Matcher, event: SpigotEvent, bot:SpigotBot) -> None:
-        # 处理消息前先检查权限
-        (permit_success, _) = await permission_check_func(matcher_, event, bot, None, 'message')
-        if not permit_success:
-            return
-
         server_from = event.server_name
         try:
             ejson_dict = json.loads(event.json())
