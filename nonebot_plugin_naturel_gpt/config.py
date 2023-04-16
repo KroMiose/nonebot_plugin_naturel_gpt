@@ -1,12 +1,12 @@
 ﻿from typing import Any, Dict, List
-import nonebot
+from nonebot.config import Config as NBConfig
 from pydantic import BaseModel, Extra
 from nonebot import get_driver
 from .logger import logger
 import yaml
 from pathlib import Path
 
-class GlobalConfig(nonebot.Config, extra=Extra.ignore):
+class GlobalConfig(NBConfig, extra=Extra.ignore):
     """Plugin Config Here"""
     ng_config_path: str = "config/naturel_gpt_config.yml"
     ng_dev_mode: bool = False
