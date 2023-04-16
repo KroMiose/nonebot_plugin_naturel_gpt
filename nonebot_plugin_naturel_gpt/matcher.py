@@ -290,6 +290,14 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         if config.DEBUG_LEVEL > 0: logger.warning(f'等待OpenAI请求返回的过程中人格预设由[{current_preset_key}]切换为[{chat.preset_key}],当前消息不再继续响应.1')
         return
     
+    # 节流判断 接收到消息后等待一段时间，如果在这段时间内再次收到消息，则跳过响应处理
+    # 效果表现为：如果在一段时间内连续收到消息，则只响应最后一条消息
+    last_recv_time = chat.last_msg_time
+    await asyncio.sleep(config.REPLY_THROTTLE_TIME)
+    if last_recv_time != chat.last_msg_time: # 如果最后一条消息时间不一致，说明在节流时间内收到了新消息，跳过处理
+        if config.DEBUG_LEVEL > 0: logger.info(f'节流时间内收到新消息，跳过处理...')
+        return
+    
     # 主动聊天参与逻辑 *待定方案
     # 达到一定兴趣阈值后，开始进行一次启动发言准备 收集特定条数的对话历史作为发言参考
     # 启动发言后，一段时间内兴趣值逐渐下降，如果随后被呼叫，则兴趣值提升
@@ -505,12 +513,12 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                     break
         else:
             logger.error(f'unknown reply type:{type(reply)}, content:{reply}')
-        await asyncio.sleep(1.5)  # 每条回复之间间隔1.5秒
+        await asyncio.sleep(1)  # 每条回复之间间隔1秒
 
     cost_token = tg.cal_token_count(str(prompt_template) + raw_res)  # 计算对话结果的 token 数量
 
-    while time.time() - sta_time < 1.5:   # 限制对话响应时间
-        time.sleep(0.1)
+    # while time.time() - sta_time < 1.5:   # 限制对话响应最短时间
+    #     time.sleep(0.1)
 
     if config.DEBUG_LEVEL > 0: logger.info(f"token消耗: {cost_token} | 对话响应: \"{raw_res}\"")
     await chat.update_chat_history_row(sender=chat.preset_key, msg=raw_res, require_summary=True)  # 更新全局对话历史记录

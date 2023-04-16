@@ -39,7 +39,7 @@ class Chat:
         tg = TextGenerator.instance
         messageunit = tg.generate_msg_template(sender=sender, msg=msg, time_str=f"[{time.strftime('%H:%M:%S %p', time.localtime())}] ")
         self._chat_data.chat_history.append(messageunit)
-        if config.DEBUG_LEVEL > 0: logger.info(f"[会话: {self.chat_key}]添加对话历史行: {messageunit}\n  |  当前对话历史行数: {len(self._chat_data.chat_history)}")
+        if config.DEBUG_LEVEL > 0: logger.info(f"[会话: {self.chat_key}]添加对话历史行: {messageunit}  |  当前对话历史行数: {len(self._chat_data.chat_history)}")
         self._last_msg_time = time.time()   # 更新上次对话时间
         while len(self._chat_data.chat_history) > config.CHAT_MEMORY_MAX_LENGTH * 2:    # 保证对话历史不超过最大长度的两倍
             self._chat_data.chat_history.pop(0)
@@ -73,7 +73,7 @@ class Chat:
         tg = TextGenerator.instance
         messageunit = tg.generate_msg_template(sender=sender, msg=msg)
         impression_data.chat_history.append(messageunit)
-        if config.DEBUG_LEVEL > 0: logger.info(f"添加对话历史行: {messageunit}\n  |  当前对话历史行数: {len(impression_data.chat_history)}")
+        if config.DEBUG_LEVEL > 0: logger.info(f"添加对话历史行: {messageunit}  |  当前对话历史行数: {len(impression_data.chat_history)}")
         # 保证对话历史不超过最大长度
         if len(impression_data.chat_history) > config.USER_MEMORY_SUMMARY_THRESHOLD and require_summary:
             prev_summarized = f"Last impression:{impression_data.chat_impression}\n\n"
@@ -327,6 +327,11 @@ class Chat:
     def preset_keys(self)->List[str]:
         """获取当前会话的所有预设名称列表"""
         return list(self.chat_preset_dicts.keys())
+    
+    @property
+    def last_msg_time(self) -> float:
+        """获取上一条消息的时间"""
+        return self._last_msg_time
     
     # endregion 
 

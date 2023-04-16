@@ -32,6 +32,8 @@ class Config(BaseModel, extra=Extra.ignore):
     """OpenAI API Key 列表"""
     OPENAI_TIMEOUT: int
     """OpenAI 请求超时时间"""
+    REPLY_THROTTLE_TIME: int
+    """回复间隔节流时间"""
     PRESETS: Dict[str, PresetConfig]
     """默认人格预设"""
     IGNORE_PREFIX: str
@@ -161,6 +163,7 @@ CONFIG_TEMPLATE = {
         'sk-xxxxxxxxxxxxx',
     ],
     "OPENAI_TIMEOUT": 60,   # OpenAI 请求超时时间
+    "REPLY_THROTTLE_TIME": 3,   # 回复间隔节流时间
     'OPENAI_PROXY_SERVER': '',  # 请求OpenAI的代理服务器
     "PRESETS": {
         "白羽": {

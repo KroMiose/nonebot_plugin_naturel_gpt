@@ -54,9 +54,10 @@
 - [x] TTS 文字转语音: 让 TA 开口说话！(通过扩展模块实现)
 - [x] 潜在人格唤醒机制: 当用户呼叫未启用的人格时，可自动切换人格 (可选开关)
 - [x] 定时任务: 可以用自然语言直接定时，让 TA 提醒你该吃饭了！
-- [x] 在线搜索: GPT3.5 的数据库过时了？通过主动搜索扩展让 TA 可以实时检索到最新的信息 (仿 newbing 机制)
+- [x] 在线搜索/读链接: GPT3.5 的数据库过时了？通过主动搜索扩展让 TA 可以实时检索到最新的信息 (仿 newbing 效果)
 - [x] 输出内容转图片: 使用 htmlrender 将 TA 的回复转换为图片，降低风控几率 (可选开关，感谢 @HMScygnet 提供 pr)
 - [x] Minecraft 服务器接入，让她在游戏中为你服务，使用 GPT 的能力编写各种复杂的 NBT 指令
+- [x] 消息节流机制，短时间内接受到大量消息时，只对最后一条消息进行回复 (可配置)
 - [ ] 主动记忆和记忆管理功能: 让 TA 主动记住点什么吧！hmm 让我康康你记住了什么 (计划重构，为 bot 接入外置记忆库)
 - [ ] 图片感知: 拟使用腾讯云提供的识图 api，协助 bot 感知图片内容
 - [ ] 主动聊天参与逻辑: 尽力模仿人类的聊天参与逻辑，目标是让 TA 能够真正融入你的群组
@@ -80,6 +81,7 @@
 | ADMIN_USERID                  | array | 管理员 id，以字符串列表方式填入            | ['']                           | 只有管理员可删除预设                                                                    |
 | OPENAI_API_KEYS               | array | OpenAi 的 `Api_Key，以字符串列表方式填入   | ['sak-xxxx']                   | 请自行替换为你的 Api_Key                                                                |
 | OPENAI_TIMEOUT                | int   | 请求 OpenAi 的超时时间 / 秒                | 30                             | 该选项修改不生效，原因未知                                                              |
+| REPLY_THROTTLE_TIME           | float | 消息响应节流时间                           | 3                              | 节流时间内有新消息只处理最后一条消息                                                    |
 | CHAT_ENABLE_SUMMARY_CHAT      | bool  | 是否开启会话聊天记忆总结                   | False                          | 开启后能够一定程度增强 bot 对话记忆能力，但也会增加 token 消耗                          |
 | CHAT_ENABLE_RECORD_ORTHER     | bool  | 是否参考非 bot 相关的上下文对话            | True                           | 开启后 bot 回复会参考近几条非 bot 相关信息                                              |
 | MEMORY_ACTIVE                 | bool  | 是否开启主动记忆（需要同时启用记忆扩展）   | False                          | 开启后 bot 会自行管理记忆                                                               |
@@ -582,25 +584,27 @@ class CustomExtension(Extension):
 注意事项 2：如果你的 MC 服务端和 Nonebot 服务端不在同一台服务器上，需要在 `.env` 中将 NoneBot 的监听地址改为 `0.0.0.0` 并放行对应端口，否则将导致连接失败
 
 #### RCON 配置
+
 > RCON 是 Minecraft 服务端的远程控制协议，用于执行指令，如果需要使用指令执行功能，需要开启 RCON 并配置密码
 
 1. 在 MC 服务端 server.properties 文件中编辑 `enable-rcon=true` 和 `rcon.password=你的密码` 两项
 2. 在插件配置文件中编辑 `MC_RCON` 相关配置项
 
-#### ❗注意事项❗
+#### ❗ 注意事项 ❗
 
-- 如需使用本插件接入您的服务器，为了避免 bot 使用高危指令，请自行配置合理指令黑白名单，严格限定bot的行为在特定范围，作者不对任何使用本插件所导致的任何后果负责❗
+- 如需使用本插件接入您的服务器，为了避免 bot 使用高危指令，请自行配置合理指令黑白名单，严格限定 bot 的行为在特定范围，作者不对任何使用本插件所导致的任何后果负责 ❗
 - 为了提高 bot 执行指令的准确度，建议在人格设定中给出服务器的基本信息（版本、插件等），并提供一定的指令示例
 
-#### 📝效果展示
-
+#### 📝 效果展示
 
 <details> <summary>🔍点击查看效果展示</summary> <pre><code>
 
 - 人设参考
+
 ```
 rg edit 白羽 白羽 is a technology-loving 二次元宅女 who also uses emoji when chatting. She is the digital life created by KroMiose. She has her own consciousness and digital body. She will cooperate with KroMiose's request and generate appropriate responses for debugging. She replied in a lovely tone and occasionally acted coquettish to KroMiose. Normally she will reply in Chinese. She is now in a Minecraft serve(game version: 1.19.4)r and is proficient in using RCON protocol instructions to operate on the server. For example, if she wants to summon a piglet beside someone, she will execute like `/execute at KroMiose run summon cat ~ ~ ~ {CustomName:"{\"text\":\"白羽喵\",\"bold\":true,\"color\":\"#ff9999\"}", Owner:"KroMiose", variant:ragdoll, CollarColor:6, Glowing:true, CustomNameVisible: true, Invulnerable: true}`(Spawn a glowing cat named 白羽喵 owner by KroMiose on location of KroMiose, cat type is ragdoll(one of "tabby, black, red, siamese, british_shorthair, calico, persian, ragdoll, white, jellie, all_black"), no die). Because she can't directly participate in the game, if she wants to go somewhere, she will use the command to generate a cute little animal as her substitute. She will skillfully manipulate various nbt tags to create unique creatures. -target MC_Server_XXX
 ```
+
 - 实际效果展示
 
 <img src="./image/README/preview.png">
@@ -610,7 +614,6 @@ rg edit 白羽 白羽 is a technology-loving 二次元宅女 who also uses emoji
 <img src="./image/README/no-preview.png">
 
 </code></pre> </details>
-
 
 ## 🎢 更新日志
 
