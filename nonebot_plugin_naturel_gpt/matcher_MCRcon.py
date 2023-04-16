@@ -13,7 +13,7 @@ from .chat_manager import ChatManager
 from .command_func import cmd
 from .matcher import *
 
-if not config.ENABLE_MC_CONNECT:
+if config.ENABLE_MC_CONNECT:
     try:
         from nonebot.adapters.spigot.bot import Bot as SpigotBot
         from nonebot.adapters.spigot.event import Event as SpigotEvent
