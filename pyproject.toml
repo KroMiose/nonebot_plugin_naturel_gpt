@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-naturel-gpt"
-version = "2.1.1"
+version = "2.1.2"
 description = "一个基于NoneBot框架的Ai聊天插件，对接OpenAi文本生成接口"
 authors = ["KroMiose"]
 license = "Apache License 2.0"
