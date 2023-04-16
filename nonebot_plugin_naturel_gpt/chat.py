@@ -34,13 +34,14 @@ class Chat:
                 preset_key = list(self.chat_preset_dicts.keys())[0]
         self.change_presettings(preset_key)
 
-    async def update_chat_history_row(self, sender:str, msg: str, require_summary:bool = False) -> None:
+    async def update_chat_history_row(self, sender:str, msg: str, require_summary:bool = False, record_time=False) -> None:
         """更新当前会话的全局对话历史行"""
         tg = TextGenerator.instance
         messageunit = tg.generate_msg_template(sender=sender, msg=msg, time_str=f"[{time.strftime('%H:%M:%S %p', time.localtime())}] ")
         self._chat_data.chat_history.append(messageunit)
         if config.DEBUG_LEVEL > 0: logger.info(f"[会话: {self.chat_key}]添加对话历史行: {messageunit}  |  当前对话历史行数: {len(self._chat_data.chat_history)}")
-        self._last_msg_time = time.time()   # 更新上次对话时间
+        if record_time:
+            self._last_msg_time = time.time()   # 更新上次对话时间
         while len(self._chat_data.chat_history) > config.CHAT_MEMORY_MAX_LENGTH * 2:    # 保证对话历史不超过最大长度的两倍
             self._chat_data.chat_history.pop(0)
 

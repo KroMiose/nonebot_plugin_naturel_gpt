@@ -271,11 +271,11 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
         # chat.update_chat_history_row(sender=sender_name, msg=trigger_text, require_summary=True)
         await chat.update_chat_history_row(sender=sender_name,
                                     msg=f"@{chat.preset_key} {trigger_text}" if is_tome and chat_type=='group' else trigger_text,
-                                    require_summary=False)
+                                    require_summary=False, record_time=True)    # 只有在需要回复时才记录时间，用于节流
         logger.info("符合 bot 发言条件，进行回复...")
     else:
         if config.CHAT_ENABLE_RECORD_ORTHER:
-            await chat.update_chat_history_row(sender=sender_name, msg=trigger_text, require_summary=False)
+            await chat.update_chat_history_row(sender=sender_name, msg=trigger_text, require_summary=False, record_time=False)
             if config.DEBUG_LEVEL > 1: logger.info("不是 bot 相关的信息，记录但不进行回复")
         else:
             if config.DEBUG_LEVEL > 1: logger.info("不是 bot 相关的信息，不进行回复")
@@ -530,7 +530,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     #     time.sleep(0.1)
 
     if config.DEBUG_LEVEL > 0: logger.info(f"token消耗: {cost_token} | 对话响应: \"{raw_res}\"")
-    await chat.update_chat_history_row(sender=chat.preset_key, msg=raw_res, require_summary=True)  # 更新全局对话历史记录
+    await chat.update_chat_history_row(sender=chat.preset_key, msg=raw_res, require_summary=True, record_time=False)  # 更新全局对话历史记录
     # 更新对用户的对话信息
     await chat.update_chat_history_row_for_user(sender=chat.preset_key, msg=raw_res, userid=trigger_userid, username=sender_name, require_summary=True)
     PersistentDataManager.instance.save_to_file()  # 保存数据
