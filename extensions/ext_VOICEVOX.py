@@ -51,6 +51,8 @@ ext_config: dict = {
     "version": "0.0.2",
     # 扩展简介
     "intro": "发送语音消息(支持翻译)",
+    # 可用会话类型 (server即MC服务器 | chat即QQ聊天)
+    "available": ['chat'],
 }
 
 # 情感参数表

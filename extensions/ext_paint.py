@@ -25,6 +25,8 @@ ext_config:dict = {
     "version": "0.0.1",
     # 拓展简介
     "intro": "绘图",
+    # 可用会话类型 (server即MC服务器 | chat即QQ聊天)
+    "available": ['chat'],
 }
 
 class CustomExtension(Extension):
