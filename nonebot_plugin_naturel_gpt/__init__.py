@@ -15,7 +15,7 @@ from .Extension import load_extensions
 from .persistent_data_manager import PersistentDataManager
 from .chat_manager import ChatManager
 from . import matcher
-from . import matcher_MCRcon
+from . import matcher_MCRcon # noqa: F401
 
 
 def set_permission_check_func(callback:Callable[[Matcher, Event, Bot, str, str], Awaitable[Tuple[bool,Optional[str]]]]):
