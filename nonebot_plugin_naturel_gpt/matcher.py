@@ -403,7 +403,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                     'user_send_raw_text': trigger_text,
                     'bot_send_raw_text': raw_res
                 })
-                if config.DEBUG_LEVEL > 0: logger.info(f"扩展 {ext_name} 返回结果: {ext_res}")
+                if config.DEBUG_LEVEL > 1: logger.info(f"扩展 {ext_name} 返回结果: {ext_res}")
                 if ext_res is not None:
                     # 将扩展返回的结果插入到回复列表的最后
                     reply_list.append(ext_res)
@@ -422,7 +422,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     # for code_block in code_blocks:
     #     reply_list.append({'code_block': code_block})
 
-    if config.DEBUG_LEVEL > 0: logger.info(f"回复序列内容: {reply_list}")
+    if config.DEBUG_LEVEL > 1: logger.info(f"回复序列内容: {reply_list}")
 
     # 回复前缀
     reply_prefix = f'<{chat.preset_key}> ' if (chat_type == 'server') else ''
@@ -452,7 +452,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 if key == 'text': # 发送普通文本
                     # 判断文本内容是否为纯符号(包括空格，换行、英文标点、中文标点)并且长度为1
                     if re.match(r'^[^\u4e00-\u9fa5\w]{1}$', reply_text):
-                        if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号文本: {reply_text}，跳过发送...")
+                        if config.DEBUG_LEVEL > 1: logger.info(f"检测到纯符号文本: {reply_text}，跳过发送...")
                         continue
                     if not reply_text.strip():
                         continue
@@ -512,8 +512,9 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                     try:
                         with MCRcon(config.MC_RCON_HOST, config.MC_RCON_PASSWORD, int(config.MC_RCON_PORT), timeout=10) as mcr:
                             resp = mcr.command(reply_content)
-                            await chat.update_chat_history_row(sender="[Minecraft Rcon]", msg=f"Executing \"{reply_content}\"... Result: {resp}", require_summary=False)  # 更新全局对话历史记录
-                            logger.info(f"发送MC-RCON指令: {reply_content} | 响应: {resp}")
+                            resp = resp if resp else '无'
+                            loop_data['end_notify'] = {'sender': '[Minecraft Rcon]', 'msg': f"执行 \"{reply_content}\" | 结果: {resp}"}
+                            if config.DEBUG_LEVEL > 0:  logger.info(f"发送MC-RCON指令: {reply_content} | 响应: {resp}")
                     except:
                         logger.warning(f"发送MC-RCON指令: {reply_content} 失败")
 
@@ -534,10 +535,16 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     # 更新对用户的对话信息
     await chat.update_chat_history_row_for_user(sender=chat.preset_key, msg=raw_res, userid=trigger_userid, username=sender_name, require_summary=True)
     PersistentDataManager.instance.save_to_file()  # 保存数据
+
+    # 如果存在响应结束通知消息，则发送通知
+    if 'end_notify' in loop_data:
+        await chat.update_chat_history_row(sender=loop_data['end_notify'].get('sender', 'System'), msg=loop_data['end_notify'].get('msg'), require_summary=False)  # 更新全局对话历史记录
+        loop_data.pop('end_notify')  # 移除end_notify
+
     if config.DEBUG_LEVEL > 0: logger.info(f"对话响应完成 | 耗时: {time.time() - sta_time}s")
     
     # 检查是否再次触发对话
-    if wake_up and loop_times < 3:
+    if wake_up and loop_times < 5:
         if 'timer' in loop_data and 'notify' in loop_data:  # 如果存在定时器和通知消息，将其作为触发消息再次调用对话
             time_diff = loop_data['timer']
             loop_data.pop('timer')  # 移除timer
