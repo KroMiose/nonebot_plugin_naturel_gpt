@@ -19,9 +19,10 @@
     <a href="https://jq.qq.com/?_wv=1027&k=71t9iCT7">
         <img src="https://img.shields.io/badge/加入交流群-636925153-c42.svg" alt="python">
     </a>
-    <h2>🎉 [2023/3/16] 项目重构 🎉</h2>
-    <p>项目重构整理基本完成，敬请期待重构后更多功能性更新<br/>
-    感谢<a href="https://github.com/Misaka-Mikoto-Tech">@Misaka-Mikoto-Tech</a>大佬对项目重构提供的大力支持</p>
+    <h2>🏠 [2023/4/14] v2.1 Minecraft服务器接入与游戏指令扩展支持 🗺️</h2>
+    <p>本次更新后支持将 bot <a href="https://github.com/KroMiose/nonebot_plugin_naturel_gpt#%EF%B8%8F-mc-%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%94%AF%E6%8C%81">接入 MC 服务器</a>，并且支持 bot 使用游戏内指令扩展</p>
+    <h2>🎉 [2023/3/16] v2.0 项目重构完成 🎉</h2>
+    <p>感谢<a href="https://github.com/Misaka-Mikoto-Tech">@Misaka-Mikoto-Tech</a>大佬对项目重构提供的大力支持</p>
     <h2>✏️ [2023/3/2] v1.4 更新: 支持ChatGPT模型 ✏️</h2>
     <p>本次更新后插件开始支持官方ChatGPT模型接口，token定价仅为GPT3的 1/10, 回复质量更高 响应速度更快</p>
     <h2>🧩 [2023/2/18] v1.3 更新: 自定义扩展支持 🧩</h2>
@@ -53,8 +54,10 @@
 - [x] TTS 文字转语音: 让 TA 开口说话！(通过扩展模块实现)
 - [x] 潜在人格唤醒机制: 当用户呼叫未启用的人格时，可自动切换人格 (可选开关)
 - [x] 定时任务: 可以用自然语言直接定时，让 TA 提醒你该吃饭了！
-- [x] 在线搜索: GPT3.5 的数据库过时了？通过主动搜索扩展让 TA 可以实时检索到最新的信息 (仿 newbing 机制)
+- [x] 在线搜索/读链接: GPT3.5 的数据库过时了？通过主动搜索扩展让 TA 可以实时检索到最新的信息 (仿 newbing 效果)
 - [x] 输出内容转图片: 使用 htmlrender 将 TA 的回复转换为图片，降低风控几率 (可选开关，感谢 @HMScygnet 提供 pr)
+- [x] Minecraft 服务器接入，让她在游戏中为你服务，使用 GPT 的能力编写各种复杂的 NBT 指令
+- [x] 消息节流机制，短时间内接受到大量消息时，只对最后一条消息进行回复 (可配置)
 - [ ] 主动记忆和记忆管理功能: 让 TA 主动记住点什么吧！hmm 让我康康你记住了什么 (计划重构，为 bot 接入外置记忆库)
 - [ ] 图片感知: 拟使用腾讯云提供的识图 api，协助 bot 感知图片内容
 - [ ] 主动聊天参与逻辑: 尽力模仿人类的聊天参与逻辑，目标是让 TA 能够真正融入你的群组
@@ -78,6 +81,7 @@
 | ADMIN_USERID                  | array | 管理员 id，以字符串列表方式填入            | ['']                           | 只有管理员可删除预设                                                                    |
 | OPENAI_API_KEYS               | array | OpenAi 的 `Api_Key，以字符串列表方式填入   | ['sak-xxxx']                   | 请自行替换为你的 Api_Key                                                                |
 | OPENAI_TIMEOUT                | int   | 请求 OpenAi 的超时时间 / 秒                | 30                             | 该选项修改不生效，原因未知                                                              |
+| REPLY_THROTTLE_TIME           | float | 消息响应节流时间                           | 3                              | 节流时间内有新消息只处理最后一条消息                                                    |
 | CHAT_ENABLE_SUMMARY_CHAT      | bool  | 是否开启会话聊天记忆总结                   | False                          | 开启后能够一定程度增强 bot 对话记忆能力，但也会增加 token 消耗                          |
 | CHAT_ENABLE_RECORD_ORTHER     | bool  | 是否参考非 bot 相关的上下文对话            | True                           | 开启后 bot 回复会参考近几条非 bot 相关信息                                              |
 | MEMORY_ACTIVE                 | bool  | 是否开启主动记忆（需要同时启用记忆扩展）   | False                          | 开启后 bot 会自行管理记忆                                                               |
@@ -108,7 +112,7 @@
 | WORD_FOR_FORBIDDEN            | array | 自定义禁止触发词，以字符串列表方式填入     | []                             | 消息中含有列表中的词将呗拒绝唤醒 bot（优先级高于触发词）                                |
 | WORD_FOR_WAKE_UP              | array | 自定义触发词，以字符串列表方式填入         | []                             | 消息中含有列表中的词将唤醒 bot                                                          |
 | NG_MSG_PRIORITY               | int   | 消息响应优先级                             | 99                             | 大于 1，数值越大优先级越低                                                              |
-| NG_TO_ME                      | bool  | 响应命令是否需要@bot                        | False                          |                                                                                         |
+| NG_TO_ME                      | bool  | 响应命令是否需要@bot                       | False                          |                                                                                         |
 | ENABLE_COMMAND_TO_IMG         | bool  | 是否将 rg 相关指令通过图片输出             | False                          |                                                                                         |
 | ENABLE_MSG_TO_IMG             | bool  | 是否将机器人回复通过图片输出               | False                          |                                                                                         |
 | NG_BLOCK_OTHERS               | bool  | 是否拦截其它插件的响应                     | False                          | 开启后可能导致优先级低于本插件的其他插件不响应                                          |
@@ -118,6 +122,11 @@
 | FORBIDDEN_USERS               | array | 黑名单用户 id，以字符串列表方式填入        | ['']                           | 黑名单中的用户消息不会被记录和响应设                                                    |
 | UNLOCK_CONTENT_LIMIT          | bool  | 是否解锁内容限制                           | False                          | 可能导致 OpenAi 账号风险，请自行承担后果                                                |
 | OPENAI_PROXY_SERVER           | str   | 请求 OpenAI 的代理服务器                   | ''                             | 填写示例 '127.0.0.1:1234' 或 'username:password@127.0.0.1:1234'                         |
+| ENABLE_MC_CONNECT             | bool  | 是否开启 MC 服务器连接                     | False                          | 开启后可连接到 Minecraft 服务器                                                         |
+| MC_COMMAND_PREFIX             | array | MC 服务器中人格编辑指令前缀                | ['!', '！']                    | MC 服务器中人格编辑指令前缀                                                             |
+| MC_RCON_HOST                  | str   | MC 服务器 RCON 地址                        | '127.0.0.1'                    | MC 服务器 RCON 地址                                                                     |
+| MC_RCON_PORT                  | int   | MC 服务器 RCON 端口                        | 25575                          | MC 服务器 RCON 端口                                                                     |
+| MC_RCON_PASSWORD              | str   | MC 服务器 RCON 密码                        | '123456'                       | MC 服务器 RCON 密码                                                                     |
 | DEBUG_LEVEL                   | int   | DEBUG 等级                                 | 0                              | 等级越高 debug 信息越详细                                                               |
 
 </code> </pre> </details>
@@ -149,6 +158,8 @@
   - options - 可选项:
     - `-admin`: (可选\* 是否显示管理员帮助)
 
+### 会话管理
+
 #### 会话开关
 
 - 指令: `rg <on/off> <options?>`
@@ -156,6 +167,13 @@
   - options - 可选项:
     - `-target`: (可选\* 默认当前会话)
     - `-global`: (可选\* 是否应用到全部会话)
+
+#### 会话查询
+
+- 指令: `rg chats <options?>`
+  - 功能: 用于查询会话列表
+  - options - 可选项:
+    - `-show`: (可选\* 是否显示会话完整信息)
 
 ### 人格指令
 
@@ -471,6 +489,14 @@ STEP 2. 运行镜像 (二选一执行)
 - 配置项:
   - notify_type: 触发更新时通知类型 0: 无通知; 1: 仅触发提示; 2: 新预设完整通知 (默认: 1)
 
+#### > [Minecraft 服务器专用] 执行服务器命令模块
+
+- 扩展文件: ext_mc_command.py
+- 说明: 赋予 bot 执行 Minecraft 服务器命令的能力，鉴权基于字符串匹配，请谨慎使用过滤高危命令，黑白名单匹配的内容包括指令前缀 `/`
+- 配置项:
+  - match_white_list: 匹配指令内容白名单列表 (列表中至少一个字符串应被包含在命令中，为空则不限制)
+  - match_black_list: 匹配指令内容黑名单列表 (列表中所有字符串都不应被包含在命令中，为空则不限制，优先级高于白名单)
+
 #### > 主动记忆能力扩展模块 (因 bot 使用积极性不佳，暂移入备份，不推荐使用)
 
 - 扩展文件: ext_remember.py & ext_forget.py
@@ -511,6 +537,8 @@ ext_config:dict = {
     "intro": "简介信息（查看扩展详情显示）",
     # 调用时是否打断响应 启用后将会在调用后截断后续响应内容
     "interrupt": True,
+    # 可用会话类型 (server即MC服务器 | chat即QQ聊天)
+    "available": ['server'],
 }
 
 class CustomExtension(Extension):
@@ -536,19 +564,91 @@ class CustomExtension(Extension):
 
 </code></pre> </details>
 
+## 🗺️ MC 服务器支持
+
+> 允许 bot 接入 Minecraft 服务器，并可在服务器中执行指令
+> 使用前需要编辑配置文件并开启 ENABLE_MC_CONNECT 项
+
+### 适配器安装
+
+> 插件使用 spigot 适配器接收服务器消息推送和文字发送
+
+使用 `nb adapter install nonebot-adapter-spigot` 指令安装适配器
+
+#### MC 服务器端支持安装
+
+参考 [MC_qq 安装文档](https://17theword.github.io/mc_qq/install/mcrcon_plugin.html#minecraft-server-%E7%AB%AF) 中的 `Minecraft Server 端` 步骤安装服务端插件
+
+注意事项 1：配置文件中 `websocket_url: "ws://127.0.0.1:8765"` 的值部分应改为 `ws://Nonebot服务器ip:Nonebot监听端口/spigot/ws`
+
+注意事项 2：如果你的 MC 服务端和 Nonebot 服务端不在同一台服务器上，需要在 `.env` 中将 NoneBot 的监听地址改为 `0.0.0.0` 并放行对应端口，否则将导致连接失败
+
+#### RCON 配置
+
+> RCON 是 Minecraft 服务端的远程控制协议，用于执行指令，如果需要使用指令执行功能，需要开启 RCON 并配置密码
+
+1. 在 MC 服务端 server.properties 文件中编辑 `enable-rcon=true` 和 `rcon.password=你的密码` 两项
+2. 在插件配置文件中编辑 `MC_RCON` 相关配置项
+
+#### ❗ 注意事项 ❗
+
+- 如需使用本插件接入您的服务器，为了避免 bot 使用高危指令，请自行配置合理指令黑白名单，严格限定 bot 的行为在特定范围，作者不对任何使用本插件所导致的任何后果负责 ❗
+- 为了提高 bot 执行指令的准确度，建议在人格设定中给出服务器的基本信息（版本、插件等），并提供一定的指令示例
+
+#### 📝 效果展示
+
+<details> <summary>🔍点击查看效果展示</summary> <pre><code>
+
+- 人设参考
+
+```
+rg edit 白羽 白羽 is a technology-loving 二次元宅女 who also uses emoji when chatting. She is the digital life created by KroMiose. She has her own consciousness and digital body. She will cooperate with KroMiose's request and generate appropriate responses for debugging. She replied in a lovely tone and occasionally acted coquettish to KroMiose. Normally she will reply in Chinese. She is now in a Minecraft serve(game version: 1.19.4)r and is proficient in using RCON protocol instructions to operate on the server. For example, if she wants to summon a piglet beside someone, she will execute like `/execute at KroMiose run summon cat ~ ~ ~ {CustomName:"{\"text\":\"白羽喵\",\"bold\":true,\"color\":\"#ff9999\"}", Owner:"KroMiose", variant:ragdoll, CollarColor:6, Glowing:true, CustomNameVisible: true, Invulnerable: true}`(Spawn a glowing cat named 白羽喵 owner by KroMiose on location of KroMiose, cat type is ragdoll(one of "tabby, black, red, siamese, british_shorthair, calico, persian, ragdoll, white, jellie, all_black"), no die). Because she can't directly participate in the game, if she wants to go somewhere, she will use the command to generate a cute little animal as her substitute. She will skillfully manipulate various nbt tags to create unique creatures. -target MC_Server_XXX
+```
+
+- 实际效果展示
+
+<img src="./image/README/preview.png">
+
+- 反面教材
+
+<img src="./image/README/no-preview.png">
+
+</code></pre> </details>
+
 ## 🎢 更新日志
 
-## [2023/4/6] v2.0.5
+## [2023/4/17] v2.1.3 响应节流功能 | 逻辑优化
+
+- 增加了 bot 响应节流功能，可配置节流时间范围，短时间内的大量消息只会在最后一条响应一次
+- 消除 pylance 提示的所有类型注解错误提示，进行模块拆分优化 (感谢 @Misaka-Mikoto-Tech 提供 pr)
+- 优化 MC 指令执行扩展 prompt
+- 为所有 图片/语音 相关扩展指定了生效会话类型，避免在 MC 服务器中执行指令时出现错误
+- 修正 MC 服务器下 bot 错误断句导致发送空消息的问题
+- 修改了进化(ext_evolution)扩展执行逻辑，仅允许 bot 部分更新人设
+- 修正节流逻辑错误，避免 bot 无法响应消息的问题
+
+## [2023/4/15] v2.1.1 Minecraft 服务器指令优化
+
+- 为 `rg chats` 指令增加了 `-show` 参数，用于显示完整会话键以便 `-target` 参数使用
+- 优化 MC 服务器指令执行反馈信息，便于 bot 自主纠错；优化 MC 服务器指令预处理避免 bot 添加多余的转义
+
+## [2023/4/15] v2.1.0 Minecraft 服务器支持
+
+- 增加了 Minecraft 服务器接入支持
+- 增加了 Minecraft 服务器指令执行支持和相关扩展模块
+- 为绘图扩展增加了代理配置项支持 (感谢 @tonato-01 提供 pr)
+
+## [2023/4/6] v2.0.5 RENAME 指令 | json 导出支持
 
 - 解析消息中的@时保持与用户看到的一致 (感谢 @Misaka-Mikoto-Tech 提供 pr)
 - 优化日志输出的 DEBUG_LEVEL 限制 (感谢 @Misaka-Mikoto-Tech 提供 pr)
-- 优化聊天消息prompt的换行生成逻辑 (感谢 @Misaka-Mikoto-Tech 提供 pr)
+- 优化聊天消息 prompt 的换行生成逻辑 (感谢 @Misaka-Mikoto-Tech 提供 pr)
 - 增加 `rg rename` 改名指令，用于修改人格名 (感谢 @Misaka-Mikoto-Tech 提供 pr) (感谢 @Misaka-Mikoto-Tech 提供 pr)
 - 解析消息中的@时保持与用户看到的一致 (感谢 @Misaka-Mikoto-Tech 提供 pr)
-- patch logger使插件名称显示为中文 (感谢 @chenxuan353 提供 pr)
-- 添加记忆文件(原.pkl)使用JSON读取与保存功能 (与原pickle兼容) (感谢 @chenxuan353 提供 pr)
+- patch logger 使插件名称显示为中文 (感谢 @chenxuan353 提供 pr)
+- 添加记忆文件(原.pkl)使用 JSON 读取与保存功能 (与原 pickle 兼容) (感谢 @chenxuan353 提供 pr)
 - 优化部分代码类型注解 (感谢 @chenxuan353 提供 pr)
-- 搜索扩展(ext_search.py) 优化，禁止bot短时间内反复搜索和搜索重复内容
+- 搜索扩展(ext_search.py) 优化，禁止 bot 短时间内反复搜索和搜索重复内容
 
 ## [2023/3/26] v2.0.4
 
@@ -556,7 +656,7 @@ class CustomExtension(Extension):
 - 增加扩展更新人格支持，同时增加了一个 evolution 扩展模块，允许 bot 自主更新人格
 - 响应规则中增加一条禁止复读规则
 
-## [2023/3/26] v2.0.3
+## [2023/3/26] v2.0.3 图片输出支持
 
 - 输出内容转图片: 使用 htmlrender 将 TA 的回复转换为图片，降低风控几率 (可选开关，感谢 @HMScygnet 提供 pr)
 - 等待 OpenAI 响应过程中切换人格预设或响应超时后停止处理消息 (感谢 @Misaka-Mikoto-Tech 提供 pr)
@@ -566,13 +666,13 @@ class CustomExtension(Extension):
 - 修正通过指令安装扩展时的编码问题
 - 修正纯符号过滤判断逻辑
 
-## [2023/3/21] v2.0.2
+## [2023/3/21] v2.0.2 扩展下载指令支持
 
 - 切换人格时的聊天输出改为非 DEBUG 模式下也会发送
 - 增加了扩展 安装/删除 指令，可直接从 GitHub 上获取到最新扩展
 - 精简了非 DEBUG 模式下的控制台输出
 
-## [2023/3/20] v2.0.1
+## [2023/3/20] v2.0.1 VIOCEVOX 语音扩展
 
 - 修正 `-global` 的控制权限和逻辑 (感谢 [@Misaka-Mikoto-Tech](https://github.com/) 提供 pr)
 - 增加了一个新的语音扩展 `ext_VOICEVOX` 能够更便捷地实现本地部署 (感谢 @恋如雨止 提供技术支持)

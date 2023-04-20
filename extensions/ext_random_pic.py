@@ -16,6 +16,8 @@ ext_config:dict = {
     "version": "0.0.1",
     # 扩展简介
     "intro": "发送随机二次元图片",
+    # 可用会话类型 (server即MC服务器 | chat即QQ聊天)
+    "available": ['chat'],
 }
 
 class CustomExtension(Extension):

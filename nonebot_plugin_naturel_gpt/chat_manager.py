@@ -1,4 +1,4 @@
-﻿from typing import Dict, Tuple
+﻿from typing import Dict, Optional, Tuple
 from .singleton import Singleton
 from .chat import Chat
 from .persistent_data_manager import PersistentDataManager
@@ -25,7 +25,7 @@ class ChatManager(Singleton["ChatManager"]):
         """是否存在指定chat_key"""
         return chat_key in self._chat_dict
     
-    def get_chat(self, chat_key: str) -> Chat:
+    def get_chat(self, chat_key: str) -> Optional[Chat]:
         """通过chat_key获取一个Chat对象"""
         return self._chat_dict.get(chat_key, None)
     

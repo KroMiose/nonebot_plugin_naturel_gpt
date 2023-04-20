@@ -1,8 +1,8 @@
-from typing import Awaitable, Callable, Tuple
+from typing import Awaitable, Callable, Optional, Tuple
 from nonebot import get_driver
 from .logger import logger
-from nonebot.params import Matcher
-from nonebot.adapters.onebot.v11 import Bot, MessageEvent
+from nonebot.matcher import Matcher
+from nonebot.adapters import Bot, Event
 
 from .config import *
 from . import utils
@@ -15,9 +15,10 @@ from .Extension import load_extensions
 from .persistent_data_manager import PersistentDataManager
 from .chat_manager import ChatManager
 from . import matcher
+from . import matcher_MCRcon
 
 
-def set_permission_check_func(callback:Callable[[Matcher, MessageEvent, Bot, str, str], Awaitable[Tuple[bool,str]]]):
+def set_permission_check_func(callback:Callable[[Matcher, Event, Bot, str, str], Awaitable[Tuple[bool,Optional[str]]]]):
     """设置Matcher的权限检查函数"""
     matcher.permission_check_func = callback
 

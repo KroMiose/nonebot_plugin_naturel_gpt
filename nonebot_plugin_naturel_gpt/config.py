@@ -1,12 +1,12 @@
 ﻿from typing import Any, Dict, List
-import nonebot
+from nonebot.config import Config as NBConfig
 from pydantic import BaseModel, Extra
 from nonebot import get_driver
 from .logger import logger
 import yaml
 from pathlib import Path
 
-class GlobalConfig(nonebot.Config, extra=Extra.ignore):
+class GlobalConfig(NBConfig, extra=Extra.ignore):
     """Plugin Config Here"""
     ng_config_path: str = "config/naturel_gpt_config.yml"
     ng_dev_mode: bool = False
@@ -32,6 +32,8 @@ class Config(BaseModel, extra=Extra.ignore):
     """OpenAI API Key 列表"""
     OPENAI_TIMEOUT: int
     """OpenAI 请求超时时间"""
+    REPLY_THROTTLE_TIME: int
+    """回复间隔节流时间"""
     PRESETS: Dict[str, PresetConfig]
     """默认人格预设"""
     IGNORE_PREFIX: str
@@ -142,6 +144,21 @@ class Config(BaseModel, extra=Extra.ignore):
     NG_CHECK_USER_NAME_HYPHEN:bool # 如果用户名中包含连字符，ChatGPT会将前半部分识别为名字，但一般情况下后半部分才是我们想被称呼的名字, eg. 策划-李华
     """检查用户名中的连字符"""
 
+    ENABLE_MC_CONNECT: bool
+    """是否启用MC服务器连接"""
+
+    MC_COMMAND_PREFIX: List[str]
+    """MC服务器人格指令前缀"""
+
+    MC_RCON_HOST: str
+    """MC服务器RCON地址"""
+
+    MC_RCON_PORT: int
+    """MC服务器RCON端口"""
+
+    MC_RCON_PASSWORD: str
+    """MC服务器RCON密码"""
+
     DEBUG_LEVEL: int
     """debug level, [0, 1, 2, 3], 0 为关闭，等级越高debug信息越详细"""
 
@@ -152,6 +169,7 @@ CONFIG_TEMPLATE = {
         'sk-xxxxxxxxxxxxx',
     ],
     "OPENAI_TIMEOUT": 60,   # OpenAI 请求超时时间
+    "REPLY_THROTTLE_TIME": 3,   # 回复间隔节流时间
     'OPENAI_PROXY_SERVER': '',  # 请求OpenAI的代理服务器
     "PRESETS": {
         "白羽": {
@@ -246,6 +264,13 @@ CONFIG_TEMPLATE = {
     
     'GROUP_CARD':True,
     'NG_CHECK_USER_NAME_HYPHEN': False, # 检查用户名中的连字符
+
+    'ENABLE_MC_CONNECT': False,  # 是否启用MC服务器
+    'MC_COMMAND_PREFIX': ['!', '！'],  # MC服务器指令前缀
+    'MC_RCON_HOST': '127.0.0.1',  # MC服务器RCON地址
+    'MC_RCON_PORT': 25575,  # MC服务器RCON端口
+    'MC_RCON_PASSWORD': '',  # MC服务器RCON密码
+
 
     'DEBUG_LEVEL': 0  # debug level, [0, 1, 2], 0 为关闭，等级越高debug信息越详细
 }

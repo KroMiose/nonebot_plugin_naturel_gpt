@@ -1,12 +1,13 @@
-﻿from typing import Dict, List, Tuple, Union
+﻿from typing import Dict, List, Optional, Tuple, Union
 import asyncio, requests
 
-from nonebot.params import Matcher
-from nonebot.adapters.onebot.v11 import Bot, MessageEvent
+from nonebot.matcher import Matcher
+from nonebot.adapters import Bot
+from nonebot.adapters import Event
 from nonebot.rule import Rule
 from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, PrivateMessageEvent, GroupMessageEvent, MessageSegment, GroupIncreaseNoticeEvent
+from nonebot.adapters.onebot.v11 import Message, MessageEvent, PrivateMessageEvent, GroupMessageEvent, MessageSegment, GroupIncreaseNoticeEvent
 
 from .config import *
 
@@ -21,19 +22,24 @@ def to_me():
 
     return Rule(_to_me)
 
-async def default_permission_check_func(matcher:Matcher, event: MessageEvent, bot:Bot, cmd:str, type:str = 'cmd') -> Tuple[bool, str]:
+async def default_permission_check_func(matcher:Matcher, event: Event, bot:Bot, cmd:Optional[str], type:str = 'cmd') -> Tuple[bool, Optional[str]]:
     """默认权限检查函数"""
-    if cmd is None: # 非命令调用
+    if not cmd: # 非命令调用
         return (True, None)
     
-    if event.user_id == int(bot.self_id): # bot 在控制自己，永远有权限
+    if not hasattr(event, 'user_id'): # 获取不到 user_id 字段默认返回成功
+        return (True, None)
+    else:
+        user_id = str(getattr(event, 'user_id'))
+
+    if user_id == bot.self_id: # bot 在控制自己，永远有权限
         return (True, None)
     
     cmd_list = [c.strip() for c in cmd.split(' ') if c.strip()]
     if(len(cmd_list) == 0): # rg
         return (True, None)
     
-    is_super_user = str(event.user_id) in config.ADMIN_USERID or await (SUPERUSER)(bot, event)
+    is_super_user = user_id in config.ADMIN_USERID or await (SUPERUSER)(bot, event)
     is_admin = is_super_user or isinstance(event, PrivateMessageEvent) or await (GROUP_ADMIN | GROUP_OWNER)(bot, event) # 超级管理员，私聊，群主，群管理，均视为admin
 
     common_cmd = ['', '查询', 'query', '设定', 'set', '更新', 'update', 'edit', '添加', 'new', '开启', 'on', '关闭', 'off', '重置', 'reset']
@@ -47,7 +53,7 @@ async def default_permission_check_func(matcher:Matcher, event: MessageEvent, bo
     else:
         return (True, None)
     
-async def gen_chat_text(event: MessageEvent, bot:Bot) -> str:
+async def gen_chat_text(event: MessageEvent, bot:Bot) -> Tuple[str, bool]:
     """生成合适的会话消息内容(eg. 将cq at 解析为真实的名字)"""
     if not isinstance(event, GroupMessageEvent):
         return event.get_plaintext(), False
@@ -69,7 +75,8 @@ async def gen_chat_text(event: MessageEvent, bot:Bot) -> str:
                             msg += f'@{user_name}' # 保持给bot看到的内容与真实用户看到的一致
         return msg, wake_up
     
-async def get_user_name(event: Union[MessageEvent, GroupIncreaseNoticeEvent], bot:Bot, user_id:int) -> str:
+
+async def get_user_name(event: Union[MessageEvent, GroupIncreaseNoticeEvent], bot:Bot, user_id:int) -> Optional[str]:
     """获取QQ用户名，如果GROUP_CARD为Ture优先群名片"""
     if (isinstance(event, GroupMessageEvent) or isinstance(event, GroupIncreaseNoticeEvent)) and config.GROUP_CARD:
         user_info = await bot.get_group_member_info(group_id=event.group_id, user_id=user_id, no_cache=False)

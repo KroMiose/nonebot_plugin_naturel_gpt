@@ -4,7 +4,7 @@ T = TypeVar("T", bound="Singleton")
 
 class Singleton_Meta(type):
     @property
-    def instance(cls:Type[T]) -> T:
+    def instance(cls:Type[T]) -> T: # type: ignore
         return cls()
     
 class Singleton(Generic[T], metaclass=Singleton_Meta):
