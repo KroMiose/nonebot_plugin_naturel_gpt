@@ -90,6 +90,9 @@ class Config(BaseModel, extra=Extra.ignore):
     FORBIDDEN_USERS: List[str]
     """拒绝回应的QQ号"""
 
+    FORBIDDEN_GROUPS: List[str]
+    """拒绝回应的群号"""
+
     WORD_FOR_WAKE_UP: List[str]
     """自定义触发词"""
     WORD_FOR_FORBIDDEN: List[str]
@@ -211,6 +214,7 @@ CONFIG_TEMPLATE = {
 
     'ADMIN_USERID': ['123456'],  # 管理员QQ号
     'FORBIDDEN_USERS': ['123456'],   # 拒绝回应的QQ号
+    'FORBIDDEN_GROUPS': ['123456'],   # 拒绝回应的群号
 
     'WORD_FOR_WAKE_UP': [],  # 自定义触发词
     'WORD_FOR_FORBIDDEN': [],  # 自定义禁止触发词

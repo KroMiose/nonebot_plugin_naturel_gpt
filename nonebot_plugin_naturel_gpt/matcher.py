@@ -66,9 +66,9 @@ async def handler(matcher_:Matcher, event: MessageEvent, bot:Bot) -> None:
     if event.get_user_id() in config.FORBIDDEN_USERS:
         if config.DEBUG_LEVEL > 0: logger.info(f"用户 {event.get_user_id()} 被屏蔽，拒绝处理消息")
         return
-    
-    if event.get_group_id() in config.FORBIDDEN_GROUPS:
-        if config.DEBUG_LEVEL > 0: logger.info(f"群 {event.get_group_id()} 被屏蔽，拒绝处理消息")
+    # 判断群是否被屏蔽
+    if str(event.group_id) in config.FORBIDDEN_GROUPS:
+        if config.DEBUG_LEVEL > 0: logger.info(f"群 {event.group_id} 被屏蔽，拒绝处理消息")
         return
 
     sender_name = await get_user_name(event=event, bot=bot, user_id=event.user_id) or '未知'
