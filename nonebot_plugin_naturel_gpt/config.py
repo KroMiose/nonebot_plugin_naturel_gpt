@@ -135,6 +135,9 @@ class Config(BaseModel, extra=Extra.ignore):
     NG_EXT_LOAD_LIST: List[ExtConfig]
     """加载的扩展列表"""
 
+    GROUP_CARD:bool
+    """优先读取群名片"""
+
     NG_CHECK_USER_NAME_HYPHEN:bool # 如果用户名中包含连字符，ChatGPT会将前半部分识别为名字，但一般情况下后半部分才是我们想被称呼的名字, eg. 策划-李华
     """检查用户名中的连字符"""
 
@@ -254,7 +257,8 @@ CONFIG_TEMPLATE = {
         'IS_ACTIVE': False,
         'EXT_CONFIG': {'arg': 'arg_value'},
     }],     # 加载的扩展列表
-
+    
+    'GROUP_CARD':True,
     'NG_CHECK_USER_NAME_HYPHEN': False, # 检查用户名中的连字符
 
     'ENABLE_MC_CONNECT': False,  # 是否启用MC服务器
