@@ -71,7 +71,7 @@ async def gen_chat_text(event: MessageEvent, bot:Bot) -> str:
     
 async def get_user_name(event: Union[MessageEvent, GroupIncreaseNoticeEvent], bot:Bot, user_id:int) -> str:
     """获取QQ用户名，优先群名片"""
-    if isinstance(event, GroupMessageEvent) or isinstance(event, GroupIncreaseNoticeEvent):
+    if (isinstance(event, GroupMessageEvent) or isinstance(event, GroupIncreaseNoticeEvent)) and config.GROUP_CARD:
         user_info = await bot.get_group_member_info(group_id=event.group_id, user_id=user_id, no_cache=False)
         user_name = user_info.get('card', None) or user_info.get('nickname', None)
     else:
