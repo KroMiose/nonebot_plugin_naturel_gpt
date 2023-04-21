@@ -38,7 +38,7 @@ class CustomExtension(Extension):
         """
         custom_config:dict = self.get_custom_config()  # 获取yaml中的配置信息
         cache=custom_config.get("cache",False)
-        proxy=custom_config.get("prxoy","http://127.0.0.1:7890")
+        proxy=custom_config.get("prxoy",None)
         custom_size=custom_config.get("size","512")
         style=custom_config.get("style",'anime style, colored-pencil')
         cache_path=custom_config.get("cache_path","./data/ng_paint")
@@ -46,7 +46,9 @@ class CustomExtension(Extension):
         # 从arg_dict中获取参数
         content = arg_dict.get('content', '')
         
-        openai.proxy ={'http':proxy}
+        if (proxy!=None):
+            openai.proxy = proxy
+        
         response = openai.Image.create(
           prompt= content + ',' + style ,
           n=1,
