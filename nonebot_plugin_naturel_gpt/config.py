@@ -92,6 +92,9 @@ class Config(BaseModel, extra=Extra.ignore):
     FORBIDDEN_USERS: List[str]
     """拒绝回应的QQ号"""
 
+    FORBIDDEN_GROUPS: List[str]
+    """拒绝回应的群号"""
+
     WORD_FOR_WAKE_UP: List[str]
     """自定义触发词"""
     WORD_FOR_FORBIDDEN: List[str]
@@ -134,6 +137,9 @@ class Config(BaseModel, extra=Extra.ignore):
 
     NG_EXT_LOAD_LIST: List[ExtConfig]
     """加载的扩展列表"""
+
+    GROUP_CARD:bool
+    """优先读取群名片"""
 
     NG_CHECK_USER_NAME_HYPHEN:bool # 如果用户名中包含连字符，ChatGPT会将前半部分识别为名字，但一般情况下后半部分才是我们想被称呼的名字, eg. 策划-李华
     """检查用户名中的连字符"""
@@ -226,6 +232,7 @@ CONFIG_TEMPLATE = {
 
     'ADMIN_USERID': ['123456'],  # 管理员QQ号
     'FORBIDDEN_USERS': ['123456'],   # 拒绝回应的QQ号
+    'FORBIDDEN_GROUPS': ['123456'],   # 拒绝回应的群号
 
     'WORD_FOR_WAKE_UP': [],  # 自定义触发词
     'WORD_FOR_FORBIDDEN': [],  # 自定义禁止触发词
@@ -254,7 +261,8 @@ CONFIG_TEMPLATE = {
         'IS_ACTIVE': False,
         'EXT_CONFIG': {'arg': 'arg_value'},
     }],     # 加载的扩展列表
-
+    
+    'GROUP_CARD':True,
     'NG_CHECK_USER_NAME_HYPHEN': False, # 检查用户名中的连字符
 
     'ENABLE_MC_CONNECT': False,  # 是否启用MC服务器
