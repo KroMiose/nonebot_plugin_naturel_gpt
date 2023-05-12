@@ -455,7 +455,17 @@ STEP 2. 运行镜像 (二选一执行)
   - SMTP_CODE: 邮箱 SMTP 授权码
   - SENDER_ADDR: 邮箱地址
 
-#### > 主动搜索扩展模块
+#### > 谷歌搜索扩展模块
+
+- 扩展文件: ext_google_search.py
+- 说明: 赋予 bot 使用谷歌搜索的能力
+- 配置项:
+  - proxy: 代理服务器地址 (默认:无)
+  - max_results: 搜索保留最大结果条数 (默认: 3)
+  - apiKey: 谷歌搜索 api_key [申请地址](https://developers.google.com/custom-search/v1/introduction?hl=zh-cn)
+  - cxKey: 谷歌搜索 cx_key [申请地址](https://programmablesearchengine.google.com/controlpanel/all)
+
+#### > 主动搜索扩展模块 (接口已失效)
 
 - 扩展文件: ext_search.py
 - 说明: 赋予 bot 主动获取互联网新信息的能力，实现类似 New Bing 的交互体验
