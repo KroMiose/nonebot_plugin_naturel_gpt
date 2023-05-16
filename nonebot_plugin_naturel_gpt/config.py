@@ -159,6 +159,9 @@ class Config(BaseModel, extra=Extra.ignore):
     MC_RCON_PASSWORD: str
     """MC服务器RCON密码"""
 
+    VERSION:str
+    """配置文件版本信息"""
+    
     DEBUG_LEVEL: int
     """debug level, [0, 1, 2, 3], 0 为关闭，等级越高debug信息越详细"""
 
@@ -271,8 +274,8 @@ CONFIG_TEMPLATE = {
     'MC_RCON_PORT': 25575,  # MC服务器RCON端口
     'MC_RCON_PASSWORD': '',  # MC服务器RCON密码
 
-
-    'DEBUG_LEVEL': 0  # debug level, [0, 1, 2], 0 为关闭，等级越高debug信息越详细
+    'VERSION':'1.0',
+    'DEBUG_LEVEL': 0,  # debug level, [0, 1, 2], 0 为关闭，等级越高debug信息越详细
 }
 
 driver = get_driver()
@@ -284,9 +287,8 @@ def get_config() ->Config:
     """获取config数据（为了能够reload建议使用此函数获取对象）"""
     return config
 
-def load_config_from_file_then_save():
-    """加载配置文件，然后保存回文件"""
-    global config
+def _load_config_obj_from_file()->Config:
+    """从配置文件加载Config对象"""
     # 读取配置文件
     with open(config_path, 'r', encoding='utf-8') as f:
         try:
@@ -306,7 +308,13 @@ def load_config_from_file_then_save():
                 config_obj_from_file[k] = CONFIG_TEMPLATE[k]
                 logger.info(f"Naturel GPT 配置文件缺少 {k} 项，将使用默认值")
 
-        config = Config.parse_obj(config_obj_from_file)
+        config_obj = Config.parse_obj(config_obj_from_file)
+    return config_obj
+
+def load_config_from_file_then_save():
+    """加载配置文件，然后保存回文件"""
+    global config
+    config = _load_config_obj_from_file()
 
     # 检查数据文件夹目录、扩展目录、日志目录是否存在 不存在则创建
     if not Path(config.NG_DATA_PATH[:-1]).exists():
@@ -321,6 +329,15 @@ def load_config_from_file_then_save():
         yaml.dump(config.dict(), f, allow_unicode=True, sort_keys=False)
     logger.info('Naturel GPT 配置文件加载成功')
 
+def reload_config():
+    """重载配置文件"""
+    global config
+    assert(config)
+
+    config_tmp = _load_config_obj_from_file()
+    for k in config.dict():
+        setattr(config, k, getattr(config_tmp,k))
+    logger.info(f'Naturel GPT 配置文件重载成功! ver:{config.VERSION}')
 
 # 检查config文件夹是否存在 不存在则创建
 if not Path("config").exists():
