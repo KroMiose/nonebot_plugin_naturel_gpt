@@ -16,6 +16,8 @@ class Chat:
     _chat_data:ChatData         # 此chat_key关联的聊天数据
     _preset_key = ''            # 预设标识
     _last_msg_time = 0          # 上次对话时间
+    _last_send_time = 0         # 上次发送时间
+    _last_gen_time = 0          # 上次生成对话时间
     is_insilence = False        # 是否处于沉默状态
     chat_attitude = 0           # 对话态度
     silence_time = 0            # 沉默时长
@@ -345,6 +347,16 @@ class Chat:
         """获取上一条消息的时间"""
         return self._last_msg_time
     
+    @property
+    def last_send_time(self) -> float:
+        """获取上一条发送的时间"""
+        return self._last_send_time
+    
+    @property
+    def last_gen_time(self) -> float:
+        """获取上一条生成的时间"""
+        return self._last_gen_time
+    
     # endregion 
 
 
@@ -449,5 +461,13 @@ class Chat:
         """重置当前会话所有预设，将丢失性格或历史数据"""
         self._chat_data.reset()
         return (True, None)
+    
+    def update_send_time(self) -> None:
+        """更新上次发送消息的时间"""
+        self._last_send_time = time.time()
+
+    def update_gen_time(self) -> None:
+        """更新上次生成消息的时间"""
+        self._last_gen_time = time.time()
     
     # endregion

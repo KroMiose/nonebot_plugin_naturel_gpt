@@ -2,6 +2,7 @@ from typing import Tuple, overload
 from .logger import logger
 from nonebot.utils import run_sync
 
+import re
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -102,6 +103,8 @@ class TextGenerator(Singleton["TextGenerator"]):
                     res = res[len(f"{custom.get('bot_name', 'AI')}："):]
                 # 替换多段回应中的回复起始标志
                 res = res.replace(f"\n\n{custom.get('bot_name', 'AI')}:", "*;")
+                # 正则匹配去掉多余的诸如 "[hh:mm:ss aa] bot_name:" 的形式
+                res = re.sub(r"\[\d{2}:\d{2}:\d{2} [AP]M\] ?" + custom.get('bot_name', 'AI') + r":", "", res)
             else:
                 response = openai.Completion.create(
                     model=self.config['model'],

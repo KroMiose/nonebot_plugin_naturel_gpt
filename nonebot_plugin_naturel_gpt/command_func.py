@@ -337,18 +337,18 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     if option_dict.get('global'):
         ChatManager.instance.toggle_auto_switch_for_all(enabled=False)
-        return {'msg': f"锁定所有会话 (￣▽￣)-ok!"}
+        return {'msg': f"锁定所有会话人格 (￣▽￣)-ok!"}
     elif option_dict.get('target'):
         target_chat_key = option_dict.get('target')
         target_chat = ChatManager.instance.get_chat(chat_key=target_chat_key)
         if target_chat:
             target_chat.toggle_auto_switch(enabled=False)
-            return {'msg': f"锁定会话: {target_chat_key} (￣▽￣)-ok!"}
+            return {'msg': f"锁定会话人格: {target_chat_key} (￣▽￣)-ok!"}
         else:
             return {'error': f"找不到会话: {target_chat_key}"}
     else:
         chat.toggle_auto_switch(enabled=False)
-        return {'msg': f"锁定当前会话 (￣▽￣)-ok!"}
+        return {'msg': f"锁定当前会话人格 (￣▽￣)-ok!"}
 
 @cmd.register(route='rg/unlock')
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
