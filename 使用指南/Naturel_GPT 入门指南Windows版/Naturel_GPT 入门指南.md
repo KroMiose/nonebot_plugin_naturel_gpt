@@ -1,5 +1,9 @@
 # 从零开始部署Naturel-GPT
 
+本期教程由 @投冥 提供，由本人代发，主题为 Windows 服务器（或本地主机）下的 Naturel_GPT 机器人部署流程，如果你是 Linux 用户，请参考[上期教程](https://api.xiaoheihe.cn/v3/bbs/app/api/web/share?link_id=103636245)
+
+另：扩展教程已在路上，预计周末发布
+
 ## 0. 什么是 Naturel_GPT ？
 
 Naturel_GPT 是一个开源免费的，基于 nonebot2 平台的聊天 AI 插件，它可以让你用自然语言和不同的人格进行交流，还可以调用各种扩展功能，如发送图片、语音、邮件，以及上网进行搜索等。你可以自定义 TA 的性格、回复风格等，也可以随时切换不同的人格。TA 还有一定的记忆能力，可以记住对你的印象和聊天记录，甚至可以涩涩（划掉）。还支持接入 Minecraft 服务器，让 TA 在游戏中执行各种复杂的 NBT 指令等。NG 是一个人性化、有趣、强大、可扩展的聊天 AI 插件。
@@ -8,29 +12,27 @@ Naturel_GPT 是一个开源免费的，基于 nonebot2 平台的聊天 AI 插件
 
 ### 效果演示
 
-<img src="95598a5d28ead94a13d828726f54f59a.jpg" alt="95598A5D28EAD94A13D828726F54F59A.jpg" style="zoom:25%;" />
+![截图](95598a5d28ead94a13d828726f54f59a.jpg)
 
-<img src="69aea77347968a60511eb449c37e2753.jpg" alt="69AEA77347968A60511EB449C37E2753.jpg" style="zoom:25%;" />
+![截图](69aea77347968a60511eb449c37e2753.jpg)
 
-<img src="83c7811057589675874781eb5a27caa9.jpg" alt="83C7811057589675874781EB5A27CAA9.jpg" style="zoom:25%;" />
+![截图](83c7811057589675874781eb5a27caa9.jpg)
 
 ![截图](5b29baf72ffabb12c9289b104ec17aba.png)
 
 ![截图](26ff4c8f7521c0e58d90aaf433dbc29d.png)
 
 ## 1. 准备
-1. 一台服务器：最好是海外服务器，国内服务器需要配置代理，详情见
-2. OPENAI官方接口：你需要在OPENAI申请一个官方接口，详细教程见
+1. 一台 Windows 服务器或者本机：最好是海外服务器，国内服务器需要配置代理
+2. OpenAI 官方账号：你需要一个OpenAI账号来获取Api_key
 
 ## 2. 部署流程
 
-本教程不包含扩展模块和 Minecraft 服务器接入相关的内容，如果反馈较好的话这些内容会在下一期更新
-
 ### 2.1 服务器准备
 
-这里使用大家最熟悉的Windows系统进行搭建，但是具体操作可能会有所不同，如果是新购买的服务器可以照抄选择相同版本。
+本部署流程以 Windows 服务器为例，本地的 Windows 电脑也可参照此教程进行部署，但本地部署需要保持开机状态才能使用，但用于体验 ai 聊天也能达到同样的效果，请自行权衡选择
 
-#### 2.1.1 连接服务器
+#### 2.1.1 连接服务器（本地部署请跳过）
 1. WIN+R打开运行
 
 2. 输入mstsc打开远程桌面
@@ -52,11 +54,13 @@ Naturel_GPT 是一个开源免费的，基于 nonebot2 平台的聊天 AI 插件
 [Python官网下载](https://www.python.org/downloads/release/python-31011/)
 
 拉到最下面选择 Windows installer (64-bit)，如果是32位系统就选择 Windows installer (32 -bit)
+安装过程比较简单，第一步勾选 "Add Python X.X to Path"，然后一路下一步直至安装完成即可
 
-还不懂可以看教程 [Python安装教程](https://zhuanlan.zhihu.com/p/569019068)
+如有其他问题可参考 [Python安装教程](https://zhuanlan.zhihu.com/p/569019068)
 
-#### 2.1.3 安装VS Code
+#### 2.1.3 安装VS Code (非必须)
 
+VS Code 是一个强大的文本编辑器，可以方便地查看代码和文本的格式与高亮显示内容，当然你足够强大，也可以直接使用记事本来编辑（
 [VS Code安装教程](https://www.runoob.com/w3cnote/vscode-tutorial.html?ivk_sa=1025883i)
 
 ### 2.2 安装 Nonebot2
@@ -102,7 +106,7 @@ nb #创建bot文件
 
 执行后如果出现如图所示界面表示进入 nonebot 项目构建流程，此时可使用方向键 上/下 选择选项，使用 回车 确定/勾选
 
-这里选择 bootstrap，然后回车
+这里选择 simple，然后回车
 
 ![截图](d019b39e60c6b3498673c9ec500ee1f1.png)
 
@@ -148,7 +152,7 @@ nb run
 
 第二个框，表示读取了config了的配置，如果发现自己的指令没有触发，请检查这里是否正确读取。
 
-第三个框，表示我们成功加载了那几个插件，这里我们加载了内置的echo。
+第三个框，表示我们成功加载了哪些插件，这里我们加载了内置的echo。(如果前面没有选择 echo 就不会出现，对使用无影响)
 
 第四个框，表示我们的nonebot和cqhttp成功链接，cqhttp的消息能够转发到nonebot啦！
 

@@ -117,6 +117,7 @@ async def handler(matcher_:Matcher, event: MessageEvent, bot:Bot) -> None:
         chat_type,
         chat_key,
         sender_name,
+        bot=bot,
     )
 
 """ ======== 注册通知响应器 ======== """
@@ -161,7 +162,8 @@ async def _(matcher_:Matcher, event: GroupIncreaseNoticeEvent, bot:Bot):  # even
         chat_type,
         chat_key,
         '[System]',
-        True
+        True,
+        bot=bot,
     )
 
 """ ======== 注册指令响应器 ======== """
@@ -225,7 +227,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
 
 
 """ ======== 消息响应方法 ======== """
-async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, matcher: Type[Matcher], chat_type: str, chat_key: str, sender_name: Optional[str] = None, wake_up: bool = False, loop_times=0, loop_data={}):
+async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, matcher: Type[Matcher], chat_type: str, chat_key: str, sender_name: Optional[str] = None, wake_up: bool = False, loop_times=0, loop_data={}, bot:Bot = None): # type: ignore
     """消息响应方法"""
 
     sender_name = sender_name or 'anonymous'
@@ -325,12 +327,18 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
             f.write(f"prompt 模板: \n{log_prompt_template}\n")
         logger.info(f"对话 prompt 模板已保存到日志文件: {chat_key}.{time.strftime('%Y-%m-%d %H-%M-%S')}.prompt.log")
 
+    chat.update_gen_time()  # 更新上次生成时间
     time_before_request = time.time()
     tg = TextGenerator.instance
     raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.preset_key, 'sender_name': sender_name})  # 生成对话结果
     if not success:  # 如果生成对话结果失败，则直接返回
         logger.warning("生成对话结果失败，跳过处理...")
         await matcher.finish(raw_res)
+
+    # 如果生成对话结果过程中启动了新的消息生成，则放弃本次生成结果
+    if chat.last_gen_time > time_before_request:
+        logger.warning("生成对话结果过程中启动了新的消息生成，放弃本次生成结果...")
+        return
 
     # 输出对话原始响应结果
     if config.DEBUG_LEVEL > 0: logger.info(f"原始回应: {raw_res}")
@@ -466,6 +474,14 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                     await matcher.send(MessageSegment.image(file=reply_content or ''))
                     logger.info(f"回复图片消息: {reply_content}")
 
+                elif key == 'file':  # 发送文件
+                    # await matcher.send(MessageSegment.file(file=reply_content or ''))
+                    try:
+                        await bot.call_api('upload_group_file', group_id=chat.chat_key.split('_')[1], file=reply_content, name=reply_content.split('/')[-1])    # type: ignore
+                    except Exception as e:
+                        logger.error(f"尝试上传文件失败: {e}")
+                    logger.info(f"回复文件消息: {reply_content}")
+
                 elif key == 'voice': # 发送语音
                     logger.info(f"回复语音消息: {reply_content}")
                     await matcher.send(Message(MessageSegment.record(file=reply_content, cache=False))) # type: ignore
@@ -501,8 +517,8 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
                 elif key == 'preset':  # 更新对话预设
                     original_preset = chat.active_preset.bot_self_introl[:]
-                    origin_snippet = reply_content.get('origin')
-                    new_snippet = reply_content.get('new')
+                    origin_snippet = reply_content.get('origin') # type: ignore
+                    new_snippet = reply_content.get('new') # type: ignore
                     if origin_snippet == '[empty]': # 如果原始内容为空，则直接追加新内容
                         new_bot_self_introl = f"{original_preset}; {new_snippet}"
                     else:   # 否则替换原始内容
@@ -536,6 +552,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
     if config.DEBUG_LEVEL > 0: logger.info(f"token消耗: {cost_token} | 对话响应: \"{raw_res}\"")
     await chat.update_chat_history_row(sender=chat.preset_key, msg=raw_res, require_summary=True, record_time=False)  # 更新全局对话历史记录
+    chat.update_send_time() # 更新对话发送时间
     # 更新对用户的对话信息
     await chat.update_chat_history_row_for_user(sender=chat.preset_key, msg=raw_res, userid=trigger_userid, username=sender_name, require_summary=True)
     PersistentDataManager.instance.save_to_file()  # 保存数据
@@ -565,7 +582,8 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 loop_times=loop_times + 1,
                 chat_type=chat_type,
                 is_tome=is_tome,
-                chat_key=chat_key
+                chat_key=chat_key,
+                bot=bot,
             )
         elif 'notify' in loop_data:   # 如果存在通知消息，将其作为触发消息再次调用对话
             await do_msg_response(
@@ -577,5 +595,6 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 loop_times=loop_times + 1,
                 chat_type=chat_type,
                 is_tome=is_tome,
-                chat_key=chat_key
+                chat_key=chat_key,
+                bot=bot,
             )
