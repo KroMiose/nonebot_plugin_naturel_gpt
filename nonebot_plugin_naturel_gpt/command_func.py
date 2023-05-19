@@ -139,6 +139,16 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
                 f"会话: {chat.chat_key} [{'启用' if chat.is_enable else '禁用'}]\n"
                 f"当前可用人格预设有:\n"
                 f"{presets_show_text}\n"
+                # f"=======================\n"
+                # f"+ 使用预设: rg set <预设名>\n"
+                # f"+ 查询预设: rg query <预设名>\n"
+                # f"+ 编辑预设: rg edit <预设名> <人格信息>\n"
+                # f"+ 添加预设: rg new <预设名> <人格信息>\n"
+                # f"+ 删除预设: rg del <预设名>\n"
+                # f"+ 改名预设: rg rename <原预设名> <新预设名>\n"
+                # f"+ 重置会话: rg reset\n"
+                # f"* 改名/重命名预设将丢失所有会话历史！\n"
+                # f"Tip: <人格信息> 是一段第三人称的人设说明(建议不超过200字)\n"
             )
         }
 
@@ -432,7 +442,10 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
         chat_info += f"+ {chat.generate_description(not option_dict.get('show'))}"
     return {'msg': f"当前已加载的会话:\n{chat_info}"}
 
-
+@cmd.register(route='rg/reload_config')
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    reload_config()
+    return {'msg': f"配置文件重载成功! ver:{config.VERSION}"}
 
 # 提交指令注册
 cmd.submit_commands()

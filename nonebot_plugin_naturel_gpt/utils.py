@@ -78,11 +78,16 @@ async def gen_chat_text(event: MessageEvent, bot:Bot) -> Tuple[str, bool]:
 
 async def get_user_name(event: Union[MessageEvent, GroupIncreaseNoticeEvent], bot:Bot, user_id:int) -> Optional[str]:
     """获取QQ用户名，如果GROUP_CARD为Ture优先群名片"""
-    if (isinstance(event, GroupMessageEvent) or isinstance(event, GroupIncreaseNoticeEvent)) and config.GROUP_CARD:
+    if isinstance(event, GroupMessageEvent) and event.sub_type == 'anonymous' and event.anonymous: # 匿名消息
+        return f'[匿名]{event.anonymous.name}'
+
+    if (isinstance(event, GroupMessageEvent) or isinstance(event, GroupIncreaseNoticeEvent)):
         user_info = await bot.get_group_member_info(group_id=event.group_id, user_id=user_id, no_cache=False)
-        user_name = user_info.get('card', None) or user_info.get('nickname', None)
+        user_name = user_info.get('nickname', None)
+        if config.GROUP_CARD:
+            user_name = user_info.get('card', None) or user_name
     else:
-        user_name = event.sender.nickname
+        user_name = event.sender.nickname if event.sender else event.get_user_id()
 
     if user_name and config.NG_CHECK_USER_NAME_HYPHEN and ('-' in user_name): # 检查用户名中的连字符, 去掉第一个连字符之前的部分
         user_name = user_name.split('-', 1)[1].replace('-', '').strip()
