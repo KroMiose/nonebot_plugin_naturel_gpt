@@ -17,7 +17,7 @@ ext_config:dict = {
     # 作者信息
     "author": "CCYellowStar",
     # 版本
-    "version": "0.0.3",
+    "version": "0.0.4",
     # 扩展简介
     "intro": "让机器人openai能上网搜索",
     # 调用时是否打断响应 启用后将会在调用后截断后续响应内容
@@ -48,7 +48,7 @@ class CustomExtension(Extension):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63'
         }
 
-        url = f"https://ddg-webapp-aagd.vercel.app/search?q={keyword}&max_results={max_results}&region=cn-zh"
+        url = f"https://ddg-webapp-search.vercel.app/search?q={keyword}&max_results={max_results}&region=cn-zh"
 
         res = requests.get(url, headers=headers,proxies={'http':proxy, 'https':proxy})
         print(res.json())
