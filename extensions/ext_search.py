@@ -48,7 +48,7 @@ class CustomExtension(Extension):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63'
         }
 
-        url = f"https://ddg-webapp-aagd.vercel.app/search?q={keyword}&max_results={max_results}&region=cn-zh"
+        url = f"https://ddg-webapp-search.vercel.app/search?q={keyword}&max_results={max_results}&region=cn-zh"
 
         res = requests.get(url, headers=headers,proxies={'http':proxy, 'https':proxy})
         print(res.json())
