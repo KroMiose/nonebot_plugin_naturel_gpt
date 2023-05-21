@@ -25,8 +25,8 @@ class ChatManager(Singleton["ChatManager"]):
         """是否存在指定chat_key"""
         return chat_key in self._chat_dict
     
-    def get_chat(self, chat_key: str) -> Optional[Chat]:
         """通过chat_key获取一个Chat对象"""
+    def get_chat(self, chat_key: str) -> Optional[Chat]:
         return self._chat_dict.get(chat_key, None)
     
     def get_all_chats(self) -> List[Chat]:
