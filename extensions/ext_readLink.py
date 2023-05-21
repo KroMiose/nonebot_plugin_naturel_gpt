@@ -1,5 +1,5 @@
 from .Extension import Extension
-import requests
+import requests, time
 import requests.utils
 
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
