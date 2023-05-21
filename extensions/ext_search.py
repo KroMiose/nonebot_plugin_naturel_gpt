@@ -17,7 +17,7 @@ ext_config:dict = {
     # 作者信息
     "author": "CCYellowStar",
     # 版本
-    "version": "0.0.3",
+    "version": "0.0.4",
     # 扩展简介
     "intro": "让机器人openai能上网搜索",
     # 调用时是否打断响应 启用后将会在调用后截断后续响应内容
