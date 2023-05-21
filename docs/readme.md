@@ -3,7 +3,7 @@
 # 🏠 首页
 
 > [!INFO]
-> 善用侧边栏导航
+> 善用侧边栏导航（移动端请点击左下角三条横线）
 
 ## 📖 说在前面
 
@@ -58,6 +58,14 @@
 - [ ] **主动聊天参与逻辑**: 尽力模仿人类的聊天参与逻辑，目标是让 TA 能够真正融入你的群组
 - [ ] **回忆录生成**: 记录你们之间的点点滴滴，获取你与 TA 的专属回忆
 
+## 🤝 贡献列表
+
+感谢以下开发者对本项目做出的贡献
+
+<a href="https://github.com/KroMiose/nonebot_plugin_naturel_gpt/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=KroMiose/nonebot_plugin_naturel_gpt&max=1000" />
+</a>
+
 ## ⭐ Star 历史
 
-[![Stargazers over time](https://starchart.cc/KroMiose/nonebot_plugin_naturel_gpt.svg)](https://starchart.cc/KroMiose/nonebot_plugin_naturel_gpt)
+[![Star History Chart](https://api.star-history.com/svg?repos=KroMiose/nonebot_plugin_naturel_gpt&type=Date)](https://star-history.com/#KroMiose/nonebot_plugin_naturel_gpt&Date)
