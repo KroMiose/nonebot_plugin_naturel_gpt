@@ -45,7 +45,7 @@ class CustomExtension(Extension):
         else:
             quote = requests.utils.quote(U) # type: ignore
             # quote = requests.utils.requote_uri(U) # TODO pylance 提示 quote 成员不存在，是否应该改为这个？
-        if keyword is None or keyword == self._last_keyword or time.time() - self._last_call_time < 10:
+        if quote is None or quote == self._last_keyword or time.time() - self._last_call_time < 10:
             return {}
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63'
