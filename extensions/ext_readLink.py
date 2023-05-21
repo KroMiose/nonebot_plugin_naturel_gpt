@@ -1,5 +1,5 @@
 from .Extension import Extension
-import requests
+import requests, time
 import requests.utils
 
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
@@ -18,9 +18,11 @@ ext_config:dict = {
     # 作者信息
     "author": "CCYellowStar",
     # 版本
-    "version": "0.0.1",
+    "version": "0.0.2",
     # 扩展简介
     "intro": "让机器人openai能阅读链接内容",
+    # 调用时是否打断响应 启用后将会在调用后截断后续响应内容
+    "interrupt": True,
 }
 
 class CustomExtension(Extension):
@@ -43,12 +45,13 @@ class CustomExtension(Extension):
         else:
             quote = requests.utils.quote(U) # type: ignore
             # quote = requests.utils.requote_uri(U) # TODO pylance 提示 quote 成员不存在，是否应该改为这个？
-
+        if quote is None or quote == self._last_keyword or time.time() - self._last_call_time < 10:
+            return {}
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63'
         }
 
-        url = f"https://ddg-webapp-aagd.vercel.app/url_to_text?url={quote}"
+        url = f"https://ddg-webapp-search.vercel.app/url_to_text?url={quote}"
 
         res = requests.get(url, headers=headers,proxies={'http':proxy, 'https':proxy})
         print(res.json())
@@ -79,6 +82,7 @@ class CustomExtension(Extension):
                 },
                 'wake_up': True,  # 是否再次响应
             }
+        
         else:
             return {
                 'text': f'[ext_readLink] 读取: {U} ...',
@@ -91,3 +95,5 @@ class CustomExtension(Extension):
 
     def __init__(self, custom_config: dict):
         super().__init__(ext_config.copy(), custom_config)
+        self._last_keyword = None
+        self._last_call_time = 0
