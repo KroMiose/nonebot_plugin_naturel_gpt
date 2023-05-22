@@ -223,6 +223,26 @@ max_results: 3
 
 <hr />
 
+## [主动搜索扩展模块](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_search.py)
+
+### 简介 <!-- {docsify-ignore} -->
+
+赋予 bot 主动获取互联网新信息的能力，实现类似 New Bing 的交互体验
+
+### 配置 <!-- {docsify-ignore} -->
+
+请根据下方示例配置中的注释来编辑你的扩展配置
+
+```yml
+# 你的代理，不填国内无法访问
+proxy: null
+
+# 搜索保留最大结果条数
+max_results: 3
+```
+
+<hr />
+
 ## [阅读链接内容扩展模块](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_readLink.py)
 
 ### 简介 <!-- {docsify-ignore} -->
