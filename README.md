@@ -28,7 +28,7 @@
 
 ### 🗺️ [2023/5/21] 文档站上线
 
-本次更新后插件文档站上线，欢迎访问 [ng.kro.zone](https://ng.kro.zone) 查看插件文档，感谢 [@lgc2333](https://github.com/lgc2333) 为文档站 建设/勘误/整理 提供的大力支持
+插件文档站上线，欢迎访问 [ng.kro.zone](https://ng.kro.zone) 查看插件文档，感谢 [@lgc2333](https://github.com/lgc2333) 为文档站 建设/勘误/整理 提供的大力支持
 
 ### 🏠 [2023/4/14] v2.1 Minecraft服务器接入与游戏指令扩展支持
 
