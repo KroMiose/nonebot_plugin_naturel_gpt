@@ -1,0 +1,25 @@
+.markdown-body,
+.text {
+  width: fit-content !important;
+  min-width: 0px !important;
+  margin: 0px !important;
+  padding: 15px !important;
+}
+
+.markdown-body code,
+.markdown-body kbd,
+.markdown-body pre,
+.markdown-body samp {
+  font-family: 'JetBrains Mono', 'Cascadia Mono', 'Segoe UI Mono',
+    'Liberation Mono', 'Menlo', 'Monaco', 'Consolas', 'Roboto Mono',
+    'Courier New', 'Courier', 'Microsoft YaHei UI', monospace !important;
+}
+
+.markdown-body code {
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+}
+
+.markdown-body > *:last-child > pre {
+  margin-bottom: 0px !important;
+}

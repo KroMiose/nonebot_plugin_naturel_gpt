@@ -23,9 +23,8 @@ from .command_func import cmd
 from .MCrcon.mcrcon import MCRcon   # fork from: https://github.com/Uncaught-Exceptions/MCRcon
 
 try:
-    import nonebot_plugin_htmlrender
-    from .text_func import text_to_img
-except:
+    from .text_to_image import md_to_img, text_to_img
+except ImportError:
     logger.warning('未安装 nonebot_plugin_htmlrender 插件，无法使用 text_to_img')
     config.ENABLE_MSG_TO_IMG = False
     config.ENABLE_COMMAND_TO_IMG = False
@@ -450,7 +449,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 if config.DEBUG_LEVEL > 0: logger.info(f"检测到纯符号或空文本: {reply_text}，跳过发送...")
                 continue
             if config.ENABLE_MSG_TO_IMG:
-                img = await text_to_img(reply_text)
+                img = await md_to_img(reply_text)
                 await matcher.send(MessageSegment.image(img))
             else:
                 await matcher.send(f"{reply_prefix}{reply_text}")
