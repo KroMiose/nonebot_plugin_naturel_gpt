@@ -6,7 +6,7 @@
 
 1. 安装本插件并启用，详见 NoneBot 关于插件安装的说明
 2. 加载插件并启动一次 NoneBot 服务
-3. 查看自动生成的 `config/naturel_gpt_config.yml` ，并在 `OPENAI_API_KEYS` 下填入你的 API Key
+3. 查看自动生成的 `config/naturel_gpt_config.yml` ，并在 `OPENAI_API_KEYS` 下填入你的 API Key，在 `ADMIN_USERID` 下填写插件管理者的QQ号，在 `OPENAI_PROXY_SERVER` 下填写你的代理地址（有部分人的网络环境不填也可以直接使用代理，但最好填一下）
 4. 在机器人所在的群组或者私聊窗口 `@TA` 或者 `提到 TA 当前的人格名` 即开始聊天
 5. 使用命令 `rg / 人格设定 / 人格 / identity` 即可查看 bot 信息和相关指令
 6. 启用后 bot 会开始监听所有消息并适时作出记录和回应，如果你不希望 bot 处理某条消息，请在消息前加上忽视符（默认为 `#` ，可在配置文件中修改）
