@@ -37,7 +37,7 @@ class CustomExtension(Extension):
             arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值}
         """
         custom_config: dict = self.get_custom_config()  # 获取yaml中的配置信息
-        proxy = custom_config.get("proxy", "")
+        proxy = custom_config.get("proxy")
         max_results = custom_config.get("max_results", 3)
 
         if proxy and (not proxy.startswith("http")):
