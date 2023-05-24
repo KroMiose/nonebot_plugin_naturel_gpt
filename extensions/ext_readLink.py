@@ -1,4 +1,3 @@
-import time
 import urllib.parse
 
 from httpx import AsyncClient
@@ -44,65 +43,70 @@ class CustomExtension(Extension):
 
         # 从arg_dict中获取参数
         url_will_read = arg_dict.get("url", None)
-        if url_will_read is None:
+        if not url_will_read:
             return {}
 
         quote = urllib.parse.quote(url_will_read, safe="")
         if (
-            quote is None
-            or quote == self._last_keyword
-            or time.time() - self._last_call_time < 10
+            quote
+            is None
+            # or quote == self._last_keyword
+            # or time.time() - self._last_call_time < 10
         ):
             return {}
 
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63",
         }
         url = "https://ddg-webapp-search.vercel.app/url_to_text"
 
-        async with AsyncClient(proxies=proxy) as cli:
-            res = (await cli.get(url, headers=headers, params={"url": quote})).json()
-        logger.debug(res)
-
         try:
-            data = res
-            text = data[0]["body"].replace("\n", " ")
-            title = data[0]["title"]
+            async with AsyncClient(proxies=proxy) as cli:
+                res = (
+                    await cli.get(url, headers=headers, params={"url": quote})
+                ).json()
+            text = res[0]["body"].replace("\n", " ")
+            title = res[0]["title"]
+        except:
+            logger.exception("读取链接失败")
+            return {"text": "[ext_readLink] 读取链接失败"}
+
+        translated = False
+        try:
             from_ = "auto"
             to_ = "en"
             d = {"data": [text, from_, to_]}
-
             async with AsyncClient(proxies=proxy) as cli:
                 # 翻译成英文
-                result = (
-                    await cli.post(
-                        "https://hf.space/embed/mikeee/gradio-gtr/+/api/predict", json=d
-                    )
-                ).json()
+                resp = await cli.post(
+                    "https://hf.space/embed/mikeee/gradio-gtr/+/api/predict",
+                    json=d,
+                    headers=headers,
+                )
+                assert resp.status_code // 100 == 2, resp.text
+                result = resp.json()
             text = result["data"][0]
-        except:
-            return {
-                "text": "[ext_readLink] 读取链接错误",
-                "image": None,  # 图片url
-                "voice": None,  # 语音url
-            }
+            translated = True
+        except Exception as e:
+            logger.error(f"翻译失败，直接将原文传入GPT ({e})")
 
         # 返回的信息将会被发送到会话中
-        if text != "Put something there, man.":
-            return {
-                "text": f"[ext_readLink] 读取: {url_will_read} ...",
-                "notify": {
-                    "sender": "[readLink]",
-                    "msg": f"[ext_readLink] 读取 {url_will_read} 结果:(To save tokens, the content of the web page has been translated into English)\n{text}\n{title}",
-                },
-                "wake_up": True,  # 是否再次响应
-            }
+        if text == "Put something there, man.":
+            text = "null"
+            title = ""
+            translated = False
 
+        tip = (
+            "(The content of the web page has been translated into English)"
+            if translated
+            else ""
+        )
+        title = f"Title: {title}\n" if title else ""
         return {
             "text": f"[ext_readLink] 读取: {url_will_read} ...",
             "notify": {
                 "sender": "[readLink]",
-                "msg": f"[ext_readLink] 读取 {url_will_read} 结果: null\n{title}",
+                "msg": f"[ext_readLink] Content of url {url_will_read} {tip}:\n{title}{text}",
             },
             "wake_up": True,  # 是否再次响应
         }
