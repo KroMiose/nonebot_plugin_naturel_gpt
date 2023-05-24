@@ -1,16 +1,12 @@
-import time
-import urllib.parse
-
-from httpx import AsyncClient
-from nonebot import logger
-
 from .Extension import Extension
+import requests, time
+import requests.utils
 
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
-ext_config: dict = {
-    "name": "readLink",  # 扩展名称，用于标识扩展
-    "arguments": {
-        "url": "str",  # 关键字
+ext_config:dict = {
+    "name": "readLink",   # 扩展名称，用于标识扩展
+    "arguments": {      
+        "url": "str",   # 关键字
     },
     # 扩展的描述信息，用于提示ai理解扩展的功能 *必填* 尽量简短 使用英文更节省token
     # 如果bot无法理解扩展的功能，可适当添加使用示例 格式: /#扩展名&参数1&...&参数n#/
@@ -29,83 +25,73 @@ ext_config: dict = {
     "interrupt": True,
 }
 
-
 class CustomExtension(Extension):
-    async def call(self, arg_dict: dict, _: dict) -> dict:
-        """当扩展被调用时执行的函数 *由扩展自行实现*
-
+    async def call(self, arg_dict: dict, ctx_data: dict) -> dict:
+        """ 当扩展被调用时执行的函数 *由扩展自行实现*
+        
         参数:
             arg_dict: dict, 由ai解析的参数字典 {参数名: 参数值}
         """
-        custom_config: dict = self.get_custom_config()  # 获取yaml中的配置信息
-        proxy = str(custom_config.get("proxy", ""))
-        if proxy and (not proxy.startswith("http")):
-            proxy = "http://" + proxy
-
+        custom_config:dict = self.get_custom_config()  # 获取yaml中的配置信息
+        proxy = str(custom_config.get('proxy', ''))
+        if proxy:
+            if not proxy.startswith('http'):
+                proxy = 'http://' + proxy        
         # 从arg_dict中获取参数
-        url_will_read = arg_dict.get("url", None)
-        if url_will_read is None:
-            return {}
+        U = arg_dict.get('url', None)
 
-        quote = urllib.parse.quote(url_will_read, safe="")
-        if (
-            quote is None
-            or quote == self._last_keyword
-            or time.time() - self._last_call_time < 10
-        ):
+        if U is None:
             return {}
-
+        else:
+            quote = requests.utils.quote(U) # type: ignore
+            # quote = requests.utils.requote_uri(U) # TODO pylance 提示 quote 成员不存在，是否应该改为这个？
+        if quote is None or quote == self._last_keyword or time.time() - self._last_call_time < 10:
+            return {}
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63"
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63'
         }
-        url = "https://ddg-webapp-search.vercel.app/url_to_text"
 
-        async with AsyncClient(proxies=proxy) as cli:
-            res = (await cli.get(url, headers=headers, params={"url": quote})).json()
-        logger.debug(res)
+        url = f"https://ddg-webapp-search.vercel.app/url_to_text?url={quote}"
 
+        res = requests.get(url, headers=headers,proxies={'http':proxy, 'https':proxy})
+        print(res.json())
+        
         try:
-            data = res
-            text = data[0]["body"].replace("\n", " ")
-            title = data[0]["title"]
+            data=res.json()    
+            text = data[0]['body'].replace("\n"," ")
+            title = data[0]['title']
             from_ = "auto"
             to_ = "en"
             d = {"data": [text, from_, to_]}
-
-            async with AsyncClient(proxies=proxy) as cli:
-                # 翻译成英文
-                result = (
-                    await cli.post(
-                        "https://hf.space/embed/mikeee/gradio-gtr/+/api/predict", json=d
-                    )
-                ).json()
-            text = result["data"][0]
+            r = requests.post("https://hf.space/embed/mikeee/gradio-gtr/+/api/predict", json=d) #翻译成英文
+            result = r.json()
+            text = result["data"][0]           
         except:
             return {
-                "text": "[ext_readLink] 读取链接错误",
-                "image": None,  # 图片url
-                "voice": None,  # 语音url
+                'text': f"[ext_readLink] 读取链接错误",
+                'image': None,  # 图片url
+                'voice': None,  # 语音url
             }
-
         # 返回的信息将会被发送到会话中
         if text != "Put something there, man.":
             return {
-                "text": f"[ext_readLink] 读取: {url_will_read} ...",
-                "notify": {
-                    "sender": "[readLink]",
-                    "msg": f"[ext_readLink] 读取 {url_will_read} 结果:(To save tokens, the content of the web page has been translated into English)\n{text}\n{title}",
+                'text': f'[ext_readLink] 读取: {U} ...',
+                'notify': {
+                    'sender': '[readLink]',
+                    'msg': f"[ext_readLink] 读取 {U} 结果:(To save tokens, the content of the web page has been translated into English)\n{text}\n{title}"
                 },
-                "wake_up": True,  # 是否再次响应
+                'wake_up': True,  # 是否再次响应
             }
-
-        return {
-            "text": f"[ext_readLink] 读取: {url_will_read} ...",
-            "notify": {
-                "sender": "[readLink]",
-                "msg": f"[ext_readLink] 读取 {url_will_read} 结果: null\n{title}",
-            },
-            "wake_up": True,  # 是否再次响应
-        }
+        
+        else:
+            return {
+                'text': f'[ext_readLink] 读取: {U} ...',
+                'notify': {
+                    'sender': '[readLink]',
+                    'msg': f"[ext_readLink] 读取 {U} 结果: null\n{title}"
+                },
+                'wake_up': True,  # 是否再次响应
+            }
 
     def __init__(self, custom_config: dict):
         super().__init__(ext_config.copy(), custom_config)
