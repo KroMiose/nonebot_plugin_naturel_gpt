@@ -1,6 +1,7 @@
 from email.header import Header
 from email.mime.text import MIMEText
 from email.utils import formataddr, parseaddr
+from typing import Optional
 
 from aiosmtplib import SMTP
 from nonebot import logger
@@ -44,6 +45,9 @@ class CustomExtension(Extension):
         content = arg_dict.get("content", None)
 
         # 从custom_config中获取配置信息
+        SMTP_ADDR = custom_config.get("SMTP_ADDR", "smtp.163.com")
+        SMTP_PORT = custom_config.get("SMTP_PORT", None)
+        SMTP_USE_TLS = custom_config.get("SMTP_USE_TLS", True)
         SMTP_CODE = custom_config.get("SMTP_CODE", None)  # 邮箱SMTP授权码
         SENDER_ADDR = custom_config.get("SENDER_ADDR", None)  # 发件人邮箱地址
         SENDER_NAME = ctx_data.get("bot_name", "MioseBot")  # 发件人名称
@@ -58,7 +62,9 @@ class CustomExtension(Extension):
                 "text": "[ext_mail] 缺少有效信息",
             }
 
-        miose_bot_opt = MioseBotOpt(SMTP_CODE, SENDER_ADDR, SENDER_NAME)
+        miose_bot_opt = MioseBotOpt(
+            SMTP_ADDR, SMTP_PORT, SMTP_USE_TLS, SENDER_ADDR, SENDER_NAME, SMTP_CODE
+        )
         ok, e = await miose_bot_opt.send_mail(receiver, title, content)
         if ok:
             return {"text": f"[ext_mail] 发送邮件({title})\n到{receiver}[成功]"}
@@ -73,11 +79,21 @@ class CustomExtension(Extension):
 
 
 class MioseBotOpt:
-    def __init__(self, mak, sender_addr, sender_name):
-        self.host_server = "smtp.163.com"
+    def __init__(
+        self,
+        host_server: str,
+        port: Optional[int],
+        use_tls: bool,
+        sender_addr: str,
+        sender_name: str,
+        ep_code: str,
+    ):
+        self.host_server = host_server
+        self.port = port
+        self.use_tls = use_tls
         self.sender = sender_addr
         self.send_name = sender_name
-        self.ep_code = mak
+        self.ep_code = ep_code
 
     async def send_mail(self, recv_mail, title, context):
         """发送邮件
@@ -92,18 +108,22 @@ class MioseBotOpt:
         from_mail, send_name = self.sender, self.send_name
         mail_title, mail_content = title, context
 
-        smtp = SMTP(self.host_server, use_tls=True)
-        await smtp.ehlo(self.host_server)
-        await smtp.login(self.sender, self.ep_code)
-        msg = MIMEText(mail_content, "html", "utf-8")
-        msg["Subject"] = Header(mail_title, "utf-8")
-        msg["From"] = MioseBotOpt._format_addr("%s <%s>" % (send_name, from_mail))
-        msg["To"] = MioseBotOpt._format_addr("%s <%s>" % (recv_mail, recv_mail))
-        try:  # 发送邮件
+        # 发送邮件
+        smtp = SMTP(self.host_server, port=self.port, use_tls=True)
+        try:
+            await smtp.connect()
+            await smtp.login(self.sender, self.ep_code)
+            msg = MIMEText(mail_content, "html", "utf-8")
+            msg["Subject"] = Header(mail_title, "utf-8")
+            msg["From"] = MioseBotOpt._format_addr("%s <%s>" % (send_name, from_mail))
+            msg["To"] = MioseBotOpt._format_addr("%s <%s>" % (recv_mail, recv_mail))
             await smtp.sendmail(from_mail, recv_mail, msg.as_string())
             await smtp.quit()
+
         except Exception as e:
+            smtp.close()
             return False, e
+
         return True, None
 
     @staticmethod
