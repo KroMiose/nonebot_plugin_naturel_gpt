@@ -419,8 +419,8 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                     # 将扩展返回的结果插入到回复列表的最后
                     reply_list.append(ext_res)
             except Exception as e:
-                logger.error(f"调用扩展 {ext_name} 时发生错误: {e}")
-                if config.DEBUG_LEVEL > 0: logger.error(f"[扩展 {ext_name}] 错误详情: {traceback.format_exc()}")
+                logger.error(f"调用扩展 {ext_name} 时发生错误: {e!r}")
+                if config.DEBUG_LEVEL > 0: logger.opt(exception=e).exception(f"[扩展 {ext_name}] 错误详情:")
                 ext_res = {}
                 # 将错误的调用指令从原始回复中去除，避免bot从上下文中学习到错误的指令用法
                 raw_res = re.sub(r"/.?#(.+?)#.?/", '', raw_res)

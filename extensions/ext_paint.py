@@ -42,7 +42,7 @@ class CustomExtension(Extension):
         """
         custom_config: dict = self.get_custom_config()  # 获取yaml中的配置信息
         cache = custom_config.get("cache", False)
-        proxy = custom_config.get("prxoy", None)
+        proxy = custom_config.get("proxy", None)
         custom_size = custom_config.get("size", "512")
         style = custom_config.get("style", "anime style, colored-pencil")
         cache_path = anyio.Path(custom_config.get("cache_path", "./data/ng_paint"))
