@@ -1,11 +1,15 @@
+import time
+
+from httpx import AsyncClient
+from nonebot import logger
+
 from .Extension import Extension
-import requests, time
 
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
-ext_config:dict = {
-    "name": "search",   # 扩展名称，用于标识扩展
-    "arguments": {      
-        "keyword": "str",   # 关键字
+ext_config: dict = {
+    "name": "search",  # 扩展名称，用于标识扩展
+    "arguments": {
+        "keyword": "str",  # 关键字
     },
     # 扩展的描述信息，用于提示ai理解扩展的功能 *必填* 尽量简短 使用英文更节省token
     # 如果bot无法理解扩展的功能，可适当添加使用示例 格式: /#扩展名&参数1&...&参数n#/
@@ -24,58 +28,80 @@ ext_config:dict = {
     "interrupt": True,
 }
 
+
 class CustomExtension(Extension):
-    async def call(self, arg_dict: dict, ctx_data: dict) -> dict:
-        custom_config:dict = self.get_custom_config()
-        proxy = custom_config.get('proxy', None)
-        max_results = custom_config.get('max_results', 3)
-        apiKey= custom_config.get('apiKey', None)
-        cxKey = custom_config.get('cxKey', None)
+    async def call(self, arg_dict: dict, _: dict) -> dict:
+        custom_config: dict = self.get_custom_config()
+        proxy = custom_config.get("proxy", None)
+        max_results = custom_config.get("max_results", 3)
+        apiKey = custom_config.get("apiKey", None)
+        cxKey = custom_config.get("cxKey", None)
 
         if apiKey is None or cxKey is None:
             return {
-                    "text": f"[Google] 未配置apiKey或cxKey",
-                    "image": None,
-                    "voice": None,
-                }
+                "text": "[Google] 未配置apiKey或cxKey",
+                "image": None,
+                "voice": None,
+            }
 
-        if proxy:
-            if not proxy.startswith('http'):
-                proxy = 'http://' + proxy        
+        if proxy and (not proxy.startswith("http")):
+            proxy = "http://" + proxy
 
-        keyword = arg_dict.get('keyword', None)
+        keyword = arg_dict.get("keyword", None)
 
-        if keyword is None or keyword == self._last_keyword or time.time() - self._last_call_time < 10:
+        if (
+            keyword is None
+            or keyword == self._last_keyword
+            or time.time() - self._last_call_time < 10
+        ):
             return {}
 
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63'
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.63"
         }
 
-        url=f"https://www.googleapis.com/customsearch/v1?key={apiKey}&cx={cxKey}&q={keyword}"
-
-        res=requests.get(url,headers=headers, proxies={"http": proxy, "https": proxy})
-        response=res.json()
+        url = "https://www.googleapis.com/customsearch/v1"
+        try:
+            async with AsyncClient(proxies=proxy) as cli:
+                response = (
+                    await cli.get(
+                        url,
+                        headers=headers,
+                        params={"key": apiKey, "cx": cxKey, "q": keyword},
+                    )
+                ).json()
+        except:
+            logger.exception("搜索失败")
+            return {
+                "text": "[Google] 搜索失败",
+                "image": None,
+                "voice": None,
+            }
 
         try:
-            items=response["items"]
-            text="\n".join([f"[{item['title']}] {item['snippet']} - from: {item['link']}" for item in items[:max_results]])
+            items = response["items"]
+            text = "\n".join(
+                [
+                    f"[{item['title']}] {item['snippet']} - from: {item['link']}"
+                    for item in items[:max_results]
+                ]
+            )
         except:
             return {
-                    "text": f"[Google] 未找到关于'{keyword}'的信息",
-                    "image": None,
-                    "voice": None,
-                }
+                "text": f"[Google] 未找到关于'{keyword}'的信息",
+                "image": None,
+                "voice": None,
+            }
 
         self._last_keyword = keyword
         self._last_call_time = time.time()
         return {
-            'text': f'[Google] 搜索: {keyword} [完成]',
-            'notify': {
-                'sender': f'[Search results for {keyword} (The following infomation will not be sent directly to chat. Please summarize the search results as desired in your reply)]',
-                'msg': f"{text}"
+            "text": f"[Google] 搜索: {keyword} [完成]",
+            "notify": {
+                "sender": f"[Search results for {keyword} (The following information will not be sent directly to chat. Please summarize the search results as desired in your reply)]",
+                "msg": f"{text}",
             },
-            'wake_up': True, 
+            "wake_up": True,
         }
 
     def __init__(self, custom_config: dict):
