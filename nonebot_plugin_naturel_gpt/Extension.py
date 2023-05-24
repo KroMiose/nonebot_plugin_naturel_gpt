@@ -79,7 +79,7 @@ def load_extensions(config: Dict[str, Any]) -> None:
         return
 
     ext_path = config['NG_EXT_PATH']
-    abs_ext_path = os.path.abspath(ext_path)
+    # abs_ext_path = os.path.abspath(ext_path)
 
     # 在当前文件夹下建立一个ext_cache文件夹 用于暂存扩展模块的.py文件以便于动态导入
     if not os.path.exists('ext_cache'):
@@ -134,8 +134,10 @@ def load_extensions(config: Dict[str, Any]) -> None:
                 global_extensions[ext.get_config().get('name').lower()] = ext
                 logger.info(f"加载扩展模块 {tmpExt.get('EXT_NAME')} 成功！")
             except Exception as e:
-                logger.error(
-                    f"加载扩展模块 \"{tmpExt.get('EXT_NAME')}\" 失败 | 原因: {e}")
+                logger.error(f"加载扩展模块 \"{tmpExt.get('EXT_NAME')}\" 失败 | 原因: {e}")
+                if isinstance(e, ImportError):
+                    logger.error("可能是该扩展所需的依赖未安装，请尝试在 NoneBot 所在的虚拟环境中执行下方命令解决")
+                    logger.opt(colors=True).error(f'<y>pip install "{e.name}"</y>')
 
 
 global_extensions: Dict[str, Extension] = {}  # 用于存储所有扩展的字典

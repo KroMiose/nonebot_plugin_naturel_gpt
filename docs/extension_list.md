@@ -47,6 +47,9 @@
 # R18 图片获取设置
 # 0 为不获取，1 为获取，2 为混合获取
 r18: 0
+
+# 请求 API 使用的代理
+proxy: null
 ```
 
 <hr />
@@ -175,7 +178,7 @@ api_url: 127.0.0.1:50021
 
 <hr />
 
-## [使用网易邮箱向指定地址发送邮件](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_email.py)
+## [发送邮件](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_email.py)
 
 ### 简介 <!-- {docsify-ignore} -->
 
@@ -191,6 +194,15 @@ SMTP_CODE: ''
 
 # [必填] 邮箱地址
 SENDER_ADDR: ''
+
+# SMTP 连接地址，默认 163 邮箱
+SMTP_ADDR: 'smtp.163.com'
+
+# SMTP 连接端口，没有特殊需求不要填写
+SMTP_PORT: null
+
+# SMTP 是否使用 TLS 连接，没有特殊需求不要填写
+SMTP_USE_TLS: true
 ```
 
 <hr />
