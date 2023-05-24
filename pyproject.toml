@@ -18,6 +18,7 @@ numpy = "^1.21.3"
 httpx = "^0.24.1"
 aiosmtplib = "^2.0.1"
 anyio = "^3.6.2"
+aiohttp = "^3.8.4"
 
 [tool.nonebot]
 # adapters = [{name = "Spigot", module_name = "nonebot.adapters.spigot", project_link = "nonebot-adapter-spigot", desc = "MineCraft通信适配"}]
