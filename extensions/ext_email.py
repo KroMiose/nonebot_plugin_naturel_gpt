@@ -1,3 +1,4 @@
+from nonebot import logger
 from .Extension import Extension
 from email.utils import parseaddr, formataddr
 from email.mime.text import MIMEText
@@ -56,10 +57,11 @@ class CustomExtension(Extension):
             }
 
         miose_bot_opt = MioseBotOpt(SMTP_CODE, SENDER_ADDR, SENDER_NAME)
-        ok, _ = await miose_bot_opt.send_mail(receiver, title, content)
+        ok, e = await miose_bot_opt.send_mail(receiver, title, content)
         if ok:
             return {"text": f"[ext_mail] 发送邮件({title})\n到{receiver}[成功]"}
 
+        logger.opt(exception=e).exception("邮件发送失败")
         return {
             "text": "[ext_mail] 邮件发送失败",
         }
