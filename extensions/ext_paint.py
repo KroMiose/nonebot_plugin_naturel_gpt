@@ -79,7 +79,7 @@ class CustomExtension(Extension):
         if not (await cache_path.exists()):
             await cache_path.mkdir(parents=True)
         filename = f"{uuid.uuid4()}.png" if cache else "temp.png"
-        image_path = cache_path / filename
+        image_path = await (cache_path / filename).resolve()
 
         try:
             async with AsyncClient(proxies=proxy) as cli:
@@ -99,7 +99,7 @@ class CustomExtension(Extension):
         # 返回的信息将会被发送到会话中
         return {
             "text": "画好了!",  # 文本信息
-            "image": (await image_path.resolve()).as_uri(),  # 图片url
+            "image": image_path.as_uri(),  # 图片url
             "voice": None,  # 语音url
         }
 

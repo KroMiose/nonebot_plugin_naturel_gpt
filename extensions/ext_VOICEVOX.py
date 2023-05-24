@@ -280,7 +280,7 @@ class CustomExtension(Extension):
         if is_base64:
             audio_data = base64.b64decode(audio_data)
 
-        file_path = anyio.Path(file_name)
+        file_path = await (anyio.Path(file_name)).resolve()
         await file_path.write_bytes(audio_data)
         local_url = file_path.as_uri()
 
