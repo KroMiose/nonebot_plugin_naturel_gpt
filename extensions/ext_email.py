@@ -1,9 +1,11 @@
-from nonebot import logger
-from .Extension import Extension
-from email.utils import parseaddr, formataddr
-from email.mime.text import MIMEText
 from email.header import Header
+from email.mime.text import MIMEText
+from email.utils import formataddr, parseaddr
+
 from aiosmtplib import SMTP
+from nonebot import logger
+
+from .Extension import Extension
 
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config: dict = {
