@@ -96,17 +96,17 @@ class CustomExtension(Extension):
             title = ""
             translated = False
 
-        tip = (
-            "(The content of the web page has been translated into English)"
-            if translated
-            else ""
-        )
-        title = f"Title: {title}\n" if title else ""
+        title = f"[Title: {title}]\n" if title else ""
         return {
             "text": f"[ext_readLink] 读取: {url_will_read} ...",
             "notify": {
                 "sender": "[readLink]",
-                "msg": f"[ext_readLink] Content of url {url_will_read} {tip}:\n{title}{text}",
+                "msg": (
+                    f"[Content of url {url_will_read} "
+                    f"({'The content of the web page has been translated into English. ' if translated else ''}"
+                    f"The following information will not be sent directly to chat. Please summarize the content as desired in your reply)]\n"
+                    f"{title}{text}"
+                ),
             },
             "wake_up": True,  # 是否再次响应
         }
