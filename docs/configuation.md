@@ -191,6 +191,9 @@ ENABLE_COMMAND_TO_IMG: true
 # 是否将机器人回复通过图片输出
 ENABLE_MSG_TO_IMG: false
 
+# 机器人通过文本生成图片的最大宽度（像素）
+IMG_MAX_WIDTH: 800
+
 # 是否开启主动记忆（需要同时启用记忆扩展）
 # 开启后 Bot 会自行管理记忆
 MEMORY_ACTIVE: true
