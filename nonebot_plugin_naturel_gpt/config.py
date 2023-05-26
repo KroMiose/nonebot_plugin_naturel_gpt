@@ -314,11 +314,7 @@ def _load_config_obj_from_file()->Config:
         config_obj = Config.parse_obj(config_obj_from_file)
     return config_obj
 
-def load_config_from_file_then_save():
-    """加载配置文件，然后保存回文件"""
-    global config
-    config = _load_config_obj_from_file()
-
+def save_config():
     # 检查数据文件夹目录、扩展目录、日志目录是否存在 不存在则创建
     if not Path(config.NG_DATA_PATH[:-1]).exists():
         Path(config.NG_DATA_PATH[:-1]).mkdir(parents=True)
@@ -330,6 +326,13 @@ def load_config_from_file_then_save():
     # 保存配置文件
     with open(config_path, 'w', encoding='utf-8') as f:
         yaml.dump(config.dict(), f, allow_unicode=True, sort_keys=False)
+
+def load_config_from_file_then_save():
+    """加载配置文件，然后保存回文件"""
+    global config
+    config = _load_config_obj_from_file()
+
+    save_config()
     logger.info('Naturel GPT 配置文件加载成功')
 
 def reload_config():

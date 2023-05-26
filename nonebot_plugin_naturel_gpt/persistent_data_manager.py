@@ -220,6 +220,8 @@ class PersistentDataManager(Singleton["PersistentDataManager"]):
 
     def load_from_file(self):
         """使用json从文件中载入数据(兼容pickle)"""
+        self._inited = False
+        self._datas = {}
         if not self._compatibility_load():
             if config.NG_DATA_PICKLE:
                 self._load_from_file_pickle()
