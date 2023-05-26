@@ -17,8 +17,7 @@ ext_config = {
     # 扩展的描述信息，用于提示 AI 理解扩展的功能，尽量简短
     # 使用英文更节省 token，添加使用示例可提高 bot 调用的准确度
     "description": (
-        "<Lolicon API Search> "
-        "Get an anime picture information and URL by keywords. "
+        "Get an anime picture information and URL by keywords using Lolicon API. "
         "Use this extension when you wants to find and send an anime picture. "
         '(For example, if you want to get a image info by ("可爱") AND ("白丝" OR "黑丝") keywords, '
         "you can use /#anime_pic_search&可爱,白丝|黑丝#/ in your response.)"
