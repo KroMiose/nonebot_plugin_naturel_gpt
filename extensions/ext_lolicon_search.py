@@ -19,8 +19,8 @@ ext_config = {
     "description": (
         "Get an anime image information and URL by tags or keywords. "
         "Use this extension when you wants to find and send an image. "
-        'For example, if you want to get a image info for ("萝莉") AND ("白丝" OR "黑丝"), '
-        "you can use this in your response: /#lolicon_search&萝莉,白丝|黑丝#/"
+        'For example, if you want to get a image info of ("萝莉") AND ("白丝" OR "黑丝") tags, '
+        "you can use /#lolicon_search&萝莉,白丝|黑丝#/ in your response."
     ),
     # 参考词，用于上下文参考使用，为空则每次都会被参考 (消耗 token)
     "refer_word": [],
@@ -71,6 +71,8 @@ class CustomExtension(Extension):
                 "wake_up": True,
             }
 
+        tag_str = ",".join(tag)
+
         try:
             async with AsyncClient(proxies=self.proxy) as cli:
                 resp = await cli.post(
@@ -105,11 +107,11 @@ class CustomExtension(Extension):
         pic_list: Optional[list] = data.get("data")
         if (not pic_list) or (not isinstance(pic_list, list)):
             return {
-                "text": f"[Lolicon Search] 未找到关于 {tag} 的图片",
+                "text": f"[Lolicon Search] 未找到关于 {tag_str} 的图片",
                 "notify": {
                     "sender": "[Lolicon Search]",
                     "msg": (
-                        f"No picture found for `{tag}`. "
+                        f"No picture found for `{tag_str}`. "
                         "You should remind the user of this message. "
                         "You can also adjust the tag text and search again using this extension."
                     ),
@@ -119,7 +121,7 @@ class CustomExtension(Extension):
 
         pic_data = pic_list[0]
         return {
-            "text": f"[Lolicon Search] 搜索 {tag} 完毕 (PID: {pic_data['pid']})",
+            "text": f"[Lolicon Search] 搜索 {tag_str} 完毕 (PID: {pic_data['pid']})",
             "notify": {
                 "sender": "[Lolicon Search]",
                 "msg": (
