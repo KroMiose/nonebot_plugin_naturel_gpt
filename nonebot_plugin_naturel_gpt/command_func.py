@@ -435,6 +435,49 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     load_extensions(config.dict())
     return {'msg': f"重载扩展成功!"}
 
+def find_ext(ext_name: str) -> Optional[ExtConfig]:
+    ext_name = ext_name.lower()
+    for ext in config.NG_EXT_LOAD_LIST:
+        if ext.EXT_NAME.lower() == ext_name:
+            return ext
+    return None
+
+@cmd.register(route='rg/ext/on', params=['ext_name'])
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    ext_name: str = param_dict.get('ext_name')
+    ext = find_ext(ext_name)
+    if not ext:
+        ext_paths = [
+            x for x in Path(config.NG_EXT_PATH).glob('ext_*.py')
+            if x.stem.lower() == f"ext_{ext_name.lower()}"
+        ]
+        if not ext_paths:
+            return {'msg': "找不到此扩展或此扩展未加载"}
+
+        ext_file_path = ext_paths[0]
+        ext = ExtConfig(EXT_NAME=ext_file_path.stem, IS_ACTIVE=False, EXT_CONFIG={})
+        config.NG_EXT_LOAD_LIST.append(ext)
+
+    if ext.IS_ACTIVE:
+        return {'msg': "该扩展已经被启用过了"}
+
+    ext.IS_ACTIVE = True
+    save_config()
+    return {'msg': "已启用该扩展，请使用 `rg ext reload` 指令重载所有扩展"}
+
+@cmd.register(route='rg/ext/off', params=['ext_name'])
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    ext = find_ext(param_dict.get('ext_name'))
+    if not ext:
+        return {'msg': "找不到此扩展或此扩展未加载"}
+
+    if ext.IS_ACTIVE:
+        ext.IS_ACTIVE = False
+        save_config()
+        return {'msg': "已禁用该扩展，请使用 `rg ext reload` 指令重载所有扩展"}
+
+    return {'msg': "该扩展已经被禁用过了"}
+
 @cmd.register(route='rg/chats')
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     chat_info:str = ''
