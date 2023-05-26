@@ -8,7 +8,7 @@ from .Extension import Extension
 # 扩展的配置信息，用于 AI 理解扩展的功能
 ext_config = {
     # 扩展名称，用于标识扩展，尽量简短
-    "name": "lolicon_search",
+    "name": "anime_pic_search",
     # 填写期望的参数类型，尽量使用简单类型，便于 AI 理解含义使用
     # 注意：实际接收到的参数类型为 str (由 AI 生成)，需要自行转换
     "arguments": {
@@ -17,10 +17,10 @@ ext_config = {
     # 扩展的描述信息，用于提示 AI 理解扩展的功能，尽量简短
     # 使用英文更节省 token，添加使用示例可提高 bot 调用的准确度
     "description": (
-        "Get an anime image information and URL by tags or keywords. "
-        "Use this extension when you wants to find and send an image. "
-        'For example, if you want to get a image info of ("萝莉") AND ("白丝" OR "黑丝") tags, '
-        "you can use /#lolicon_search&萝莉,白丝|黑丝#/ in your response."
+        "Get an anime picture information and URL by keywords. "
+        "Use this extension when you wants to find and send an anime picture. "
+        '(For example, if you want to get a image info by ("可爱") AND ("白丝" OR "黑丝") keywords, '
+        "you can use /#anime_pic_search&可爱,白丝|黑丝#/ in your response.)"
     ),
     # 参考词，用于上下文参考使用，为空则每次都会被参考 (消耗 token)
     "refer_word": [],
@@ -127,9 +127,9 @@ class CustomExtension(Extension):
                 "msg": (
                     "[This is the image information found through your search. "
                     "This image was found on Pixiv. "
-                    "You MUST send this image out in your response USING MARKDOWN FORMAT, "
+                    "You HAVE TO send this image out in your response using MARKDOWN FORMAT, "
                     "e.g. ![Image Title](Image URL) . "
-                    "DO NOT USE ANY EXTENSIONS IN YOUR RESPONSE THIS TIME.]\n"
+                    "Do not use any extensions in your response this time.]\n"
                     f"URL: {pic_data['urls']['original']}\n"
                     f"Title: {pic_data['title']} (PID: {pic_data['pid']})\n"
                     f"Author: {pic_data['author']} (UID: {pic_data['uid']})\n"
