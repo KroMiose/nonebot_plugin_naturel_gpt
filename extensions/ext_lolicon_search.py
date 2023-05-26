@@ -120,7 +120,7 @@ class CustomExtension(Extension):
                     "This image was posted on Pixiv. "
                     "This image will NOT send to chat directly, "
                     "you need to send this image out in your response using Markdown format like this: "
-                    '"![Image Title](Image URL)".'
+                    '"![Image Title](Image URL)". '
                     'DO NOT use any other extensions like "#readLink&url#" in your response this time.]\n'
                     f"URL: {pic_data['urls']['original']}\n"
                     f"Title: {pic_data['title']} (PID: {pic_data['pid']})\n"
