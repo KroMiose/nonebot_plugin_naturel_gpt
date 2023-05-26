@@ -125,39 +125,39 @@ class TextGenerator(Singleton["TextGenerator"]):
         """总结文本生成"""
         openai.api_key = key
         try:
-            if self.config['model'].startswith('gpt-3.5-turbo'):
-                response = openai.ChatCompletion.create(
-                    model=self.config['model'],
-                    messages=[
-                        {'role': 'user', 'content': prompt},
-                    ],
-                    temperature=0.6,
-                    max_tokens=self.config.get('max_summary_tokens', 512),
-                    top_p=1,
-                    frequency_penalty=0,
-                    presence_penalty=0,
-                    timeout=self.config.get('timeout', 30),
-                )
-                res = ''
-                for choice in response.choices: # type: ignore
-                    res += choice.message.content
-                res = res.strip()
-                # 去掉头尾引号（如果有）
-                if res.startswith('"') and res.endswith('"'):
-                    res = res[1:-1]
-                if res.startswith("'") and res.endswith("'"):
-                    res = res[1:-1]
-            else:
-                response = openai.Completion.create(
-                    model="text-davinci-003",
-                    prompt=prompt,
-                    temperature=0.6,
-                    max_tokens=self.config.get('max_summary_tokens', 512),
-                    top_p=1,
-                    frequency_penalty=0,
-                    presence_penalty=0
-                )
-                res = response['choices'][0]['text'].strip() # type: ignore
+            response = openai.ChatCompletion.create(
+                model='gpt-3.5-turbo',
+                messages=[
+                    {'role': 'user', 'content': prompt},
+                ],
+                temperature=0.6,
+                max_tokens=self.config.get('max_summary_tokens', 512),
+                top_p=1,
+                frequency_penalty=0.2,
+                presence_penalty=0.2,
+                timeout=self.config.get('timeout', 30),
+            )
+            res = ''
+            for choice in response.choices: # type: ignore
+                res += choice.message.content
+            res = res.strip()
+            # 去掉头尾引号（如果有）
+            if res.startswith('"') and res.endswith('"'):
+                res = res[1:-1]
+            if res.startswith("'") and res.endswith("'"):
+                res = res[1:-1]
+            # if self.config['model'].startswith('gpt-3.5-turbo'):
+            # else:
+            #     response = openai.Completion.create(
+            #         model="text-davinci-003",
+            #         prompt=prompt,
+            #         temperature=0.6,
+            #         max_tokens=self.config.get('max_summary_tokens', 512),
+            #         top_p=1,
+            #         frequency_penalty=0,
+            #         presence_penalty=0
+            #     )
+            #     res = response['choices'][0]['text'].strip() # type: ignore
             return res, True
         except Exception as e:
             return f"请求 OpenAi Api 时发生错误: {e}", False
@@ -166,39 +166,39 @@ class TextGenerator(Singleton["TextGenerator"]):
         """印象文本生成"""
         openai.api_key = key
         try:
-            if self.config['model'].startswith('gpt-3.5-turbo'):
-                response = openai.ChatCompletion.create(
-                    model=self.config['model'],
-                    messages=[
-                        {'role': 'user', 'content': prompt},
-                    ],
-                    temperature=0.6,
-                    max_tokens=self.config.get('max_summary_tokens', 512),
-                    top_p=1,
-                    frequency_penalty=0,
-                    presence_penalty=0,
-                    timeout=self.config.get('timeout', 30),
-                )
-                res = ''
-                for choice in response.choices: # type: ignore
-                    res += choice.message.content
-                res = res.strip()
-                # 去掉头尾引号（如果有）
-                if res.startswith('"') and res.endswith('"'):
-                    res = res[1:-1]
-                if res.startswith("'") and res.endswith("'"):
-                    res = res[1:-1]
-            else:
-                response = openai.Completion.create(
-                    model="text-davinci-003",
-                    prompt=prompt,
-                    temperature=0.6,
-                    max_tokens=self.config.get('max_summary_tokens', 512),
-                    top_p=1,
-                    frequency_penalty=0,
-                    presence_penalty=0
-                )
-                res = response['choices'][0]['text'].strip() # type: ignore
+            response = openai.ChatCompletion.create(
+                model='gpt-3.5-turbo-0301',
+                messages=[
+                    {'role': 'user', 'content': prompt},
+                ],
+                temperature=0.6,
+                max_tokens=self.config.get('max_summary_tokens', 512),
+                top_p=1,
+                frequency_penalty=0.2,
+                presence_penalty=0.2,
+                timeout=self.config.get('timeout', 30),
+            )
+            res = ''
+            for choice in response.choices: # type: ignore
+                res += choice.message.content
+            res = res.strip()
+            # 去掉头尾引号（如果有）
+            if res.startswith('"') and res.endswith('"'):
+                res = res[1:-1]
+            if res.startswith("'") and res.endswith("'"):
+                res = res[1:-1]
+            # if self.config['model'].startswith('gpt-3.5-turbo'):
+            # else:
+            #     response = openai.Completion.create(
+            #         model="text-davinci-003",
+            #         prompt=prompt,
+            #         temperature=0.6,
+            #         max_tokens=self.config.get('max_summary_tokens', 512),
+            #         top_p=1,
+            #         frequency_penalty=0,
+            #         presence_penalty=0
+            #     )
+            #     res = response['choices'][0]['text'].strip() # type: ignore
             return res, True
         except Exception as e:
             return f"请求 OpenAi Api 时发生错误: {e}", False
