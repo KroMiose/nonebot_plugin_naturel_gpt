@@ -18,10 +18,10 @@ ext_config = {
     # 使用英文更节省 token，添加使用示例可提高 bot 调用的准确度
     "description": (
         "Get an anime image information and URL using Lolicon API. "
-        "Use this extension when you wants to get an anime picture. "
-        '(For example, if you want to get a image info using keywords ("可爱") AND ("白丝" OR "黑丝"), '
-        'you can use "/#anime_pic_search&可爱,白丝|黑丝#/" in your response. '
-        'Tou can also get a random image by using "/#anime_pic_search&#/".)'
+        "Use this extension when you want to get or send an anime picture. "
+        '(For example, You can get a random image by using "/#anime_pic_search&#/"; '
+        'And you can also get a image info in keywords ("可爱") AND ("白丝" OR "黑丝") '
+        'by using "/#anime_pic_search&可爱,白丝|黑丝#/" in your response. '
     ),
     # 参考词，用于上下文参考使用，为空则每次都会被参考 (消耗 token)
     "refer_word": [],
@@ -109,7 +109,7 @@ class CustomExtension(Extension):
             }
 
         pic_data = pic_list[0]
-        tip = "搜索 {tag_str} 完毕" if tag_str else "已获取一张随机图"
+        tip = f"搜索 {tag_str} 完毕" if tag_str else "已获取一张随机图"
         tags = f"\nTags: {', '.join(pic_data['tags'])}" if self.provide_tags else ""
         return {
             "text": f"[Lolicon Search] {tip} (PID: {pic_data['pid']})",
