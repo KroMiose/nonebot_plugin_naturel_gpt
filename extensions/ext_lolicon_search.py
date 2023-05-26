@@ -18,7 +18,7 @@ ext_config = {
     # 使用英文更节省 token，添加使用示例可提高 bot 调用的准确度
     "description": (
         "Get an anime image information and URL using Lolicon API. "
-        "Use this extension when you want to get or send an anime picture. "
+        "Use this extension when user requests you to get or send an anime picture (动漫图, 色图, 涩图). "
         'For example, You can get a random image info by using "/#get_anime_pic&#/"; '
         'Or you can get a image info with keywords ("可爱") AND ("白丝" OR "黑丝") '
         'by using "/#get_anime_pic&可爱,白丝|黑丝#/" in your response.'
