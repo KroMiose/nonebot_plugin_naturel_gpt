@@ -29,7 +29,7 @@ ext_config = {
     # 作者信息
     "author": "student_2333",
     # 版本
-    "version": "0.0.1",
+    "version": "0.1.0",
     # 扩展简介
     "intro": "让 Bot 能够使用 LoliconAPI 搜索并获取图片信息，并让 Bot 使用 Markdown 格式发出",
     # 调用时是否打断响应 启用后将会在调用后截断后续响应内容
@@ -52,6 +52,7 @@ class CustomExtension(Extension):
         self.r18: int = config.get("r18", 0)
         self.pic_proxy: Optional[str] = config.get("pic_proxy")
         self.exclude_ai: bool = config.get("exclude_ai", False)
+        self.provide_tags: bool = config.get("provide_tags", True)
 
         if self.proxy and (not self.proxy.startswith("http")):
             self.proxy = "http://" + self.proxy
@@ -120,6 +121,7 @@ class CustomExtension(Extension):
             }
 
         pic_data = pic_list[0]
+        tags = f"\nTags: {', '.join(pic_data['tags'])}" if self.provide_tags else ""
         return {
             "text": f"[Lolicon Search] 搜索 {tag_str} 完毕 (PID: {pic_data['pid']})",
             "notify": {
@@ -127,13 +129,13 @@ class CustomExtension(Extension):
                 "msg": (
                     "[This is the image information found through your search. "
                     "This image was found on Pixiv. "
-                    "You HAVE TO send this image out in your response using MARKDOWN FORMAT, "
-                    "e.g. ![Image Title](Image URL) . "
-                    "Do not use any extensions in your response this time.]\n"
+                    "You MUST SEND this image out in your response USING MARKDOWN FORMAT like: "
+                    '"![Image Title](Image URL)".'
+                    "Do not use any other extensions in your response this time.]\n"
                     f"URL: {pic_data['urls']['original']}\n"
                     f"Title: {pic_data['title']} (PID: {pic_data['pid']})\n"
-                    f"Author: {pic_data['author']} (UID: {pic_data['uid']})\n"
-                    f"Tags: {', '.join(pic_data['tags'])}"
+                    f"Author: {pic_data['author']} (UID: {pic_data['uid']})"
+                    f"{tags}"
                 ),
             },
             "wake_up": True,

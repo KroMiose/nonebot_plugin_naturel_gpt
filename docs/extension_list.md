@@ -96,6 +96,10 @@ r18: 0
 # 是否在结果中排除 AI 图
 exclude_ai: false
 
+# 是否将图片的 Tag 提供给 Bot
+# 禁用此项可能有助于提高 Bot 的发图意愿
+provide_tags: true
+
 # 请求 API 使用的代理
 proxy: null
 
