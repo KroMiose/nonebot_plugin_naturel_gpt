@@ -118,8 +118,8 @@ class CustomExtension(Extension):
                 "msg": (
                     "[This is the image information found through your extension call. "
                     "This image was posted on Pixiv. "
-                    "This image will not send to chat directly, "
-                    "you MUST SEND this image out in your response MANUALLY using Markdown format like this: "
+                    "This image will NOT be AUTOMATICALLY SENT to the chat, "
+                    "you MUST MANUALLY SEND this image out in your response using Markdown format like this: "
                     '"![Image Title](Image URL)". '
                     'DO NOT use any other extensions like "#readLink&url#" in your response this time.]\n'
                     f"URL: {pic_data['urls']['original']}\n"
