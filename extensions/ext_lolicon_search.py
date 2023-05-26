@@ -17,10 +17,11 @@ ext_config = {
     # 扩展的描述信息，用于提示 AI 理解扩展的功能，尽量简短
     # 使用英文更节省 token，添加使用示例可提高 bot 调用的准确度
     "description": (
-        "Get an anime picture information and URL by keywords using Lolicon API. "
-        "Use this extension when you wants to find and send an anime picture. "
-        '(For example, if you want to get a image info by ("可爱") AND ("白丝" OR "黑丝") keywords, '
-        "you can use /#anime_pic_search&可爱,白丝|黑丝#/ in your response.)"
+        "Get an anime image information and URL using Lolicon API. "
+        "Use this extension when you wants to get an anime picture. "
+        '(For example, if you want to get a image info using keywords ("可爱") AND ("白丝" OR "黑丝"), '
+        'you can use "/#anime_pic_search&可爱,白丝|黑丝#/" in your response. '
+        'Tou can also get a random image by using "/#anime_pic_search&#/".)'
     ),
     # 参考词，用于上下文参考使用，为空则每次都会被参考 (消耗 token)
     "refer_word": [],
@@ -58,21 +59,8 @@ class CustomExtension(Extension):
             self.proxy = "http://" + self.proxy
 
     async def call(self, arg_dict: Dict[str, str], _: dict) -> dict:
-        tag = [x for x in arg_dict.get("tag", "").split(",") if x]
-        if not tag:
-            return {
-                "text": "[Lolicon Search] GPT 没有给出要搜索的 Tag",
-                "notify": {
-                    "sender": "[Lolicon Search]",
-                    "msg": (
-                        "You did not specify the tag to search for! "
-                        "Please call this extension with your tags again."
-                    ),
-                },
-                "wake_up": True,
-            }
-
-        tag_str = ",".join(tag)
+        tag = [x for x in arg_dict.get("tag", "").split(",") if x] or None
+        tag_str = ",".join(tag) if tag else ""
 
         try:
             async with AsyncClient(proxies=self.proxy) as cli:
@@ -121,15 +109,17 @@ class CustomExtension(Extension):
             }
 
         pic_data = pic_list[0]
+        tip = "搜索 {tag_str} 完毕" if tag_str else "已获取一张随机图"
         tags = f"\nTags: {', '.join(pic_data['tags'])}" if self.provide_tags else ""
         return {
-            "text": f"[Lolicon Search] 搜索 {tag_str} 完毕 (PID: {pic_data['pid']})",
+            "text": f"[Lolicon Search] {tip} (PID: {pic_data['pid']})",
             "notify": {
                 "sender": "[Lolicon Search]",
                 "msg": (
-                    "[This is the image information found through your search. "
-                    "This image was found on Pixiv. "
-                    "You MUST SEND this image out in your response USING MARKDOWN FORMAT like: "
+                    "[This is the image information found through your extension call. "
+                    "This image was posted on Pixiv. "
+                    "This image will NOT send to chat directly, "
+                    "so you need to send this image out in your response using Markdown format like this: "
                     '"![Image Title](Image URL)".'
                     "Do not use any other extensions in your response this time.]\n"
                     f"URL: {pic_data['urls']['original']}\n"
