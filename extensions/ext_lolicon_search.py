@@ -17,9 +17,9 @@ ext_config = {
     # 扩展的描述信息，用于提示 AI 理解扩展的功能，尽量简短
     # 使用英文更节省 token，添加使用示例可提高 bot 调用的准确度
     "description": (
-        "Get an anime image information and URL for specified tags. "
-        "Use this extension when you wants to send an anime image. "
-        'If you want to get a image info for ("萝莉") AND ("白丝" OR "黑丝"), '
+        "Get an anime image information and URL by tags or keywords. "
+        "Use this extension when you wants to find and send an image. "
+        'For example, if you want to get a image info for ("萝莉") AND ("白丝" OR "黑丝"), '
         "you can use this in your response: /#lolicon_search&萝莉,白丝|黑丝#/"
     ),
     # 参考词，用于上下文参考使用，为空则每次都会被参考 (消耗 token)
