@@ -8,7 +8,7 @@ from .Extension import Extension
 # 扩展的配置信息，用于 AI 理解扩展的功能
 ext_config = {
     # 扩展名称，用于标识扩展，尽量简短
-    "name": "anime_pic_search",
+    "name": "get_anime_pic",
     # 填写期望的参数类型，尽量使用简单类型，便于 AI 理解含义使用
     # 注意：实际接收到的参数类型为 str (由 AI 生成)，需要自行转换
     "arguments": {
@@ -19,9 +19,9 @@ ext_config = {
     "description": (
         "Get an anime image information and URL using Lolicon API. "
         "Use this extension when you want to get or send an anime picture. "
-        'For example, You can get a random image by using "/#anime_pic_search&#/"; '
-        'And you can also get a image info in keywords ("可爱") AND ("白丝" OR "黑丝") '
-        'by using "/#anime_pic_search&可爱,白丝|黑丝#/" in your response.'
+        'For example, You can get a random image info by using "/#get_anime_pic&#/"; '
+        'Or you can get a image info with keywords ("可爱") AND ("白丝" OR "黑丝") '
+        'by using "/#get_anime_pic&可爱,白丝|黑丝#/" in your response.'
     ),
     # 参考词，用于上下文参考使用，为空则每次都会被参考 (消耗 token)
     "refer_word": [],
