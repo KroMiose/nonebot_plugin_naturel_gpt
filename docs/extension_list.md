@@ -73,6 +73,38 @@ r18: false
 
 <hr />
 
+## [Lolicon Search](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_lolicon_search.py)
+
+### 简介 <!-- {docsify-ignore} -->
+
+作者：[lgc2333](https://github.com/lgc2333)
+
+让 Bot 能够主动搜索色图信息，搜索后 Bot 会以 Markdown 格式将图片发出  
+当开启回复转图时，Bot 的回复图中将会展示此图片
+
+~~有一定程度防止封号与风控~~
+
+### 配置 <!-- {docsify-ignore} -->
+
+请根据下方示例配置中的注释来编辑你的扩展配置
+
+```yml
+# R18 图片获取设置
+# 0 为不获取，1 为获取，2 为混合获取
+r18: 0
+
+# 是否在结果中排除 AI 图
+exclude_ai: false
+
+# 请求 API 使用的代理
+proxy: null
+
+# 图片反代地址，非必要不需要修改
+pic_proxy: null
+```
+
+<hr />
+
 ## [发送表情包](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_emoticon.py)
 
 ### 简介 <!-- {docsify-ignore} -->
@@ -209,6 +241,8 @@ SMTP_USE_TLS: true
 
 ## [谷歌搜索扩展模块](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_google_search.py)
 
+!> 请勿与其它搜索拓展一并启用
+
 ### 简介 <!-- {docsify-ignore} -->
 
 赋予 bot 使用谷歌搜索的能力
@@ -236,6 +270,8 @@ max_results: 3
 <hr />
 
 ## [主动搜索扩展模块](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_search.py)
+
+!> 请勿与其它搜索拓展一并启用
 
 ### 简介 <!-- {docsify-ignore} -->
 
