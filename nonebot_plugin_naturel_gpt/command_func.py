@@ -447,6 +447,9 @@ def find_ext(ext_name: str) -> Optional[ExtConfig]:
 @cmd.register(route='rg/ext/on', params=['ext_name'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     ext_name: str = param_dict.get('ext_name')
+    if not ext_name:
+        return {'msg': "未指定扩展名!"}
+
     ext_name = ext_name.lower()
     ext = find_ext(ext_name)
     if not ext:
@@ -473,7 +476,11 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
 
 @cmd.register(route='rg/ext/off', params=['ext_name'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
-    ext = find_ext(param_dict.get('ext_name'))
+    ext_name: str = param_dict.get('ext_name')
+    if not ext_name:
+        return {'msg': "未指定扩展名!"}
+
+    ext = find_ext(ext_name)
     if not ext:
         return {'msg': "找不到此扩展或此扩展未加载"}
 
