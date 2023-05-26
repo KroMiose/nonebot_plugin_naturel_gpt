@@ -98,8 +98,8 @@ class CustomExtension(Extension):
         return {
             "text": f"[Google] 搜索: {keyword} [完成]",
             "notify": {
-                "sender": f"[Search results for {keyword} (The following information will not be sent directly to chat. Please summarize the search results as desired in your reply)]",
-                "msg": f"{text}",
+                "sender": "[Google]",
+                "msg": f"[Search results for {keyword} (The following information will not be sent directly to chat. Please summarize the search results as desired in your reply)]\n{text}",
             },
             "wake_up": True,
         }
