@@ -1,14 +1,15 @@
+import difflib
+import os
 from typing import Optional
-from .logger import logger
+
+import requests
+
 from .chat import Chat
 from .chat_manager import ChatManager
-from .Extension import Extension, global_extensions, load_extensions
-
-import difflib
-import requests
-import os
-
 from .config import *
+from .Extension import global_extensions, load_extensions
+from .logger import logger
+from .persistent_data_manager import PersistentDataManager
 
 # 选项类型  bool只要有就是True，str则需要跟上参数值
 option_type = {
@@ -493,6 +494,7 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
 @cmd.register(route='rg/reload_config')
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     reload_config()
+    PersistentDataManager.instance.load_from_file()
     return {'msg': f"配置文件重载成功! ver:{config.VERSION}"}
 
 # 提交指令注册
