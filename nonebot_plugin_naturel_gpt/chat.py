@@ -1,5 +1,6 @@
 ﻿import copy
 import time
+import random
 from typing import Dict, List, Optional, Tuple
 from .logger import logger
 from . import Extension
@@ -79,6 +80,11 @@ class Chat:
         if config.DEBUG_LEVEL > 0: logger.info(f"添加对话历史行: {messageunit}  |  当前对话历史行数: {len(impression_data.chat_history)}")
         # 保证对话历史不超过最大长度
         if len(impression_data.chat_history) > config.USER_MEMORY_SUMMARY_THRESHOLD and require_summary:
+            _times = 0
+            while len(impression_data.chat_history) > 1000 and _times < 100:
+                # 随机删除一些对话历史行
+                impression_data.chat_history.pop(random.randint(0, len(impression_data.chat_history) - 1))
+                _times += 1
             prev_summarized = f"Last impression:{impression_data.chat_impression}\n\n"
             history_str = '\n'.join(impression_data.chat_history)
             prompt = (   # 以机器人的视角总结对话
@@ -95,7 +101,8 @@ class Chat:
                 return
             # logger.info(f"生成对话印象摘要: {global_preset_userdata[self.preset_key][userid]['chat_impression']}")
             if config.DEBUG_LEVEL > 0: logger.info(f"印象生成消耗token数: {tg.cal_token_count(prompt + impression_data.chat_impression)}")
-            impression_data.chat_history = impression_data.chat_history[-config.CHAT_MEMORY_SHORT_LENGTH:]
+            # impression_data.chat_history = impression_data.chat_history[-config.CHAT_MEMORY_SHORT_LENGTH:]
+            impression_data.chat_history = []   # 直接清空对话历史
 
     def set_memory(self, mem_key:str, mem_value:str = '') -> None:
         """为当前预设设置记忆"""
