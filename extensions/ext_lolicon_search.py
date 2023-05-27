@@ -8,7 +8,7 @@ from .Extension import Extension
 # 扩展的配置信息，用于 AI 理解扩展的功能
 ext_config = {
     # 扩展名称，用于标识扩展，尽量简短
-    "name": "lolicon_search",
+    "name": "get_anime_pic",
     # 填写期望的参数类型，尽量使用简单类型，便于 AI 理解含义使用
     # 注意：实际接收到的参数类型为 str (由 AI 生成)，需要自行转换
     "arguments": {
@@ -17,10 +17,11 @@ ext_config = {
     # 扩展的描述信息，用于提示 AI 理解扩展的功能，尽量简短
     # 使用英文更节省 token，添加使用示例可提高 bot 调用的准确度
     "description": (
-        "Get an anime image information and URL for specified tags. "
-        "Use this extension when you wants to send an anime image. "
-        'If you want to get a image info for ("萝莉") AND ("白丝" OR "黑丝"), '
-        "you can use this in your response: /#lolicon_search&萝莉,白丝|黑丝#/"
+        "Get an anime image information using Lolicon API. "
+        "Use this extension when user wants you to get an anime picture (色图, 涩图, and so on). "
+        'For example, You can get a random image by using "/#get_anime_pic&#/" in your response; '
+        'Or you can get a image by tags or keywords, such as "/#get_anime_pic&可爱,白丝|黑丝#/" '
+        '(will search ("可爱") AND ("白丝" OR "黑丝")).'
     ),
     # 参考词，用于上下文参考使用，为空则每次都会被参考 (消耗 token)
     "refer_word": [],
@@ -29,7 +30,7 @@ ext_config = {
     # 作者信息
     "author": "student_2333",
     # 版本
-    "version": "0.0.1",
+    "version": "0.1.0",
     # 扩展简介
     "intro": "让 Bot 能够使用 LoliconAPI 搜索并获取图片信息，并让 Bot 使用 Markdown 格式发出",
     # 调用时是否打断响应 启用后将会在调用后截断后续响应内容
@@ -52,24 +53,14 @@ class CustomExtension(Extension):
         self.r18: int = config.get("r18", 0)
         self.pic_proxy: Optional[str] = config.get("pic_proxy")
         self.exclude_ai: bool = config.get("exclude_ai", False)
+        self.provide_tags: bool = config.get("provide_tags", True)
 
         if self.proxy and (not self.proxy.startswith("http")):
             self.proxy = "http://" + self.proxy
 
     async def call(self, arg_dict: Dict[str, str], _: dict) -> dict:
-        tag = [x for x in arg_dict.get("tag", "").split(",") if x]
-        if not tag:
-            return {
-                "text": "[Lolicon Search] GPT 没有给出要搜索的 Tag",
-                "notify": {
-                    "sender": "[Lolicon Search]",
-                    "msg": (
-                        "You did not specify the tag to search for! "
-                        "Please call this extension with your tags again."
-                    ),
-                },
-                "wake_up": True,
-            }
+        tag = [x for x in arg_dict.get("tag", "").split(",") if x] or None
+        tag_str = ",".join(tag) if tag else ""
 
         try:
             async with AsyncClient(proxies=self.proxy) as cli:
@@ -105,11 +96,11 @@ class CustomExtension(Extension):
         pic_list: Optional[list] = data.get("data")
         if (not pic_list) or (not isinstance(pic_list, list)):
             return {
-                "text": f"[Lolicon Search] 未找到关于 {tag} 的图片",
+                "text": f"[Lolicon Search] 未找到关于 {tag_str} 的图片",
                 "notify": {
                     "sender": "[Lolicon Search]",
                     "msg": (
-                        f"No picture found for `{tag}`. "
+                        f"No picture found for `{tag_str}`. "
                         "You should remind the user of this message. "
                         "You can also adjust the tag text and search again using this extension."
                     ),
@@ -118,20 +109,23 @@ class CustomExtension(Extension):
             }
 
         pic_data = pic_list[0]
+        tip = f"搜索 {tag_str} 完毕" if tag_str else "已获取一张随机图"
+        tags = f"\nTags: {', '.join(pic_data['tags'])}" if self.provide_tags else ""
         return {
-            "text": f"[Lolicon Search] 搜索 {tag} 完毕 (PID: {pic_data['pid']})",
+            "text": f"[Lolicon Search] {tip} (PID: {pic_data['pid']})",
             "notify": {
                 "sender": "[Lolicon Search]",
                 "msg": (
-                    "[This is the image information found through your search. "
-                    "This image was found on Pixiv. "
-                    "You MUST send this image out in your response USING MARKDOWN FORMAT, "
-                    "e.g. ![Image Title](Image URL) . "
-                    "DO NOT USE ANY EXTENSIONS IN YOUR RESPONSE THIS TIME.]\n"
+                    "[This is the image information found through your extension call. "
+                    "This image was posted on Pixiv. "
+                    "This image will NOT BE AUTOMATICALLY SENT to the chat, "
+                    "you MUST MANUALLY SEND this image out in your response USING MARKDOWN FORMAT "
+                    '("![Image Title](Image URL)")!'
+                    'DO NOT use any other extensions like "#readLink&url#" in your response this time.]\n'
                     f"URL: {pic_data['urls']['original']}\n"
                     f"Title: {pic_data['title']} (PID: {pic_data['pid']})\n"
-                    f"Author: {pic_data['author']} (UID: {pic_data['uid']})\n"
-                    f"Tags: {', '.join(pic_data['tags'])}"
+                    f"Author: {pic_data['author']} (UID: {pic_data['uid']})"
+                    f"{tags}"
                 ),
             },
             "wake_up": True,
