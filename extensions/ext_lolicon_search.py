@@ -1,7 +1,9 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from httpx import AsyncClient
 from nonebot import logger
+from nonebot_plugin_naturel_gpt.config import config as plugin_config
+from pydantic import BaseModel, Field
 
 from .Extension import Extension
 
@@ -18,10 +20,11 @@ ext_config = {
     # 使用英文更节省 token，添加使用示例可提高 bot 调用的准确度
     "description": (
         "Get an anime image information using Lolicon API. "
-        "Use this extension when user wants you to get an anime picture (色图, 涩图, and so on). "
-        'For example, You can get a random image by using "/#get_anime_pic&#/" in your response; '
-        'Or you can get a image by tags or keywords, such as "/#get_anime_pic&可爱,白丝|黑丝#/" '
-        '(will search ("可爱") AND ("白丝" OR "黑丝")).'
+        "Use this extension at the end of response when user wants an anime image (图, 色图, and more). "
+        'Typically, you can pass empty tag like "/#get_anime_pic&#/" for a random image. '
+        'You can also specify Chinese tags (do not include "#" in tags) '
+        'like "/#get_anime_pic&tag1,tag2|tag3#/" (means "tag1" AND ("tag2" OR "tag3")) '
+        "to get a specific image."
     ),
     # 参考词，用于上下文参考使用，为空则每次都会被参考 (消耗 token)
     "refer_word": [],
@@ -30,14 +33,39 @@ ext_config = {
     # 作者信息
     "author": "student_2333",
     # 版本
-    "version": "0.1.0",
+    "version": "0.2.0",
     # 扩展简介
-    "intro": "让 Bot 能够使用 LoliconAPI 搜索并获取图片信息，并让 Bot 使用 Markdown 格式发出",
+    "intro": "更人性化的 Lolicon API 色图扩展，让 AI 可以知道自己发了什么",
     # 调用时是否打断响应 启用后将会在调用后截断后续响应内容
     "interrupt": True,
     # 可用会话类型 (`server` 即 MC服务器 | `chat` 即 QQ聊天)
     "available": ["chat"],
 }
+
+
+class LoliconPicUrls(BaseModel):
+    original: str
+
+
+class LoliconPicData(BaseModel):
+    pid: int
+    p: int
+    uid: int
+    title: str
+    author: str
+    r18: bool
+    width: int
+    height: int
+    tags: List[str]
+    ext: str
+    ai_type: int = Field(..., alias="aiType")
+    upload_date: int = Field(..., alias="uploadDate")
+    urls: LoliconPicUrls
+
+
+class LoliconReturn(BaseModel):
+    error: str
+    data: List[LoliconPicData]
 
 
 def dict_del_none(will_del: dict) -> dict:
@@ -54,13 +82,16 @@ class CustomExtension(Extension):
         self.pic_proxy: Optional[str] = config.get("pic_proxy")
         self.exclude_ai: bool = config.get("exclude_ai", False)
         self.provide_tags: bool = config.get("provide_tags", True)
+        self.send_manually: bool = config.get("send_manually", False)
 
         if self.proxy and (not self.proxy.startswith("http")):
             self.proxy = "http://" + self.proxy
 
     async def call(self, arg_dict: Dict[str, str], _: dict) -> dict:
-        tag = [x for x in arg_dict.get("tag", "").split(",") if x] or None
-        tag_str = ",".join(tag) if tag else ""
+        tag_str = arg_dict.get("tag", "").strip()
+
+        tags = [x for x in tag_str.split(",") if x] or None
+        tag_str = ",".join(tags) if tags else ""
 
         try:
             async with AsyncClient(proxies=self.proxy) as cli:
@@ -68,7 +99,7 @@ class CustomExtension(Extension):
                     "https://api.lolicon.app/setu/v2",
                     json=dict_del_none(
                         {
-                            "tag": tag,
+                            "tag": tags,
                             "num": 1,
                             "r18": self.r18,
                             "proxy": self.pic_proxy,
@@ -77,14 +108,14 @@ class CustomExtension(Extension):
                     ),
                 )
                 assert resp.status_code // 100 == 2, resp.text
-                data: dict = resp.json()
+                data = LoliconReturn(**resp.json())
 
         except Exception as e:
             logger.exception("获取图片信息失败")
             return {
-                "text": f"[Lolicon Search] 搜索失败 ({e!r})",
+                "text": f"[LoliconAPI] 搜索失败 ({e!r})",
                 "notify": {
-                    "sender": "[Lolicon Search]",
+                    "sender": "[LoliconAPI]",
                     "msg": (
                         f"Search Failed: {e!r}. "
                         "Please explain this error message to the user."
@@ -93,12 +124,11 @@ class CustomExtension(Extension):
                 "wake_up": True,
             }
 
-        pic_list: Optional[list] = data.get("data")
-        if (not pic_list) or (not isinstance(pic_list, list)):
+        if (not data.data) or (not (pic := data.data[0]).title):
             return {
-                "text": f"[Lolicon Search] 未找到关于 {tag_str} 的图片",
+                "text": f"[LoliconAPI] 未找到关于 {tag_str} 的图片",
                 "notify": {
-                    "sender": "[Lolicon Search]",
+                    "sender": "[LoliconAPI]",
                     "msg": (
                         f"No picture found for `{tag_str}`. "
                         "You should remind the user of this message. "
@@ -108,24 +138,33 @@ class CustomExtension(Extension):
                 "wake_up": True,
             }
 
-        pic_data = pic_list[0]
-        tip = f"搜索 {tag_str} 完毕" if tag_str else "已获取一张随机图"
-        tags = f"\nTags: {', '.join(pic_data['tags'])}" if self.provide_tags else ""
+        user_tip = f"搜索 {tag_str} 完毕" if tag_str else "已获取一张随机图"
+        tags_tip = f"\nTags: {', '.join(pic.tags)}" if self.provide_tags else ""
+
+        send_manually = (not plugin_config.ENABLE_MSG_TO_IMG) or self.send_manually
+        ai_tip_tail = (
+            f'for tag "{tag_str}"' if tag_str else "through your extension call"
+        )
+        send_tip = "You sent a image via this extension.\n" if send_manually else ""
+        output_tip = (
+            " "
+            if send_manually
+            else f' and output this image by using "![{pic.title}]({pic.urls.original})" '
+        )
+
         return {
-            "text": f"[Lolicon Search] {tip} (PID: {pic_data['pid']})",
+            "text": f"[LoliconAPI] {user_tip} (PID: {pic.pid})",
+            "image": pic.urls.original if send_manually else None,
             "notify": {
-                "sender": "[Lolicon Search]",
+                "sender": "[LoliconAPI]",
                 "msg": (
-                    "[This is the image information found through your extension call. "
+                    f"{send_tip}"
+                    f"Below is the image information found {ai_tip_tail}. "
                     "This image was posted on Pixiv. "
-                    "This image will NOT BE AUTOMATICALLY SENT to the chat, "
-                    "you MUST MANUALLY SEND this image out in your response USING MARKDOWN FORMAT "
-                    '("![Image Title](Image URL)")!'
-                    'DO NOT use any other extensions like "#readLink&url#" in your response this time.]\n'
-                    f"URL: {pic_data['urls']['original']}\n"
-                    f"Title: {pic_data['title']} (PID: {pic_data['pid']})\n"
-                    f"Author: {pic_data['author']} (UID: {pic_data['uid']})"
-                    f"{tags}"
+                    f"You should summary the image information{output_tip}in your response.\n"
+                    f"Title: {pic.title} (https://pixiv.net/artworks/{pic.pid})\n"
+                    f"Author: {pic.author} (https://www.pixiv.net/users/{pic.uid})"
+                    f"{tags_tip}"
                 ),
             },
             "wake_up": True,

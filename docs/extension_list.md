@@ -73,16 +73,15 @@ r18: false
 
 <hr />
 
-## [Lolicon Search](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_lolicon_search.py)
+## [更人性化的 Lolicon API 色图扩展](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_lolicon_search.py)
 
 ### 简介 <!-- {docsify-ignore} -->
 
-作者：[lgc2333](https://github.com/lgc2333)
+作者：[student_2333](https://github.com/lgc2333)
 
-让 Bot 能够主动搜索色图信息，搜索后 Bot 会以 Markdown 格式将图片发出  
-当开启回复转图时，Bot 的回复图中将会展示此图片
+此扩展与其它扩展不同的地方在于 Bot 可以知道他发送出去了什么图片，或者在发图的过程中遇到了什么错误
 
-~~有一定程度防止封号与风控~~
+当开启回复转图时，可选让 Bot 在其回复图展示图片，~~有一定程度防止封号与风控~~
 
 ### 配置 <!-- {docsify-ignore} -->
 
@@ -99,6 +98,11 @@ exclude_ai: false
 # 是否将图片的 Tag 提供给 Bot
 # 禁用此项可能有助于提高 Bot 的发图意愿
 provide_tags: true
+
+# 是否直接使用扩展发送图片，而不是将图片地址传给 Bot 让其发送
+# 适用于 Bot 死活不在回复中发图的情况
+# 如果未开启回复转图，则此项保持开启
+send_manually: false
 
 # 请求 API 使用的代理
 proxy: null
