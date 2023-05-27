@@ -165,7 +165,7 @@ is_base64: false
 调用语音生成接口实现语音回复 (需自行准备语音合成 api 接口)
 
 ### [VOX](https://voicevox.hiroshiba.jp/) Docker 部署指南 <!-- {docsify-ignore} -->
-
+#### （Windows可以直接下载上面VOX里的安装包打开即可使用） <!-- {docsify-ignore} -->
 1. 拉取镜像
 
    ```bash
@@ -375,6 +375,35 @@ match_white_list: []
 match_black_list: []
 ```
 
+<hr />
+
+## [AI作曲模块](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_makemidi.py)
+
+### 简介 <!-- {docsify-ignore} -->
+
+作者：[CCYellowStar](https://github.com/CCYellowStar)
+
+借鉴~~抄袭~~[nonebot_plugin_makemidi](https://github.com/RandomEnch/nonebot_plugin_makemidi) 插件让ai输入midi来生成midi音乐
+
+### 扩展安装指南 <!-- {docsify-ignore} -->
+
+请根据下方步骤安装你的扩展  
+
+1.pip 安装库
+```
+pip install nonebot_plugin_makemidi
+```
+2.安装fluidsynth
+```
+https://wwpr.lanzout.com/i1jLO0xgpi3g
+下载fluidsynth后解压到合适位置，将其bin文件夹的路径添加到环境变量path中
+为使适配器能发送音频，你还需要安装ffmpeg，方法与fluidsynth相同(如果你能发语音就是已经安装了ffmpeg)
+```
+3.下载音源文件
+```
+https://wwpr.lanzout.com/iIpwl0xgpr5c
+下载gm.zip后解压将里面的gm.sf2放到bot的resources目录下
+```
 <hr />
 
 ## [已归档扩展（不推荐使用 / 已失效）](archived_extensions.md)
