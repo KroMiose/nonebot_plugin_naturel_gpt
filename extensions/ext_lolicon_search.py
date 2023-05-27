@@ -20,8 +20,8 @@ ext_config = {
         "Get an anime image information using Lolicon API. "
         "Use this extension when user wants you to get an anime picture (色图, 涩图, and so on). "
         'For example, You can get a random image by using "/#get_anime_pic&#/" in your response; '
-        'Or you can get a image with keywords ("可爱") AND ("白丝" OR "黑丝") '
-        'by using "/#get_anime_pic&可爱,白丝|黑丝#/".'
+        'Or you can get a image by tags or keywords, such as "/#get_anime_pic&可爱,白丝|黑丝#/" '
+        '(will search ("可爱") AND ("白丝" OR "黑丝")).'
     ),
     # 参考词，用于上下文参考使用，为空则每次都会被参考 (消耗 token)
     "refer_word": [],
