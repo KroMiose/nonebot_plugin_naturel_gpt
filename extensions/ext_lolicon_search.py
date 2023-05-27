@@ -17,11 +17,11 @@ ext_config = {
     # 扩展的描述信息，用于提示 AI 理解扩展的功能，尽量简短
     # 使用英文更节省 token，添加使用示例可提高 bot 调用的准确度
     "description": (
-        "Get an anime image information and URL using Lolicon API. "
-        "Use this extension when user requests you to get or send an anime picture (动漫图, 色图, 涩图). "
-        'For example, You can get a random image info by using "/#get_anime_pic&#/"; '
-        'Or you can get a image info with keywords ("可爱") AND ("白丝" OR "黑丝") '
-        'by using "/#get_anime_pic&可爱,白丝|黑丝#/" in your response.'
+        "Get an anime image information using Lolicon API. "
+        "Use this extension when user wants you to get an anime picture (色图, 涩图, and so on). "
+        'For example, You can get a random image by using "/#get_anime_pic&#/" in your response; '
+        'Or you can get a image with keywords ("可爱") AND ("白丝" OR "黑丝") '
+        'by using "/#get_anime_pic&可爱,白丝|黑丝#/".'
     ),
     # 参考词，用于上下文参考使用，为空则每次都会被参考 (消耗 token)
     "refer_word": [],
