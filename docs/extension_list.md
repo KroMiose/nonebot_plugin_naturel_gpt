@@ -168,8 +168,14 @@ is_base64: false
 
 调用语音生成接口实现语音回复 (需自行准备语音合成 api 接口)
 
-### [VOX](https://voicevox.hiroshiba.jp/) Docker 部署指南 <!-- {docsify-ignore} -->
-#### （Windows可以直接下载上面VOX里的安装包打开即可使用） <!-- {docsify-ignore} -->
+### [VOX](https://voicevox.hiroshiba.jp/) 部署指南 <!-- {docsify-ignore} -->
+
+#### Windows <!-- {docsify-ignore} -->
+
+从 [这里](https://voicevox.hiroshiba.jp/) 下载安装包直接安装打开即可使用
+
+#### Linux (Docker) <!-- {docsify-ignore} -->
+
 1. 拉取镜像
 
    ```bash
@@ -381,33 +387,29 @@ match_black_list: []
 
 <hr />
 
-## [AI作曲模块](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_makemidi.py)
+## [AI 作曲模块](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_makemidi.py)
 
 ### 简介 <!-- {docsify-ignore} -->
 
 作者：[CCYellowStar](https://github.com/CCYellowStar)
 
-借鉴~~抄袭~~[nonebot_plugin_makemidi](https://github.com/RandomEnch/nonebot_plugin_makemidi) 插件让ai输入midi来生成midi音乐
+借鉴~~抄袭~~ [nonebot_plugin_makemidi](https://github.com/RandomEnch/nonebot_plugin_makemidi) 插件让 ai 输入 midi 来生成 midi 音乐
 
 ### 扩展安装指南 <!-- {docsify-ignore} -->
 
-请根据下方步骤安装你的扩展  
+请根据下方步骤安装你的扩展
 
-1.pip 安装库
-```
-pip install nonebot_plugin_makemidi
-```
-2.安装fluidsynth
-```
-https://wwpr.lanzout.com/i1jLO0xgpi3g
-下载fluidsynth后解压到合适位置，将其bin文件夹的路径添加到环境变量path中
-为使适配器能发送音频，你还需要安装ffmpeg，方法与fluidsynth相同(如果你能发语音就是已经安装了ffmpeg)
-```
-3.下载音源文件
-```
-https://wwpr.lanzout.com/iIpwl0xgpr5c
-下载gm.zip后解压将里面的gm.sf2放到bot的resources目录下
-```
+1. 安装前置插件  
+   在你的 NoneBot 环境中输入下方命令即可
+   ```bash
+   pip install nonebot_plugin_makemidi
+   ```
+2. 安装 fluidsynth  
+   从 [这里](https://wwpr.lanzout.com/i1jLO0xgpi3g) 下载 fluidsynth 后解压到合适位置，将其 bin 文件夹的路径 [添加到环境变量](<https://learn.microsoft.com/zh-cn/previous-versions/office/developer/sharepoint-2010/ee537574(v=office.14)#%E5%B0%86%E8%B7%AF%E5%BE%84%E6%B7%BB%E5%8A%A0%E5%88%B0-path-%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F>) 中  
+    为使 GoCQ 能发送语音，你还需要安装 ffmpeg（[下载地址](https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-full.7z)），方法与 fluidsynth 相似（如果你能发语音就是已经安装了 ffmpeg）
+3. 下载音源文件  
+   从 [这里](https://wwpr.lanzout.com/iIpwl0xgpr5c) 下载 `gm.zip` 后解压，将里面的 `gm.sf2` 放到 NoneBot 工作目录的 `resources` 目录下
+
 <hr />
 
 ## [已归档扩展（不推荐使用 / 已失效）](archived_extensions.md)
