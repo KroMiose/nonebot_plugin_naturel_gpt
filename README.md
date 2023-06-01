@@ -86,12 +86,13 @@
 <details>
 <summary>点击展开</summary>
 
-### [2023/6/1] v2.1.6 扩展优化 | 新增扩展
+### [2023/6/1] v2.1.7 扩展优化 | 新增扩展
 
 - 新增 makemidi 扩展，允许 bot 进行 midi 创作（感谢@CCYellowStar 提供 pr）
 - 新增 lolicon_search 扩展，搜索图片后会反馈图片信息（感谢@student_2333 提供 pr）
 - 新增扩展 启用/禁用 命令，对于不需要额外配置的扩展，可使用指令安装后直接启用（感谢@student_2333 提供 pr）
 - 新增 OpenAI API 的 base_url 配置，以便接入任何兼容 OpenAI API 格式的第三方接口
+- 修复了一个 prompt 构建错误的问题
 
 ### [2023/5/24] v2.1.5 扩展优化 | 图片输出优化
 
