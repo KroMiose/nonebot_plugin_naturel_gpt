@@ -208,7 +208,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
     if res:
         if res.get('msg'):     # 如果有返回消息则发送
             if config.ENABLE_COMMAND_TO_IMG:
-                img = await text_to_img(res.get('msg'))
+                img = await text_to_img(res.get('msg')) # type: ignore
                 await identity.send(MessageSegment.image(img))
             else:
                 await identity.send(str(res.get('msg')))

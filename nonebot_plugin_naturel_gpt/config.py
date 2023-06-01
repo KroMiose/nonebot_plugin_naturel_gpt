@@ -32,6 +32,10 @@ class Config(BaseModel, extra=Extra.ignore):
     """OpenAI API Key 列表"""
     OPENAI_TIMEOUT: int
     """OpenAI 请求超时时间"""
+    OPENAI_PROXY_SERVER: str
+    """请求OpenAI的代理服务器"""
+    OPENAI_BASE_URL: str
+    """请求OpenAI的基础URL"""
     REPLY_THROTTLE_TIME: int
     """回复间隔节流时间"""
     PRESETS: Dict[str, PresetConfig]
@@ -132,8 +136,6 @@ class Config(BaseModel, extra=Extra.ignore):
     NG_ENABLE_AWAKE_IDENTITIES: bool
     """是否允许自动唤醒其它人格"""
 
-    OPENAI_PROXY_SERVER: str
-    """请求OpenAI的代理服务器"""
     UNLOCK_CONTENT_LIMIT: bool
     """解锁内容限制"""
 
@@ -174,8 +176,9 @@ CONFIG_TEMPLATE = {
         'sk-xxxxxxxxxxxxx',
     ],
     "OPENAI_TIMEOUT": 60,   # OpenAI 请求超时时间
-    "REPLY_THROTTLE_TIME": 3,   # 回复间隔节流时间
     'OPENAI_PROXY_SERVER': '',  # 请求OpenAI的代理服务器
+    'OPENAI_BASE_URL': 'https://api.openai.com/v1',      # 请求OpenAI的基础URL
+    "REPLY_THROTTLE_TIME": 3,   # 回复间隔节流时间
     "PRESETS": {
         "白羽": {
             'preset_key': '白羽',  # 人格名称
