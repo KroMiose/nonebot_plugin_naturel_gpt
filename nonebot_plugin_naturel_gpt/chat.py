@@ -224,7 +224,7 @@ class Chat:
             (
                 (
                     'You must use Markdown syntax in your response. '
-                    'Use "<br />" tag to create a line break; use two consecutive line break to create a new paragraph. '
+                    'Use two consecutive line break to create a new paragraph (line break). '
                     'Also remembering to escape special characters (e.g. "~" to "\\~") unless you really need special formatting, '
                     'otherwise your response will include some format issues.'
                 )
