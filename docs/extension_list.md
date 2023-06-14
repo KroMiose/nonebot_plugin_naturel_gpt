@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD024 MD031 MD033 -->
+<!-- markdownlint-disable MD024 MD031 MD033 MD036 -->
 
 # 📋 扩展列表
 
@@ -409,6 +409,25 @@ match_black_list: []
     为使 GoCQ 能发送语音，你还需要安装 ffmpeg（[下载地址](https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-full.7z)），方法与 fluidsynth 相似（如果你能发语音就是已经安装了 ffmpeg）
 3. 下载音源文件  
    从 [这里](https://wwpr.lanzout.com/iIpwl0xgpr5c) 下载 `gm.zip` 后解压，将里面的 `gm.sf2` 放到 NoneBot 工作目录的 `resources` 目录下
+
+<hr />
+
+## [启用回复转图后直接发送文本消息模块](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_makemidi.py)
+
+### 简介 <!-- {docsify-ignore} -->
+
+_标题好长不要介意_
+
+让回复转图的 Bot 拥有直接发送文本消息的能力
+
+### 配置 <!-- {docsify-ignore} -->
+
+请根据下方示例配置中的注释来编辑你的扩展配置
+
+```yml
+# 关键词黑名单，列表内包括的关键词 Bot 都无法通过本扩展发送
+black_words: []
+```
 
 <hr />
 
