@@ -13,9 +13,10 @@ from nonebot_plugin_htmlrender.data_source import (  # noqa: E402
     read_tpl,
 )
 
-ADDITIONAL_CSS = (Path(__file__).parent / "res" / "additional.css").read_text(
-    encoding="u8"
-)
+
+RES_PATH = Path(__file__).parent / "res"
+ADDITIONAL_CSS = (RES_PATH / "additional.css").read_text(encoding="u8")
+ADDITIONAL_HTML = (RES_PATH / "additional.html").read_text(encoding="u8")
 
 
 async def text_to_img(text: str) -> bytes:
@@ -55,16 +56,16 @@ async def md_to_img(md: str) -> bytes:
     )
     logger.debug(md)
 
-    extra = ""
-    if "math/tex" in md:
-        katex_css = await read_tpl("katex/katex.min.b64_fonts.css")
-        katex_js = await read_tpl("katex/katex.min.js")
-        mathtex_js = await read_tpl("katex/mathtex-script-type.min.js")
-        extra = (
-            f'<style type="text/css">{katex_css}</style>'
-            f"<script defer>{katex_js}</script>"
-            f"<script defer>{mathtex_js}</script>"
-        )
+    # if "math/tex" in md:
+    katex_css = await read_tpl("katex/katex.min.b64_fonts.css")
+    katex_js = await read_tpl("katex/katex.min.js")
+    mathtex_js = await read_tpl("katex/mathtex-script-type.min.js")
+    extra = (
+        f"{ADDITIONAL_HTML}\n"
+        f'<style type="text/css">{katex_css}</style>\n'
+        f"<script defer>{katex_js}</script>\n"
+        f"<script defer>{mathtex_js}</script>\n"
+    )
 
     css = "\n".join(
         [
