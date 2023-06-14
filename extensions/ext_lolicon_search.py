@@ -120,7 +120,7 @@ class CustomExtension(Extension):
                 "notify": {
                     "sender": "system",
                     "msg": (
-                        "[LoliconSearch]"
+                        "[LoliconSearch]\n"
                         f"Search Failed: {e!r}. "
                         "Please explain this error message to the user."
                     ),
@@ -134,7 +134,7 @@ class CustomExtension(Extension):
                 "notify": {
                     "sender": "system",
                     "msg": (
-                        "[LoliconSearch]"
+                        "[LoliconSearch]\n"
                         f"No picture found for `{tag_str}`. "
                         "You should remind the user of this message. "
                         "You can also adjust the tag text and search again using this extension."
@@ -164,7 +164,7 @@ class CustomExtension(Extension):
             "notify": {
                 "sender": "system",
                 "msg": (
-                    f"[LoliconSearch]"
+                    f"[LoliconSearch]\n"
                     f"{send_tip}"
                     f"Below is the image information found {ai_tip_tail}. "
                     f"This image was posted on Pixiv. "

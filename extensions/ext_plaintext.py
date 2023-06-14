@@ -1,3 +1,4 @@
+from typing import List, cast
 from nonebot_plugin_naturel_gpt.config import config as plugin_config
 
 from .Extension import Extension
@@ -12,9 +13,10 @@ ext_config = {
     # 扩展的描述信息，用于提示 AI 理解扩展的功能，尽量简短
     # 使用英文更节省 token，添加使用示例可提高 bot 调用的准确度
     "description": (
-        "Your responses are usually sent as images, "
-        "Use this extension if you want to send plain text. "
-        'e.g. "/#send_plaintext&Hello#/" will send "Hello" to the chat.'
+        "Send plain text directly to the chat. "
+        "As your response will be converted into an image and sent out, "
+        "this extension allows you to send messages that users can copy. "
+        'e.g. "/#send_plaintext&google.com#/".'
     ),
     # 参考词，用于上下文参考使用，为空则每次都会被参考 (消耗 token)
     "refer_word": [],
@@ -34,12 +36,31 @@ ext_config = {
 
 
 class CustomExtension(Extension):
-    def __init__(self, custom_config):
+    def __init__(self, custom_config: dict):
         if not plugin_config.ENABLE_MSG_TO_IMG:
             raise RuntimeError("本扩展仅适用于启用回复转图的 Bot，没启用回复转图请不要安装本扩展")
 
         super().__init__(ext_config.copy(), custom_config)
+        self.black_words = [
+            x.lower() for x in cast(List[str], custom_config.get("black_words", []))
+        ]
 
     async def call(self, arg_dict: dict, _: dict) -> dict:
         msg = arg_dict.get("msg")
-        return {"text": msg} if msg else {}
+        if not msg:
+            return {}
+
+        for bw in self.black_words:
+            if bw in msg:
+                return {
+                    "notify": {
+                        "sender": "system",
+                        "msg": (
+                            f'[SendPlaintext]\nYou cannot send "{bw}" directly! '
+                            "Please reconsider the content you want to send."
+                        ),
+                    },
+                    "wake_up": True,
+                }
+
+        return {"text": msg}
