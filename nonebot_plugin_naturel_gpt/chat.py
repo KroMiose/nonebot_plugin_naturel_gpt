@@ -222,7 +222,12 @@ class Chat:
             # f"Only give the response content of {self.chat_presets['preset_key']} and do not carry any irrelevant information or the speeches of other members"
             # f"Please play the {self.chat_presets['preset_key']} role and only give the reply content of the {self.chat_presets['preset_key']} role, response needs to follow the role's setting and habits(Provided by the user)"
             (
-                'You need to use Markdown syntax in your response. If you want to create a line break, please use two consecutive line break characters or use "<br />". You should escape some special markdown characters, such as "~" to "\\~" and so on.'
+                (
+                    'You must use Markdown syntax in your response. '
+                    'Use "<br />" tag to create a line break; use two consecutive line break to create a new paragraph. '
+                    'Also remembering to escape special characters (e.g. "~" to "\\~") unless you really need special formatting, '
+                    'otherwise your response will include some format issues.'
+                )
                 if config.ENABLE_MSG_TO_IMG
                 else "If the response contains code blocks, use the markdown format below\n```python\nprint('hi')\n```"
             ),
