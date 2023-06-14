@@ -13,10 +13,10 @@ ext_config = {
     # 扩展的描述信息，用于提示 AI 理解扩展的功能，尽量简短
     # 使用英文更节省 token，添加使用示例可提高 bot 调用的准确度
     "description": (
-        "Send plain text directly to the chat. "
+        "Send message directly to the chat. "
         "As your response will be converted into an image and sent out, "
-        "this extension allows you to send messages that users can copy. "
-        'e.g. "/#send_plaintext&google.com#/".'
+        "this extension allows you to send messages that users can interact (e.g. copy, visit url). "
+        'e.g. "/#send_plaintext&google.com#/" (singleline); "/#send_plaintext&print("1")\nprint("2")#/" (multiline) .'
     ),
     # 参考词，用于上下文参考使用，为空则每次都会被参考 (消耗 token)
     "refer_word": [],
@@ -33,6 +33,21 @@ ext_config = {
     # 可用会话类型 (`server` 即 MC服务器 | `chat` 即 QQ聊天)
     "available": ["chat"],
 }
+
+
+def escape_line_break(string: str) -> str:
+    buffer = []
+
+    next_escape = False
+    for char in string:
+        if char == "\\":
+            next_escape = True
+        elif next_escape:
+            buffer.append("\n" if char == "n" else f"\\{char}")
+        else:
+            buffer.append(char)
+
+    return "".join(buffer)
 
 
 class CustomExtension(Extension):
@@ -63,4 +78,4 @@ class CustomExtension(Extension):
                     "wake_up": True,
                 }
 
-        return {"text": msg}
+        return {"text": escape_line_break(msg)}
