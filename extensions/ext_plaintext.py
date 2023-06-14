@@ -42,8 +42,20 @@ def escape_line_break(string: str) -> str:
     for char in string:
         if char == "\\":
             next_escape = True
+
         elif next_escape:
-            buffer.append("\n" if char == "n" else f"\\{char}")
+            if char == "\\":
+                # \\ -> \
+                buffer.append("\\")
+
+            elif char == "n":
+                # \n -> 换行
+                buffer.append("\n")
+
+            else:
+                # \s -> \s (保持原状)
+                buffer.append(f"\\{char}")
+
         else:
             buffer.append(char)
 
