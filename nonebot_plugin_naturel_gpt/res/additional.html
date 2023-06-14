@@ -1,0 +1,9 @@
+<script>
+  (() => {
+    const anchors = document.getElementsByTagName('a');
+    for (let i = 0; i < anchors.length; i += 1) {
+      const elem = anchors.item(i);
+      elem.innerText = `${elem.innerText} (${elem.href})`;
+    }
+  })();
+</script>

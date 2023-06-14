@@ -10,9 +10,10 @@
 .markdown-body kbd,
 .markdown-body pre,
 .markdown-body samp {
-  font-family: 'JetBrains Mono', 'Cascadia Mono', 'Segoe UI Mono',
-    'Liberation Mono', 'Menlo', 'Monaco', 'Consolas', 'Roboto Mono',
-    'Courier New', 'Courier', 'Microsoft YaHei UI', monospace !important;
+  font-family: 'VictorMono Nerd Font', 'Victor Mono', 'JetBrainsMono Nerd Font',
+    'JetBrains Mono', 'Cascadia Mono', 'Segoe UI Mono', 'Liberation Mono',
+    'Menlo', 'Monaco', 'Consolas', 'Roboto Mono', 'Courier New', 'Courier',
+    'Microsoft YaHei UI', monospace !important;
 }
 
 .markdown-body code {
