@@ -1,16 +1,20 @@
-from typing import Tuple, overload
-from .logger import logger
-from nonebot.utils import run_sync
-
 import re
 import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+from typing import Tuple, Dict
+from .logger import logger
+from nonebot.utils import run_sync
+from tiktoken import Encoding, encoding_for_model
+
 
 import openai
-from transformers import GPT2TokenizerFast
+# from transformers import GPT2TokenizerFast
 from .singleton import Singleton
 
-tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
+enc_cache: Dict[str, Encoding] = {}
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+
+# tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
 
 try:    # 检查openai版本是否高于0.27.0
     import pkg_resources
@@ -18,7 +22,7 @@ try:    # 检查openai版本是否高于0.27.0
     if openai_version < '0.27.0':
         logger.warning(f"当前 openai 库版本为 {openai_version}，请更新至 0.27.0 版本以上，否则可能导致 gpt-3.5-turbo 模型无法使用")
 except:
-    logger.warning(f"无法获取 openai 库版本，请更新至 0.27.0 版本以上，否则 gpt-3.5-turbo 模型将无法使用")
+    logger.warning("无法获取 openai 库版本，请更新至 0.27.0 版本以上，否则 gpt-3.5-turbo 模型将无法使用")
 
 class TextGenerator(Singleton["TextGenerator"]):
     def init(self, api_keys: list, config: dict, proxy = None, base_url = ''):
@@ -210,10 +214,31 @@ class TextGenerator(Singleton["TextGenerator"]):
         """生成对话模板"""
         return f"{time_str}{sender}: {msg}"
 
+    # @staticmethod
+    # def cal_token_count(msg: str) -> int:
+    #     """计算字符串的token数量"""
+    #     try:
+    #         return len(tokenizer.encode(msg))
+    #     except:
+    #         return 2048
+
     @staticmethod
-    def cal_token_count(msg: str) -> int:
-        """计算字符串的token数量"""
-        try:
-            return len(tokenizer.encode(msg))
-        except:
-            return 2048
+    def cal_token_count(text: str, model: str = "gpt-3.5-turbo"):
+        """计算字节对编码后的token数量
+
+        Args:
+            text (str): 文本
+            model (str, optional): 模型. Defaults to "gpt-3.5-turbo".
+
+        Returns:
+            int: token 数量
+        """
+
+        if model in enc_cache:
+            enc = enc_cache[model]
+        else:
+            enc = encoding_for_model(model)
+            enc_cache[model] = enc
+
+        return len(enc.encode(text))
+

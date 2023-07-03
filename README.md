@@ -86,6 +86,12 @@
 <details>
 <summary>点击展开</summary>
 
+### [2023/7/3] v2.1.8 token 计算优化 | 新增扩展和优化
+
+- 文转图功能显示锚元素URL (感谢@student_2333 提供 pr)
+- 新增扩展 ext_plaintext, 更新 lolicon_search 并调整扩展相关的 prompt (感谢@student_2333 提供 pr)
+- 更换了 tiktoken 来进行 token 计算
+
 ### [2023/6/1] v2.1.7 扩展优化 | 新增扩展
 
 - 新增 makemidi 扩展，允许 bot 进行 midi 创作（感谢@CCYellowStar 提供 pr）

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-naturel-gpt"
-version = "2.1.7"
+version = "2.1.8"
 description = "一个基于NoneBot框架的Ai聊天插件，对接OpenAi文本生成接口"
 authors = ["KroMiose <li_xiangff@163.com>"]
 license = "Apache License 2.0"
@@ -11,7 +11,6 @@ packages = [{ include = "nonebot_plugin_naturel_gpt" }]
 python = "^3.8"
 nonebot2 = "^2.0.0rc3"
 openai = ">=0.27.0"
-transformers = "^4.26.0"
 nonebot-adapter-onebot = "^2.2.1"
 jieba = "^0.42.1"
 numpy = "^1.21.3"
@@ -19,6 +18,7 @@ httpx = "^0.24.1"
 aiosmtplib = "^2.0.1"
 anyio = "^3.6.2"
 aiohttp = "^3.8.4"
+tiktoken = "0.4.0"
 
 [tool.nonebot]
 # adapters = [{name = "Spigot", module_name = "nonebot.adapters.spigot", project_link = "nonebot-adapter-spigot", desc = "MineCraft通信适配"}]

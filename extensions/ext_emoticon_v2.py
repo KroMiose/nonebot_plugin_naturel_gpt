@@ -19,7 +19,7 @@ ext_config: dict = {
 class CustomExtension(Extension):
     async def call(self, arg_dict: dict, _: dict) -> dict:
         name = arg_dict.get("name", None)
-        url = f"http://111.230.15.231/emotic/readEmotic?name={name}&page=1&limit=1"
+        url = f"http://111.230.15.231:3000/emotic/getOneEmo?name={name}"
 
         async with AsyncClient() as cli:
             data = (await cli.get(url)).json()

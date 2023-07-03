@@ -4,11 +4,11 @@ import anyio
 import openai
 from httpx import AsyncClient
 from nonebot import logger
-from transformers import GPT2TokenizerFast
+# from transformers import GPT2TokenizerFast
 
 from .Extension import Extension
 
-tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
+# tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
 
 
 # 拓展的配置信息，用于ai理解拓展的功能 *必填*

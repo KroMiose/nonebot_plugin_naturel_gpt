@@ -3,7 +3,6 @@ import random
 import re
 import time
 import os
-import traceback
 from typing import Awaitable, List, Dict, Callable, Optional, Set, Tuple, Type
 from nonebot import on_command, on_message, on_notice
 from .logger import logger
@@ -191,7 +190,7 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
     raw_cmd:str = arg.extract_plain_text()
     if config.DEBUG_LEVEL > 0: logger.info(f"接收到指令: {raw_cmd} | 来源: {chat_key}")
     
-    presets_show_text = '\n'.join([f'  -> {k + " (当前)" if k == chat.preset_key else k}' for k in chat_presets_dict.keys()])
+    '\n'.join([f'  -> {k + " (当前)" if k == chat.preset_key else k}' for k in chat_presets_dict.keys()])
 
     # 执行命令前先检查权限
     (permit_success, permit_msg) = await permission_check_func(matcher_, event,bot,raw_cmd,'cmd')
@@ -300,7 +299,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     last_recv_time = chat.last_msg_time
     await asyncio.sleep(config.REPLY_THROTTLE_TIME)
     if last_recv_time != chat.last_msg_time: # 如果最后一条消息时间不一致，说明在节流时间内收到了新消息，跳过处理
-        if config.DEBUG_LEVEL > 0: logger.info(f'节流时间内收到新消息，跳过处理...')
+        if config.DEBUG_LEVEL > 0: logger.info('节流时间内收到新消息，跳过处理...')
         return
     
     # 主动聊天参与逻辑 *待定方案
@@ -368,7 +367,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 break
 
     # 提取markdown格式的代码块
-    code_blocks = re.findall(r"```(.+?)```", raw_res, re.S)
+    re.findall(r"```(.+?)```", raw_res, re.S)
     # 提取后去除所有markdown格式的代码块，剩余部分为对话结果
     talk_res = re.sub(r"```(.+?)```", '', raw_res)
 
@@ -571,7 +570,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
             if time_diff > 0:
                 if config.DEBUG_LEVEL > 0: logger.info(f"等待 {time_diff}s 后再次调用对话...")
                 await asyncio.sleep(time_diff)
-            if config.DEBUG_LEVEL > 0: logger.info(f"再次调用对话...")
+            if config.DEBUG_LEVEL > 0: logger.info("再次调用对话...")
             await do_msg_response(
                 matcher=matcher,
                 trigger_text=loop_data.get('notify', {}).get('msg', ''),
