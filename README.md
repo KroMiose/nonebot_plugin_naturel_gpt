@@ -11,6 +11,7 @@
     🧬 支持多个人格自定义 / 切换 | 尽情发挥你的想象力吧！ ⚙️<br/>
     🧬 <a href="https://docs.google.com/spreadsheets/d/1JQNmVH-vlDn2uEPwkjv3iN-zn0PHpQ7RGbgA5T3fxOA/edit?usp=sharing">预设收集共享表(欢迎分享各种自定义人设)</a> 🧬 <br/>
     🎆 如果喜欢请点个⭐吧！您的支持就是我持续更新的动力 🎉<br/>
+    💬 技术交流/答疑/讨论 -> ：<a href="https://jq.qq.com/?_wv=1027&k=71t9iCT7">加入插件交流群-636925153</a> 🗨️ <br/>
     <a href="./LICENSE">
         <img src="https://img.shields.io/badge/license-Apache 2.0-6cg.svg" alt="license">
     </a>
@@ -44,6 +45,14 @@
 ### 🧩 [2023/2/18] v1.3 更新: 自定义扩展支持
 
 本次更新后插件开始支持自定义扩展，您可以直接通过自然语言直接调用多种扩展功能，包括 文本/图片/语音/邮件...
+
+## 🎁 安装命令
+
+请在 Bot 目录下执行此命令
+
+```bash
+nb plugin install nonebot-plugin-naturel-gpt
+```
 
 ## 💡 功能列表
 
