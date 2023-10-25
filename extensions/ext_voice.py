@@ -6,7 +6,7 @@ tencentcloud_common_secretid : "xxxxx"
 tencentcloud_common_secretkey : "xxxxx"
 ng_voice_tar : 'ja'
 """
-
+import re
 import asyncio
 import base64
 import os
@@ -24,8 +24,12 @@ from aiohttp import request
 from loguru import logger
 from nonebot import get_driver
 from nonebot.exception import ActionFailed
-
+import random
 from .Extension import Extension
+import json
+
+# 读取JSON文件
+
 
 try:
     from ujson import loads as loadJsonS
@@ -36,7 +40,8 @@ except:
 ext_config: dict = {
     "name": "voice",  # 扩展名称，用于标识扩展
     "arguments": {
-        "sentence": "str",  # 需要转换的文本
+        "sentence": "str", 
+        "unsername": "str" # 需要转换的文本
     },
     # 扩展的描述信息，用于提示ai理解扩展的功能 *必填* 尽量简短 使用英文更节省token
     "description": "Send a voice sentence. (usage in response: /#voice&你好#/)",
@@ -84,6 +89,7 @@ class CustomExtension(Extension):
 
         # 获取参数
         raw_text = arg_dict.get("sentence", None)
+        user = arg_dict.get("unsername", None)
 
         # 从这里开始翻译
 
@@ -153,27 +159,43 @@ class CustomExtension(Extension):
         # ! moegoe.azurewebsites.net 是一个公开的语音合成api，非本人搭建，请勿滥用 (tip by KroMiose)
         # 该api只支持日语，如果传入其它语言，会导致合成结果不可预知
         # 如果你开启了翻译就没事了
-        url = f"https://moegoe.azurewebsites.net/api/speak?text={text}&id=0"
+        AA_without_quotes = user.strip('"')
+        if AA_without_quotes=="苗苗":
+            AA_without_quotes="可莉"
+        url = f"https://genshinvoice.top/api?speaker={AA_without_quotes}&text={text}&format=wav&length=1&noise=0.6&noisew=0.8&sdp_ratio=0.2"
 
         # todo: 如果需要使用本地的语音合成api，请取消注释下面的代码，并自行改为您的api地址，将填入合成文本的地方改为{text}
         # url = f"http://127.0.0.1:23211/to_voice?text={text}"
 
         # 下载语音文件
-        async with request("GET", url) as r:
-            file_name = f"{voice_path}{uuid.uuid1()}.ogg"
-            content = await r.read()
-            audio_data = base64.b64decode(content) if is_base64 else content
 
-        file_path = await (anyio.Path(file_name)).resolve()
-        await file_path.write_bytes(audio_data)
-        local_url = file_path.as_uri()
+        def contains_english_char(s):
+            for c in s:
+                if 'a' <= c.lower() <= 'z':
+                    return True
+            return False     
+        if text is not None and contains_english_char(f"{raw_text}")  :
+            return {
+                "text" : f"{raw_text}",
+            }
+        elif len(raw_text)>=9 and len(raw_text)<=50 : 
+            async with request("GET", url) as r:
+                file_name = f"{voice_path}{uuid.uuid1()}.ogg"
+                content = await r.read()
+                audio_data = base64.b64decode(content) if is_base64 else content
 
-        if text is not None:
+            file_path = await (anyio.Path(file_name)).resolve()
+            await file_path.write_bytes(audio_data)
+            local_url = file_path.as_uri()
             return {
                 "voice": local_url,  # 语音url
-                "text": f"[语音消息] {raw_text}",  # 文本
             }
-        return {}
+        else:
+                        return {
+                "text" : f"{raw_text}",
+            }
+
+
 
     def __init__(self, custom_config: dict):
         super().__init__(ext_config.copy(), custom_config)

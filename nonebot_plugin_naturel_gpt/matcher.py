@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import random
 import re
 import time
@@ -10,7 +10,7 @@ from nonebot.params import CommandArg
 from nonebot.matcher import Matcher
 from nonebot.adapters import Bot, Event
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, PrivateMessageEvent, GroupMessageEvent, MessageSegment, GroupIncreaseNoticeEvent
-
+from .claude import *
 from .config import *
 from .utils import *
 from .chat import Chat
@@ -20,6 +20,7 @@ from .Extension import global_extensions
 from .openai_func import TextGenerator
 from .command_func import cmd
 from .MCrcon.mcrcon import MCRcon   # fork from: https://github.com/Uncaught-Exceptions/MCRcon
+import json
 
 try:
     from .text_to_image import md_to_img, text_to_img
@@ -259,7 +260,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 chat.change_presettings(preset_key)
                 logger.info(f"检测到 {preset_key} 的唤醒词，切换到 {preset_key} 的人格")
                 if chat_type != 'server':
-                    await matcher.send(f'[NG] 已切换到 {preset_key} (￣▽￣)-ok !')
+                    await matcher.send(f'人格 {preset_key} (￣▽￣)-ok !')
                 wake_up = True
                 break
 
@@ -315,39 +316,69 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     sta_time:float = time.time()
 
     # 生成对话 prompt 模板
-    prompt_template = chat.get_chat_prompt_template(userid=trigger_userid, chat_type=chat_type)
-    # 生成 log 输出用的 prompt 模板
-    log_prompt_template = '\n'.join([f"[{m['role']}]\n{m['content']}\n" for m in prompt_template]) if isinstance(prompt_template, list) else prompt_template
-    if config.DEBUG_LEVEL > 0:
-        # logger.info("对话 prompt 模板: \n" + str(log_prompt_template))
-        # 保存 prompt 模板到日志文件
-        with open(os.path.join(config.NG_LOG_PATH, f"{chat_key}.{time.strftime('%Y-%m-%d %H-%M-%S')}.prompt.log"), 'a', encoding='utf-8') as f:
-            f.write(f"prompt 模板: \n{log_prompt_template}\n")
-        logger.info(f"对话 prompt 模板已保存到日志文件: {chat_key}.{time.strftime('%Y-%m-%d %H-%M-%S')}.prompt.log")
+    if config.CLAUDE:
+        prompt_template = chat.get_chat_prompt_template(sender_name,userid=trigger_userid, chat_type=chat_type,)
+        # 生成 log 输出用的 prompt 模板
+        log_prompt_template = '\n'.join([f"[{m['role']}]\n{m['content']}\n" for m in prompt_template]) if isinstance(prompt_template, list) else prompt_template
+        if config.DEBUG_LEVEL > 0:
+            # logger.info("对话 prompt 模板: \n" + str(log_prompt_template))
+            # 保存 prompt 模板到日志文件
+            with open(os.path.join(config.NG_LOG_PATH, f"{chat_key}.{time.strftime('%Y-%m-%d %H-%M-%S')}.prompt.log"), 'a', encoding='utf-8') as f:
+                f.write(f"prompt 模板: \n{log_prompt_template}\n")
+            logger.info(f"对话 prompt 模板已保存到日志文件: {chat_key}.{time.strftime('%Y-%m-%d %H-%M-%S')}.prompt.log")
 
-    chat.update_gen_time()  # 更新上次生成时间
-    time_before_request = time.time()
-    tg = TextGenerator.instance
-    raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.preset_key, 'sender_name': sender_name})  # 生成对话结果
-    if not success:  # 如果生成对话结果失败，则直接返回
-        logger.warning("生成对话结果失败，跳过处理...")
-        await matcher.finish(raw_res)
+        chat.update_gen_time()  # 更新上次生成时间
+        time_before_request = time.time()
+        aaa= await get_multiple_replies_from_claude(prompt_template,[2])  # 生成对话结果
+        raw_res=aaa[0]
+        raw_res = raw_res.replace("amp;", "")
+        success = True
+        if not success:  # 如果生成对话结果失败，则直接返回
 
-    # 如果生成对话结果过程中启动了新的消息生成，则放弃本次生成结果
-    if chat.last_gen_time > time_before_request:
-        logger.warning("生成对话结果过程中启动了新的消息生成，放弃本次生成结果...")
-        return
+            logger.warning("生成对话结果失败，跳过处理...")
+            await matcher.finish(raw_res)
 
-    # 输出对话原始响应结果
-    if config.DEBUG_LEVEL > 0: logger.info(f"原始回应: {raw_res}")
+        # 如果生成对话结果过程中启动了新的消息生成，则放弃本次生成结果
+        if chat.last_gen_time > time_before_request:
+            logger.warning("生成对话结果过程中启动了新的消息生成，放弃本次生成结果...")
+            return
 
-    if time.time() - time_before_request > config.OPENAI_TIMEOUT:
-        logger.warning(f'OpenAI响应超过timeout值[{config.OPENAI_TIMEOUT}]，停止处理')
-        return
+        # 输出对话原始响应结果
+        if config.DEBUG_LEVEL > 0: logger.info(f"原始回应: {raw_res}")
+    else:
+        prompt_template = chat.get_chat_prompt_template(userid=trigger_userid, chat_type=chat_type)
+        # 生成 log 输出用的 prompt 模板
+        log_prompt_template = '\n'.join([f"[{m['role']}]\n{m['content']}\n" for m in prompt_template]) if isinstance(prompt_template, list) else prompt_template
+        if config.DEBUG_LEVEL > 0:
+            # logger.info("对话 prompt 模板: \n" + str(log_prompt_template))
+            # 保存 prompt 模板到日志文件
+            with open(os.path.join(config.NG_LOG_PATH, f"{chat_key}.{time.strftime('%Y-%m-%d %H-%M-%S')}.prompt.log"), 'a', encoding='utf-8') as f:
+                f.write(f"prompt 模板: \n{log_prompt_template}\n")
+            logger.info(f"对话 prompt 模板已保存到日志文件: {chat_key}.{time.strftime('%Y-%m-%d %H-%M-%S')}.prompt.log")
 
-    if chat.preset_key != current_preset_key:
-        if config.DEBUG_LEVEL > 0: logger.warning(f'等待OpenAI响应返回的过程中人格预设由[{current_preset_key}]切换为[{chat.preset_key}],当前消息不再继续处理.2')
-        return
+        chat.update_gen_time()  # 更新上次生成时间
+        time_before_request = time.time()
+        tg = TextGenerator.instance
+        raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.preset_key, 'sender_name': sender_name})  # 生成对话结果
+        if not success:  # 如果生成对话结果失败，则直接返回
+            logger.warning("生成对话结果失败，跳过处理...")
+            await matcher.finish(raw_res)
+
+        # 如果生成对话结果过程中启动了新的消息生成，则放弃本次生成结果
+        if chat.last_gen_time > time_before_request:
+            logger.warning("生成对话结果过程中启动了新的消息生成，放弃本次生成结果...")
+            return
+
+        # 输出对话原始响应结果
+        if config.DEBUG_LEVEL > 0: logger.info(f"原始回应: {raw_res}")
+
+        if time.time() - time_before_request > config.OPENAI_TIMEOUT:
+            logger.warning(f'OpenAI响应超过timeout值[{config.OPENAI_TIMEOUT}]，停止处理')
+            return
+
+        if chat.preset_key != current_preset_key:
+            if config.DEBUG_LEVEL > 0: logger.warning(f'等待OpenAI响应返回的过程中人格预设由[{current_preset_key}]切换为[{chat.preset_key}],当前消息不再继续处理.2')
+            return       
 
     # 用于存储最终回复顺序内容的列表
     reply_list:List[Union[str, dict]] = []
@@ -373,12 +404,22 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
 
     # 分割对话结果提取出所有 "/#扩展名&参数1&参数2#/" 格式的扩展调用指令 参数之间用&分隔 多行匹配
     ext_calls = re.findall(r"/.?#(.+?)#.?/", talk_res, re.S)
+    # 首先查找所有扩展调用指令
 
+# 如果 ext_calls 为空，则替换 talk_res 中的内容为voice并删除
+    if current_preset_key in ["苗苗","丹恒","克拉拉","穹","「信使」","史瓦罗","彦卿","晴霓","杰帕德","素裳","绿芙蓉","罗刹","艾丝妲","黑塔","丹枢","希露瓦","白露","费斯曼","停云","可可利亚","景元","螺丝咕姆","青镞","公输师傅","卡芙卡","大毫","驭空","半夏","奥列格","娜塔莎","桑博","瓦尔特","阿兰","伦纳德","佩拉","卡波特","帕姆","帕斯卡","青雀","三月七","刃","姬子","布洛妮娅","希儿","星","符玄","虎克","银狼","镜流","「博士」","「大肉丸」","九条裟罗","佐西摩斯","刻晴","博易","卡维","可莉","嘉玛","埃舍尔","塔杰·拉德卡尼","大慈树王","宵宫","康纳","影","枫原万叶","欧菲妮","玛乔丽","珊瑚","田铁嘴","砂糖","神里绫华","罗莎莉亚","荒泷一斗","莎拉","迪希雅","钟离","阿圆","阿娜耶","阿拉夫","雷泽","香菱","龙二","「公子」","「白老先生」","优菈","凯瑟琳","哲平","夏洛蒂","安柏","巴达维","式大将","斯坦利","毗伽尔","海妮耶","爱德琳","纳西妲","老孟","芙宁娜","阿守","阿祇","丹吉尔","丽莎","五郎","元太","克列门特","克罗索","北斗","埃勒曼","天目十五","奥兹","恶龙","早柚","杜拉夫","松浦","柊千里","甘雨","石头","纯水精灵？","羽生田千鹤","莱依拉","菲谢尔","言笑","诺艾尔","赛诺","辛焱","迪娜泽黛","那维莱特","八重神子","凯亚","吴船长","埃德","天叔","女士","恕筠","提纳里","派蒙","流浪者","深渊使徒","玛格丽特","珐露珊","琴","瑶瑶","留云借风真君","绮良良","舒伯特","荧","莫娜","行秋","迈勒斯","阿佩普","鹿野奈奈","七七","伊迪娅","博来","坎蒂丝","埃尔欣根","埃泽","塞琉斯","夜兰","常九爷","悦","戴因斯雷布","笼钓瓶一心","纳比尔","胡桃","艾尔海森","艾莉丝","菲米尼","蒂玛乌斯","迪奥娜","阿晃","阿洛瓦","陆行岩本真蕈·元素生命","雷电将军","魈","鹿野院平藏","「女士」","「散兵」","凝光","妮露","娜维娅","宛烟","慧心","托克","托马","掇星攫辰天君","旁白","浮游水蕈兽·元素生命","烟绯","玛塞勒","百闻","知易","米卡","西拉杰","迪卢克","重云","阿扎尔","霍夫曼","上杉","久利须","嘉良","回声海螺","多莉","安西","德沃沙克","拉赫曼","林尼","查尔斯","深渊法师","温迪","爱贝尔","珊瑚宫心海","班尼特","琳妮特","申鹤","神里绫人","艾伯特","萍姥姥","萨赫哈蒂","萨齐因","阿尔卡米","阿贝多","anzai","久岐忍","九条镰治","云堇","伊利亚斯","埃洛伊","塞塔蕾","拉齐","昆钧","柯莱","沙扎曼","海芭夏","白术","空","艾文","芭芭拉","莫塞伊思","莺儿","达达利亚","迈蒙","长生","阿巴图伊","陆景和","莫弈","夏彦","左然"]:  
+        if not ext_calls :
+                abcd=[]
+                abcd.extend(talk_res.split(';'))
+                for aa in abcd:                    
+                    ext_call_str = f"voice&{aa}&{current_preset_key}"
+                    ext_calls.append(ext_call_str)
+                talk_res=''           
     # 对分割后的对话根据 '*;' 进行分割，表示对话结果中的分句，处理结果为列表，其中每个元素为一句话
     if config.NG_ENABLE_MSG_SPLIT:
         # 提取后去除所有扩展调用指令并切分信息，剩余部分为对话结果 多行匹配
-        talk_res = re.sub(r"/.?#(.+?)#.?/", '*;', talk_res)
-        reply_list.extend(talk_res.split('*;'))
+        talk_res = re.sub(r"/.?#(.+?)#.?/", ';', talk_res)
+        reply_list.extend(talk_res.split(';'))
     else:
         # 提取后去除所有扩展调用指令，剩余部分为对话结果 多行匹配
         talk_res = re.sub(r"/.?#(.+?)#.?/", '', talk_res)
@@ -483,7 +524,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 elif key == 'voice': # 发送语音
                     logger.info(f"回复语音消息: {reply_content}")
                     await matcher.send(Message(MessageSegment.record(file=reply_content, cache=False))) # type: ignore
-
+                    await asyncio.sleep(4)
                 elif key == 'code_block':  # 发送代码块
                     await matcher.send(Message(reply_text))
 
@@ -543,7 +584,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
             logger.error(f'unknown reply type:{type(reply)}, content:{reply}')
         await asyncio.sleep(1)  # 每条回复之间间隔1秒
 
-    cost_token = tg.cal_token_count(str(prompt_template) + raw_res)  # 计算对话结果的 token 数量
+    cost_token = 555  # 计算对话结果的 token 数量
 
     # while time.time() - sta_time < 1.5:   # 限制对话响应最短时间
     #     time.sleep(0.1)
@@ -596,3 +637,6 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
                 chat_key=chat_key,
                 bot=bot,
             )
+
+
+# 创建一个字典，用于存放你想写入的数据

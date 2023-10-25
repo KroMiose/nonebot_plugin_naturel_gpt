@@ -169,6 +169,15 @@ class Config(BaseModel, extra=Extra.ignore):
     DEBUG_LEVEL: int
     """debug level, [0, 1, 2, 3], 0 为关闭，等级越高debug信息越详细"""
 
+    CLAUDE: bool
+    """是否启用claude"""
+    slack_user_token : str
+    """集成权限的token"""
+    claude_id : str
+    """claude的id"""
+    channel_id : str
+    """claude所在频道的id"""
+
 # 配置文件模板(把全部默认值写到Config定义里比较乱，因此保留此默认值对象,作为真实的默认值)
 CONFIG_TEMPLATE = {
     "OPENAI_API_KEYS": [    # OpenAI API Key 列表
@@ -282,6 +291,10 @@ CONFIG_TEMPLATE = {
 
     'VERSION':'1.0',
     'DEBUG_LEVEL': 0,  # debug level, [0, 1, 2], 0 为关闭，等级越高debug信息越详细
+    'CLAUDE':False,
+    'slack_user_token':'aa',
+    'claude_id':'aa',
+    'channel_id':'aa',
 }
 
 driver = get_driver()

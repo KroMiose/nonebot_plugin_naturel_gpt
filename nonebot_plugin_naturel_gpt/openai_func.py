@@ -37,23 +37,33 @@ class TextGenerator(Singleton["TextGenerator"]):
             openai.api_base = base_url
     
     @run_sync
-    def get_response(self, prompt, type: str = 'chat', custom: dict = {}) -> Tuple[str, bool]:
+    def get_response(self, prompt, type: str = 'chat', custom: dict = None) -> Tuple[str, bool]:
         """获取文本生成"""
+        if custom is None:
+            custom = {}  # 修复函数参数默认值的问题
+
         res, success = ('', False)
-        for _ in range(len(self.api_keys)):
+        for i in range(len(self.api_keys)):
+            current_key_index = (self.key_index + i) % len(self.api_keys)
+            if current_key_index==0:
+                openai.api_base='https://api.chatanywhere.com.cn/v1'
+            else:
+                openai.api_base='https://api.chatanywhere.cn/v1'
             if type == 'chat':
-                res, success = self.get_chat_response(self.api_keys[self.key_index], prompt, custom)
+                res, success = self.get_chat_response(self.api_keys[current_key_index], prompt, custom)
             elif type == 'summarize':
-                res, success = self.get_summarize_response(self.api_keys[self.key_index], prompt, custom)
+                res, success = self.get_summarize_response(self.api_keys[current_key_index], prompt, custom)
             elif type == 'impression':
-                res, success = self.get_impression_response(self.api_keys[self.key_index], prompt, custom)
+                res, success = self.get_impression_response(self.api_keys[current_key_index], prompt, custom)
             else:
                 res, success = (f'未知类型:{type}', False)
+
             if success:
+                self.key_index = (current_key_index + 1) % len(self.api_keys)  # 更新到下一个API密钥索引以备下次使用
                 return res, True
 
             # 请求错误处理
-            if "Rate limit" in res:
+            if "Rate limit" in res:       
                 reason = res
                 res = '超过每分钟请求次数限制，喝杯茶休息一下吧 (´；ω；`)'
                 break
@@ -67,10 +77,13 @@ class TextGenerator(Singleton["TextGenerator"]):
             else:
                 reason = res
                 res = '哎呀，发生了未知错误 (´；ω；`)'
-            self.key_index = (self.key_index + 1) % len(self.api_keys)
-            logger.warning(f"当前 Api Key({self.key_index}): [{self.api_keys[self.key_index][:4]}...{self.api_keys[self.key_index][-4:]}] 请求错误，尝试使用下一个...")
+            logger.warning(f"当前 Api Key({current_key_index}): [{self.api_keys[current_key_index][:4]}...{self.api_keys[current_key_index][-4:]}] 请求错误，尝试使用下一个...")
             logger.error(f"错误原因: {res} => {reason}")
-        logger.error("请求 OpenAi 发生错误，请检查 Api Key 是否正确或者查看控制台相关日志")
+
+        if not success:
+            self.key_index = 0  # 如果所有密钥都未成功，重置key_index为0
+            logger.error("请求 OpenAi 发生错误，请检查 Api Key 是否正确或者查看控制台相关日志")
+
         return res, False
 
     def get_chat_response(self, key:str, prompt, custom:dict = {})->Tuple[str, bool]:
