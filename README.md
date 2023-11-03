@@ -12,6 +12,7 @@
     🧬 <a href="https://docs.google.com/spreadsheets/d/1JQNmVH-vlDn2uEPwkjv3iN-zn0PHpQ7RGbgA5T3fxOA/edit?usp=sharing">预设收集共享表(欢迎分享各种自定义人设)</a> 🧬 <br/>
     🎆 如果喜欢请点个⭐吧！您的支持就是我持续更新的动力 🎉<br/>
     💬 技术交流/答疑/讨论 -> ：<a href="https://jq.qq.com/?_wv=1027&k=71t9iCT7">加入插件交流群-636925153</a> 🗨️ <br/>
+    👀 <a href="https://github.com/KroMiose/nonebot_plugin_naturel_gpt/tree/ng_for_claude">Claude 适配分支</a> <a href="https://github.com/238066asxsa">By: 238066asxsa</a> 👀 <br/>
     <a href="./LICENSE">
         <img src="https://img.shields.io/badge/license-Apache 2.0-6cg.svg" alt="license">
     </a>
