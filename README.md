@@ -82,6 +82,7 @@ nb plugin install nonebot-plugin-naturel-gpt
 - [x] 输出内容转图片: 使用 htmlrender 将 TA 的回复转换为图片，降低风控几率 (可选开关，感谢 @HMScygnet 提供 pr)
 - [x] Minecraft 服务器接入，让她在游戏中为你服务，使用 GPT 的能力编写各种复杂的 NBT 指令
 - [x] 消息节流机制，短时间内接受到大量消息时，只对最后一条消息进行回复 (可配置)
+- [x] Stable Diffusion 绘画接入支持 (需自备绘图 API)
 - [ ] 主动记忆和记忆管理功能: 让 TA 主动记住点什么吧！hmm 让我康康你记住了什么 (计划重构，为 bot 接入外置记忆库)
 - [ ] 图片感知: 拟使用腾讯云提供的识图 api，协助 bot 感知图片内容
 - [ ] 主动聊天参与逻辑: 尽力模仿人类的聊天参与逻辑，目标是让 TA 能够真正融入你的群组
@@ -95,6 +96,10 @@ nb plugin install nonebot-plugin-naturel-gpt
 
 <details>
 <summary>点击展开</summary>
+
+### [2023/11/26] Stable Diffusion 绘图支持
+
+- 新增 Stable Diffusion 绘图扩展，支持使用任意 SD 后端由 AI 自主绘图
 
 ### [2023/7/3] v2.1.8 token 计算优化 | 新增扩展和优化
 
