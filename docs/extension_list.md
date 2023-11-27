@@ -19,6 +19,26 @@
 
 <hr />
 
+## [Stable Diffusion 绘画扩展](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_stablediffusion.py)
+
+### 简介 <!-- {docsify-ignore} -->
+
+调用任意 Stable Diffusion 后端生成图片并发送
+
+### 配置 <!-- {docsify-ignore} -->
+
+请根据下方示例配置中的注释来编辑你的扩展配置
+
+```yml
+# SD 后端 API 地址
+sd_base_api: http://127.0.0.1:7860
+
+# 生成图片时使用的对话模型
+chat_model: gpt-3.5-turbo
+```
+
+<hr />
+
 ## [发送随机二次元图片 (ixiaowai)](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_random_pic.py)
 
 !> 请勿与其它发图拓展一并启用
