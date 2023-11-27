@@ -9,14 +9,15 @@ from .Extension import Extension
 import openai
 
 SD_BASE_API = ""
+CHAT_MODEL = "gpt-3.5-turbo"
 
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config: dict = {
     "name": "draw",  # 扩展名称，用于标识扩展
     "arguments": {
-        "description": "str",  # 关键字
+        "description": "str",  # 画面描述
     },
-    "description": "Draw a picture by detail description. (usage in response: /#draw&一个穿着可爱连衣裙萝莉在海边玩耍#/)",
+    "description": "The description of the picture must be as accurate and detailed as possible; If there is too little information, you need to reason and supplement the details of the picture. (usage in response: /#draw&A girl who wears ... and ...#/)",  # 扩展描述，用于ai理解扩展的功能
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": ["图", "再", "涩", "色", "画"],
     # 每次消息回复中最大调用次数，不填则默认为99
@@ -41,8 +42,9 @@ class CustomExtension(Extension):
         """
         custom_config: dict = self.get_custom_config()  # 获取yaml中的配置信息
 
-        global SD_BASE_API
+        global SD_BASE_API, CHAT_MODEL
         SD_BASE_API = custom_config.get("sd_base_api", "http://127.0.0.1:7860")
+        CHAT_MODEL = custom_config.get("chat_model", "gpt-3.5-turbo")
 
         description = arg_dict.get("description", "")
 
@@ -121,7 +123,7 @@ async def gen_chat_response_text(
     frequency_penalty: float = 0.2,
     presence_penalty: float = 0.2,
     top_p=1,
-    model="gpt-3.5-turbo",
+    model=CHAT_MODEL,
 ) -> Tuple[str, int]:
     """生成聊天回复内容"""
 
@@ -183,7 +185,7 @@ Stable Diffusion是一款利用深度学习的文生图模型，支持通过使�
 - 你输出的 Stable Diffusion prompt 以“**Prompt:**”开头。
 - prompt 内容包含画面主体、材质、附加细节、图像质量、艺术风格、色彩色调、灯光等部分，但你输出的 prompt 不能分段，例如类似"medium:"这样的分段描述是不需要的，也不能包含":"和"."。
 - 画面主体：尽可能简短的英文描述画面主体, 如 A girl in a garden，主体细节概括（主体可以是人、事、物、景）画面核心内容。这部分根据用户每次给你的主题来生成。你可以添加更多主题相关的合理的细节。
-- 对于人物主题，你必须描述人物的眼睛、鼻子、嘴唇，例如'beautiful detailed eyes,beautiful detailed lips,extremely detailed eyes and face,longeyelashes'，以免Stable Diffusion随机生成变形的面部五官，这点非常重要。你还可以描述人物的外表、情绪、衣服、姿势、视角、动作、背景等。人物属性中，1girl表示一个女孩，2girls表示两个女孩。
+- 对于人物主题，你必须描述人物的眼睛、鼻子、嘴唇，例如'beautiful detailed eyes,beautiful detailed lips,extremely detailed eyes and face,longeyelashes'，以免Stable Diffusion随机生成变形的面部五官，这点非常重要。你还可以描述人物的外表、情绪、衣服、姿势、视角、动作、背景等。人物属性中，1girl表示一个女孩，2girls表示两个女孩。特别的，如果你需要绘制一个特定动漫人物，必须给出人物的具体名字，例如：'Hatsune Miku' 以达到指定效果。
 - 材质：用来制作艺术品的材料。 例如：插图、油画、3D 渲染和摄影。 Medium 有很强的效果，因为一个关键字就可以极大地改变风格。
 - 附加细节：画面场景细节，或人物细节，描述画面细节内容，让图像看起来更充实和合理。这部分是可选的，要注意画面的整体和谐，不能与主题冲突。
 - 图像质量：你可以根据主题的需求添加：HDR,UHD,studio lighting,ultra-fine painting,sharp focus,physically-based rendering,extreme detail description,professional,vivid colors,bokeh。
@@ -219,7 +221,7 @@ async def gen_sd_prompt_by_scene(scene: str) -> str:
     res, _ = await gen_chat_response_text(
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT.strip()},
-            {"role": "user", "content": f"场景: {scene}"},
+            {"role": "user", "content": f"画面描述: {scene}"},
         ],
     )
     return res
