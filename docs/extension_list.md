@@ -19,6 +19,29 @@
 
 <hr />
 
+## [Stable Diffusion 绘画扩展](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_dalle_draw.py)
+
+### 简介 <!-- {docsify-ignore} -->
+
+调用dall-e-3绘制图像并发送
+
+### 配置 <!-- {docsify-ignore} -->
+
+请根据下方示例配置中的注释来编辑你的扩展配置
+
+```yml
+# 调用的 dalle3 使用的api key
+key: sk-xxxxxxxxxxxxxxxx
+
+# 使用代理地址
+proxy: null
+
+# 请求的url地址
+url: https://api.openai.com/v1/images/generations
+```
+
+<hr />
+
 ## [Stable Diffusion 绘画扩展](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_stablediffusion.py)
 
 ### 简介 <!-- {docsify-ignore} -->
