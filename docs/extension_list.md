@@ -19,29 +19,6 @@
 
 <hr />
 
-## [Dall-e-3 绘画扩展](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_dalle_draw.py)
-
-### 简介 <!-- {docsify-ignore} -->
-
-调用dall-e-3绘制图像并发送
-
-### 配置 <!-- {docsify-ignore} -->
-
-请根据下方示例配置中的注释来编辑你的扩展配置
-
-```yml
-# 调用的 dalle3 使用的api key
-key: sk-xxxxxxxxxxxxxxxx
-
-# 使用代理地址
-proxy: null
-
-# 请求的url地址
-url: https://api.openai.com/v1/images/generations
-```
-
-<hr />
-
 ## [Stable Diffusion 绘画扩展](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_stablediffusion.py)
 
 ### 简介 <!-- {docsify-ignore} -->
@@ -64,6 +41,29 @@ always_improve_prompt: (best quality,4k,8k,masterpiece:1.2),ultra-detailed,(real
 
 # 绘图固定负面提示词
 always_negative_prompt: too many fingers, long neck, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, bad feet,futa,pink hair,((poorly drawn hands)), ((poorly drawn face)), (((mutation))), (((deformed))), ((ugly)), blurry, ((bad anatomy)), (((bad proportions))), ((extra limbs)), cloned face, (((disfigured))), (((more than 2 nipples))), out of frame, ugly, extra limbs, (bad anatomy), gross proportions, (malformed limbs), ((missing arms)), ((missing legs)), (((extra arms))), (((extra legs))), mutated hands, (fused fingers), (too many fingers), (((long neck))), missing fingers, extra digit, fewer digits, bad feet, nsfw,
+```
+
+<hr />
+
+## [Dall-e-3 绘画扩展](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_dalle_draw.py)
+
+### 简介 <!-- {docsify-ignore} -->
+
+调用dall-e-3绘制图像并发送
+
+### 配置 <!-- {docsify-ignore} -->
+
+请根据下方示例配置中的注释来编辑你的扩展配置
+
+```yml
+# 调用的 dalle3 使用的api key
+key: sk-xxxxxxxxxxxxxxxx
+
+# 使用代理地址
+proxy: null
+
+# 请求的url地址
+url: https://api.openai.com/v1/images/generations
 ```
 
 <hr />
