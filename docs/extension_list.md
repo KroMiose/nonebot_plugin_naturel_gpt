@@ -19,7 +19,7 @@
 
 <hr />
 
-## [Stable Diffusion 绘画扩展](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_dalle_draw.py)
+## [Dall-e-3 绘画扩展](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_dalle_draw.py)
 
 ### 简介 <!-- {docsify-ignore} -->
 
