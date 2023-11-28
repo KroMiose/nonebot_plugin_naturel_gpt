@@ -56,7 +56,7 @@ always_negative_prompt: too many fingers, long neck, bad anatomy, bad hands, tex
 请根据下方示例配置中的注释来编辑你的扩展配置
 
 ```yml
-# 调用的 dalle3 使用的api key
+# 调用 dalle3 使用的api key
 key: sk-xxxxxxxxxxxxxxxx
 
 # 使用代理地址
