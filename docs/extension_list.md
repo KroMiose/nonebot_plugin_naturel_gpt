@@ -35,6 +35,12 @@ sd_base_api: http://127.0.0.1:7860
 
 # 生成图片时使用的对话模型
 chat_model: gpt-3.5-turbo
+
+# 绘图固定正面提示词
+always_improve_prompt: (best quality,4k,8k,masterpiece:1.2),ultra-detailed,(realistic,photorealistic,photo-realistic:1.37),
+
+# 绘图固定负面提示词
+always_negative_prompt: too many fingers, long neck, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, bad feet,futa,pink hair,((poorly drawn hands)), ((poorly drawn face)), (((mutation))), (((deformed))), ((ugly)), blurry, ((bad anatomy)), (((bad proportions))), ((extra limbs)), cloned face, (((disfigured))), (((more than 2 nipples))), out of frame, ugly, extra limbs, (bad anatomy), gross proportions, (malformed limbs), ((missing arms)), ((missing legs)), (((extra arms))), (((extra legs))), mutated hands, (fused fingers), (too many fingers), (((long neck))), missing fingers, extra digit, fewer digits, bad feet, nsfw,
 ```
 
 <hr />
