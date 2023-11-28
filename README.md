@@ -97,12 +97,9 @@ nb plugin install nonebot-plugin-naturel-gpt
 <details>
 <summary>点击展开</summary>
 
-### [2023/11/28] Dall-e-3 绘图支持
+### [2023/11/28] Dall-e-3 绘图支持 | Stable Diffusion 绘图支持
 
-- 新增 Dall-e-3 绘图扩展，支持使用Dall-e-3绘图
-
-### [2023/11/26] Stable Diffusion 绘图支持
-
+- 新增 Dall-e-3 绘图扩展，支持使用Dall-e-3绘图（感谢@微量元素 提供 pr）
 - 新增 Stable Diffusion 绘图扩展，支持使用任意 SD 后端由 AI 自主绘图
 
 ### [2023/7/3] v2.1.8 token 计算优化 | 新增扩展和优化
