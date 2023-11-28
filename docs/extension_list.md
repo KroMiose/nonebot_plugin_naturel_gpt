@@ -45,6 +45,29 @@ always_negative_prompt: too many fingers, long neck, bad anatomy, bad hands, tex
 
 <hr />
 
+## [Dall-e-3 绘画扩展](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_dalle_draw.py)
+
+### 简介 <!-- {docsify-ignore} -->
+
+调用dall-e-3绘制图像并发送
+
+### 配置 <!-- {docsify-ignore} -->
+
+请根据下方示例配置中的注释来编辑你的扩展配置
+
+```yml
+# 调用 dalle3 使用的api key
+key: sk-xxxxxxxxxxxxxxxx
+
+# 使用代理地址
+proxy: null
+
+# 请求的url地址
+url: https://api.openai.com/v1/images/generations
+```
+
+<hr />
+
 ## [发送随机二次元图片 (ixiaowai)](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_random_pic.py)
 
 !> 请勿与其它发图拓展一并启用
