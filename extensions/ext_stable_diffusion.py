@@ -10,6 +10,11 @@ import openai
 
 SD_BASE_API = ""
 CHAT_MODEL = "gpt-3.5-turbo"
+ALWAYS_IMPROVE_PROMPT = (
+    "masterpiece, best quality,extremely detailed CG unity 8k wallpaper,"
+)
+ALWAYS_NEGATIVE_PROMPT = "paintings, cartoon, anime, sketches, worst quality, low quality, normal quality, lowres, watermark, monochrome, grayscale, ugly, blurry, Tan skin, dark skin, black skin, skin spots, skin blemishes, age spot, glans, disabled, distorted, bad anatomy, morbid, malformation, amputation, bad proportions, twins, missing body, fused body, extra head, poorly drawn face, bad eyes, deformed eye, unclear eyes, cross-eyed, long neck, malformed limbs, extra limbs, extra arms, missing arms, bad tongue, strange fingers, mutated hands, missing hands, poorly drawn hands, extra hands, fused hands, connected hand, bad hands, wrong fingers, missing fingers, extra fingers, 4 fingers, 3 fingers, deformed hands, extra legs, bad legs, many legs, more than two legs, bad feet, wrong feet, extra feet, nsfw"
+IMG_SIZE = 512
 
 # 扩展的配置信息，用于ai理解扩展的功能 *必填*
 ext_config: dict = {
@@ -17,7 +22,7 @@ ext_config: dict = {
     "arguments": {
         "description": "str",  # 画面描述
     },
-    "description": "The description of the picture must be as accurate and detailed as possible; If there is too little information, you need to reason and supplement the details of the picture. (usage in response: /#draw&A girl who wears ... and ...#/)",  # 扩展描述，用于ai理解扩展的功能
+    "description": "The description of the picture must be as accurate and detailed as possible; If there is too little information, you need to reason and supplement the details of the picture. (usage in response: /#draw&A girl who has ... wears ... and ...#/)",  # 扩展描述，用于ai理解扩展的功能
     # 参考词，用于上下文参考使用，为空则每次都会被参考(消耗token)
     "refer_word": ["图", "再", "涩", "色", "画"],
     # 每次消息回复中最大调用次数，不填则默认为99
@@ -42,9 +47,33 @@ class CustomExtension(Extension):
         """
         custom_config: dict = self.get_custom_config()  # 获取yaml中的配置信息
 
-        global SD_BASE_API, CHAT_MODEL
+        # 配置信息处理
+        global SD_BASE_API, CHAT_MODEL, ALWAYS_IMPROVE_PROMPT, ALWAYS_NEGATIVE_PROMPT, IMG_SIZE
+
         SD_BASE_API = custom_config.get("sd_base_api", "http://127.0.0.1:7860")
         CHAT_MODEL = custom_config.get("chat_model", "gpt-3.5-turbo")
+        IMG_SIZE = custom_config.get("img_size", 512)
+
+        ALWAYS_IMPROVE_PROMPT = (
+            custom_config.get(
+                "always_improve_prompt",
+            )
+            or ALWAYS_IMPROVE_PROMPT
+        )
+
+        ALWAYS_NEGATIVE_PROMPT = (
+            custom_config.get(
+                "always_negative_prompt",
+            )
+            or ALWAYS_NEGATIVE_PROMPT
+        )
+
+        ALWAYS_IMPROVE_PROMPT = (
+            (ALWAYS_IMPROVE_PROMPT + ",") if ALWAYS_IMPROVE_PROMPT else ""
+        )
+        ALWAYS_NEGATIVE_PROMPT = (
+            (ALWAYS_NEGATIVE_PROMPT + ",") if ALWAYS_NEGATIVE_PROMPT else ""
+        )
 
         description = arg_dict.get("description", "")
 
@@ -68,26 +97,24 @@ class CustomExtension(Extension):
 
 """ ======== Stable Diffusion 绘画方法 ======== """
 
-DEFAULT_IMPROVE_PROMPT = "(best quality,4k,8k,masterpiece:1.2),ultra-detailed,(realistic,photorealistic,photo-realistic:1.37),"
-DEFAULT_NEGATIVE_PROMPT = "too many fingers, long neck, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, bad feet,futa,pink hair,((poorly drawn hands)), ((poorly drawn face)), (((mutation))), (((deformed))), ((ugly)), blurry, ((bad anatomy)), (((bad proportions))), ((extra limbs)), cloned face, (((disfigured))), (((more than 2 nipples))), (((adult))), out of frame, ugly, extra limbs, (bad anatomy), gross proportions, (malformed limbs), ((missing arms)), ((missing legs)), (((extra arms))), (((extra legs))), mutated hands, (fused fingers), (too many fingers), (((long neck))), missing fingers, extra digit, fewer digits, bad feet"
 
+async def text2img(prompt: str, negative_prompt: str = ALWAYS_NEGATIVE_PROMPT) -> str:
+    """让笔自己画画 返回base64图像"""
 
-async def text2img(prompt: str, negative_prompt: str = DEFAULT_NEGATIVE_PROMPT) -> str:
-    """文字转图像 返回base64图像"""
     res = json.loads(
         await async_fetch(
             f"{SD_BASE_API}/sdapi/v1/txt2img",
             "post",
             data={
-                "prompt": DEFAULT_IMPROVE_PROMPT + prompt,
-                "negative_prompt": negative_prompt,
+                "prompt": ALWAYS_IMPROVE_PROMPT + prompt,
+                "negative_prompt": ALWAYS_NEGATIVE_PROMPT + negative_prompt,
                 "sampler_name": "DPM++ 2M Karras",
                 "batch_size": 1,
                 "n_iter": 1,
-                "steps": 50,
+                "steps": 35,
                 "cfg_scale": 7,
-                "width": 512,
-                "height": 512,
+                "width": IMG_SIZE,
+                "height": IMG_SIZE,
             },
             headers={
                 "Content-Type": "application/json",
@@ -101,16 +128,9 @@ async def text2img(prompt: str, negative_prompt: str = DEFAULT_NEGATIVE_PROMPT) 
 
 
 async def ai_text2img(prompt) -> str:
+    """让 ChatGPT 自己拿笔画画"""
     prompt, negative_prompt = split_content(prompt)
     return await text2img(prompt, negative_prompt)
-
-
-def split_content(gpt_prompt: str) -> tuple[str, str]:
-    """分割 prompt"""
-    if gpt_prompt.startswith("**Prompt:**"):
-        gpt_prompt = gpt_prompt[len("**Prompt:**") :].strip()
-    res_list = [s.strip() for s in gpt_prompt.split("**Negative Prompt:**")]
-    return res_list[0], res_list[1] if len(res_list) > 1 else ""
 
 
 """ ======== Openai 生成 Prompt  ======== """
@@ -119,7 +139,7 @@ def split_content(gpt_prompt: str) -> tuple[str, str]:
 # 问一问神奇的 ChatGPT
 async def gen_chat_response_text(
     messages,
-    temperature: float = 0,
+    temperature: float = 0.1,
     frequency_penalty: float = 0.2,
     presence_penalty: float = 0.2,
     top_p=1,
@@ -141,17 +161,7 @@ async def gen_chat_response_text(
     return output, token_consumption  # noqa: RET504
 
 
-def save_base64_img(base64_img: str, path: str, overwrite: bool = False):
-    """保存base64图像为文件"""
-
-    if Path(path).exists() and not overwrite:
-        # logger.warning(f"文件 {path} 已存在 | 跳过...")
-        return
-    ensure_path_exist(path, use_parent=True)
-    with Path(path).open("wb") as f:
-        f.write(base64.decodebytes(base64_img.encode()))
-
-
+# 画师生成咒语
 SYSTEM_PROMPT = """
 # Stable Diffusion prompt 助理
 
@@ -208,30 +218,32 @@ Stable Diffusion是一款利用深度学习的文生图模型，支持通过使�
 ### 4. 示例:
 一份合格的参考 Prompt 如下所示:
 ```
-**Prompt:** (1 cute girl on left), doll body, loli, Witch,solo,((full_body)),small_breasts,straight-on,twin_braids,long hair,facing viewer,zettai_ryouiki,open_robe,holding wand,dark magic_circle,(Heterochromatic pupil),expressionless,star Pentagram on chest,delicate magic_hat, delicate cloth,england,red bowknot,slim,Magic Workshop background, sparkle, lens flare, light leaks, Broken glass, jewelry, (Dark wizard), star eyes, ((from above)), golden eyes
+**Prompt:** sharp focus,colorful,capanime screencap,1 cute girl, loli,Witch,solo,full_body,small_breasts,straight-on,twin_braids,white long hair,facing viewer,zettai_ryouiki,open_robe,holding wand,dark magic_circle,Heterochromatic pupil,expressionless,star badge on chest, moon_badge,delicate magic_hat, delicate cloth
 
-**Negative Prompt:** head out of frame,out of frame,(feet out of frame),(hat out of frame)
+**Negative Prompt:** out_of_frame,(feet out of frame),(hat_out_of_frame)
 ```
-注意: 除非用户的场景需要，否则你的回答不应该与上述示例中的 Prompt 有过多雷同。
+注意: 除非用户的场景需要，否则你的回答不应该与上述示例中的 Prompt 有过多雷同内容。
 """
 
 
 async def gen_sd_prompt_by_scene(scene: str) -> str:
     """根据场景生成 sd 绘画提示词"""
+
     res, _ = await gen_chat_response_text(
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT.strip()},
-            {"role": "user", "content": f"画面描述: {scene}"},
+            {"role": "user", "content": f"画面场景: {scene}"},
         ],
     )
     return res
 
 
 async def draw_by_desc(desc: str) -> bytes:
-    file_name = str(time.time()) + ".png"
+    """通过描述开始画画"""
+
+    file_name = f"{time.strftime('%Y%m%d-%H%M%S')}.png"
     path = f"ext_cache_sd/{file_name}"
     prompt = await gen_sd_prompt_by_scene(desc)
-    # await ue.reply(f"AI 生成结果: {prompt}")
     save_base64_img(
         await ai_text2img(prompt),
         path,
@@ -239,7 +251,27 @@ async def draw_by_desc(desc: str) -> bytes:
     return Path(path).read_bytes()
 
 
-""" ======== 必要工具 ======== """
+""" ======== 工具箱 ======== """
+
+
+def split_content(gpt_prompt: str) -> tuple[str, str]:
+    """分割文本内容 (prompt)"""
+
+    if gpt_prompt.startswith("**Prompt:**"):
+        gpt_prompt = gpt_prompt[len("**Prompt:**") :].strip()
+    res_list = [s.strip() for s in gpt_prompt.split("**Negative Prompt:**")]
+    return res_list[0], res_list[1] if len(res_list) > 1 else ""
+
+
+def save_base64_img(base64_img: str, path: str, overwrite: bool = False):
+    """保存base64图像为文件"""
+
+    if Path(path).exists() and not overwrite:
+        # logger.warning(f"文件 {path} 已存在 | 跳过...")
+        return
+    ensure_path_exist(path, use_parent=True)
+    with Path(path).open("wb") as f:
+        f.write(base64.decodebytes(base64_img.encode()))
 
 
 def ensure_path_exist(path: str, use_parent: bool = False):
@@ -260,7 +292,7 @@ async def async_fetch(
     proxy_server: str = "",
     timeout: int = 60,
 ) -> str:
-    """异步获取网页"""
+    """异步发起请求"""
 
     if headers is None:
         headers = {}

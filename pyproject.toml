@@ -10,7 +10,7 @@ packages = [{ include = "nonebot_plugin_naturel_gpt" }]
 [tool.poetry.dependencies]
 python = "^3.8"
 nonebot2 = "^2.0.0rc3"
-openai = ">=0.27.0"
+openai = ">=0.27.0,<0.29.0"
 nonebot-adapter-onebot = "^2.2.1"
 jieba = "^0.42.1"
 numpy = "^1.21.3"
@@ -20,9 +20,19 @@ anyio = "^3.6.2"
 aiohttp = "^3.8.4"
 tiktoken = "0.4.0"
 
-[tool.nonebot]
-# adapters = [{name = "Spigot", module_name = "nonebot.adapters.spigot", project_link = "nonebot-adapter-spigot", desc = "MineCraft通信适配"}]
+[tool.poetry.group.dev.dependencies]
+nb-cli = "^1.2.8"
+nonebot2 = {extras = ["fastapi"], version = "^2.1.2"}
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.nonebot]
+adapters = [
+    { name = "OneBot V11", module_name = "nonebot.adapters.onebot.v11" }
+]
+plugins = ["nonebot_plugin_naturel_gpt"]
+plugin_dirs = []
+builtin_plugins = []
