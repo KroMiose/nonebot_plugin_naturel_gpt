@@ -13,7 +13,7 @@
 
 注意事项：
 
-- NoneBot 应使用 `ReverseDriver`，也就是需要使用 **反向 WS** 连接到 GoCQ
+- NoneBot 应使用 `ReverseDriver`，也就是需要使用 **反向 WS** 连接到 你的 MC 服务端
 - 配置文件中 `websocket_url` 的值部分应为 `ws://<NoneBot所在IP>:<NoneBot监听端口>/spigot/ws`，例如 `ws://127.0.0.1:8765/spigot/ws`
 - 如果你的 MC 服务器和 NoneBot 不在同一台服务器上，需要在 NoneBot 的 `.env` 文件中将 NoneBot 的监听地址改为 `0.0.0.0` 并放行对应端口，否则将导致连接失败
 

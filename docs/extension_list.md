@@ -37,10 +37,13 @@ sd_base_api: http://127.0.0.1:7860
 chat_model: gpt-3.5-turbo
 
 # 绘图固定正面提示词
-always_improve_prompt: (best quality,4k,8k,masterpiece:1.2),ultra-detailed,(realistic,photorealistic,photo-realistic:1.37),
+always_improve_prompt: masterpiece, best quality,extremely detailed CG unity 8k wallpaper,
 
 # 绘图固定负面提示词
-always_negative_prompt: too many fingers, long neck, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, bad feet,futa,pink hair,((poorly drawn hands)), ((poorly drawn face)), (((mutation))), (((deformed))), ((ugly)), blurry, ((bad anatomy)), (((bad proportions))), ((extra limbs)), cloned face, (((disfigured))), (((more than 2 nipples))), out of frame, ugly, extra limbs, (bad anatomy), gross proportions, (malformed limbs), ((missing arms)), ((missing legs)), (((extra arms))), (((extra legs))), mutated hands, (fused fingers), (too many fingers), (((long neck))), missing fingers, extra digit, fewer digits, bad feet, nsfw,
+always_negative_prompt: paintings, cartoon, anime, sketches, worst quality, low quality, normal quality, lowres, watermark, monochrome, grayscale, ugly, blurry, Tan skin, dark skin, black skin, skin spots, skin blemishes, age spot, glans, disabled, distorted, bad anatomy, morbid, malformation, amputation, bad proportions, twins, missing body, fused body, extra head, poorly drawn face, bad eyes, deformed eye, unclear eyes, cross-eyed, long neck, malformed limbs, extra limbs, extra arms, missing arms, bad tongue, strange fingers, mutated hands, missing hands, poorly drawn hands, extra hands, fused hands, connected hand, bad hands, wrong fingers, missing fingers, extra fingers, 4 fingers, 3 fingers, deformed hands, extra legs, bad legs, many legs, more than two legs, bad feet, wrong feet, extra feet, nsfw
+
+# 绘制图片尺寸
+img_size: 512
 ```
 
 <hr />
@@ -49,7 +52,7 @@ always_negative_prompt: too many fingers, long neck, bad anatomy, bad hands, tex
 
 ### 简介 <!-- {docsify-ignore} -->
 
-调用dall-e-3绘制图像并发送
+调用 dall-e-3 绘制图像并发送
 
 ### 配置 <!-- {docsify-ignore} -->
 
@@ -174,7 +177,7 @@ pic_proxy: null
 
 ```yml
 # [必填] 平台 token (需自行申请)
-token: ''
+token: ""
 ```
 
 <hr />
@@ -197,10 +200,10 @@ ng_voice_translate_on: false
 tencentcloud_common_region: ap-shanghai
 
 # 腾讯翻译 Secret ID
-tencentcloud_common_secretid: ''
+tencentcloud_common_secretid: ""
 
 # 腾讯翻译 Secret Key
-tencentcloud_common_secretkey: ''
+tencentcloud_common_secretkey: ""
 
 # 翻译目标语言
 g_voice_tar: ja
@@ -253,10 +256,10 @@ ng_voice_translate_on: false
 tencentcloud_common_region: ap-shanghai
 
 # 腾讯翻译 Secret ID
-tencentcloud_common_secretid: ''
+tencentcloud_common_secretid: ""
 
 # 腾讯翻译 Secret Key
-tencentcloud_common_secretkey: ''
+tencentcloud_common_secretkey: ""
 
 # 翻译目标语言
 g_voice_tar: ja
@@ -285,13 +288,13 @@ api_url: 127.0.0.1:50021
 
 ```yml
 # [必填] 邮箱 SMTP 授权码
-SMTP_CODE: ''
+SMTP_CODE: ""
 
 # [必填] 邮箱地址
-SENDER_ADDR: ''
+SENDER_ADDR: ""
 
 # SMTP 连接地址，默认 163 邮箱
-SMTP_ADDR: 'smtp.163.com'
+SMTP_ADDR: "smtp.163.com"
 
 # SMTP 连接端口，没有特殊需求不要填写
 SMTP_PORT: null
@@ -317,11 +320,11 @@ SMTP_USE_TLS: true
 ```yml
 # [必填] 谷歌搜索 api_key
 # 申请地址：https://developers.google.com/custom-search/v1/introduction?hl=zh-cn
-apiKey: ''
+apiKey: ""
 
 # [必填] 谷歌搜索 cx_key
 # 申请地址：https://programmablesearchengine.google.com/controlpanel/all
-cxKey: ''
+cxKey: ""
 
 # 代理服务器地址
 proxy: null

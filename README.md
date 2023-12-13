@@ -92,10 +92,39 @@ nb plugin install nonebot-plugin-naturel-gpt
 
 ### > [点击前往 NG 文档站](https://ng.kro.zone)
 
+## 🧑‍💻 开发指南
+
+> 通过以下几步操作即可快速开始开发本插件
+
+1. 克隆本仓库
+
+```bash
+git clone https://github.com/KroMiose/nonebot_plugin_naturel_gpt.git
+```
+
+2. 进入目录并安装依赖
+
+```bash
+cd nonebot_plugin_naturel_gpt
+pip install poetry  # 需要提前安装 Python 环境: 推荐 Python 3.10
+poetry install --dev
+```
+
+3. 运行 Bot
+
+```bash
+nb run
+```
+
 ## 🎢 更新日志
 
 <details>
 <summary>点击展开</summary>
+
+### [2023/12/13] v2.1.9 失效依赖修复
+
+- 锁定 OpenAI 依赖版本为 0.27~0.28 修复安装问题
+- 修改项目结构为可单独运行的 Nonebot 机器人架构，方便功能开发
 
 ### [2023/11/28] Dall-e-3 绘图支持 | Stable Diffusion 绘图支持
 

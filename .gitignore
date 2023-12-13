@@ -1,9 +1,10 @@
 __pycache__
 dist
 tests
-poetry.lock
 /extensions/.gitignore
 
 config
 data
 ext_cache
+.env.dev
+.env.prod
