@@ -1,5 +1,8 @@
-﻿from typing import Dict, List, Optional, Tuple, Union
-import asyncio, requests
+﻿import hashlib
+from typing import Dict, Optional, Tuple, Union
+import asyncio
+import requests
+import aiohttp
 
 from nonebot.matcher import Matcher
 from nonebot.adapters import Bot
@@ -9,7 +12,12 @@ from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, PrivateMessageEvent, GroupMessageEvent, MessageSegment, GroupIncreaseNoticeEvent
 
-from .config import *
+from .config import config
+
+try:
+    import ujson as json
+except ImportError:
+    import json
 
 def to_me():
     if config.NG_TO_ME:
@@ -43,7 +51,7 @@ async def default_permission_check_func(matcher:Matcher, event: Event, bot:Bot, 
     is_admin = is_super_user or isinstance(event, PrivateMessageEvent) or await (GROUP_ADMIN | GROUP_OWNER)(bot, event) # 超级管理员，私聊，群主，群管理，均视为admin
 
     common_cmd = ['', '查询', 'query', '设定', 'set', '更新', 'update', 'edit', '添加', 'new', '开启', 'on', '关闭', 'off', '重置', 'reset']
-    super_cmd = ['admin', '删除', 'del', 'delete', '锁定', 'lock', '解锁', 'unlock', '扩展', 'ext',  'debug', '会话', 'chats', '记忆', 'memory']
+    super_cmd = ['admin', '删除', 'del', 'delete', '锁定', 'lock', '解锁', 'unlock', '扩展', 'ext',  'debug', '会话', 'chats', '记忆', 'memory', 'get', 'upload', 'ph']
     
     cmd_0 = cmd_list[0]
     if cmd_0 in super_cmd or '-global' in cmd_list: # 超级命令或者命令中包含 `-global` 选项需要超级管理员权限
@@ -102,3 +110,80 @@ async def translate(text:str, from_:str="auto", to_:str="en") -> str:
         return r.json()["data"][0]
     except:
         raise Exception("翻译 API 请求失败")
+
+async def async_fetch(
+    url,
+    method: str = "get",
+    params: Optional[Dict] = None,
+    data: Union[str, Dict] = "{}",
+    headers: Optional[Dict] = None,
+    proxy_server: str = "",
+    timeout: int = 60,
+) -> str:
+    """发起异步请求"""
+
+    if headers is None:
+        headers = {}
+    if params is None:
+        params = {}
+    if isinstance(data, dict):
+        data = json.dumps(data)
+
+    async with aiohttp.ClientSession(headers=headers) as session:
+        if proxy_server:
+            conn = aiohttp.TCPConnector(limit=10, verify_ssl=False)
+            session = aiohttp.ClientSession(connector=conn)
+            session._default_headers.update(  # noqa: SLF001
+                {"Proxy-Switch-Ip": "yes"},
+            )
+            session._default_headers.update(  # noqa: SLF001
+                {"Proxy-Server": proxy_server},
+            )
+        async with getattr(session, method)(
+            url,
+            params=params,
+            data=data,
+            timeout=timeout,
+        ) as resp:
+            return await resp.text()
+
+def fetch(
+    url,
+    method: str = "get",
+    params: Optional[Dict] = None,
+    data: Union[str, Dict] = "{}",
+    headers: Optional[Dict] = None,
+    proxy_server: str = "",
+    timeout: int = 60,
+) -> str:
+    """发起请求"""
+
+    if headers is None:
+        headers = {}
+    if params is None:
+        params = {}
+    if isinstance(data, dict):
+        data = json.dumps(data)
+
+    if proxy_server:
+        proxies = {
+            "http": f"http://{proxy_server}",
+            "https": f"https://{proxy_server}",
+        }
+    else:
+        proxies = None
+
+    resp = getattr(requests, method)(
+        url,
+        params=params,
+        data=data,
+        headers=headers,
+        proxies=proxies,
+        timeout=timeout,
+    )
+    return resp.text
+
+def md5(s):
+    m = hashlib.md5()
+    m.update(s.encode("utf-8"))
+    return m.hexdigest()

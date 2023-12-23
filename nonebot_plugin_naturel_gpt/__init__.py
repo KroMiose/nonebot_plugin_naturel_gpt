@@ -5,6 +5,7 @@ from nonebot.matcher import Matcher
 from nonebot.adapters import Bot, Event
 
 from .config import *
+from .preset_hub_funcs import check_presethub_connection
 from . import utils
 
 global_config = get_driver().config
@@ -56,3 +57,9 @@ base_url=config.OPENAI_BASE_URL if config.OPENAI_BASE_URL else '', # OpenAI API�
 """ ======== 加载扩展模块 ======== """
 # Extension 模块有作为 __main__ 执行的需求，此时无法加载 class Config, 因此需要传递字典
 load_extensions(config.dict())
+
+""" ======== 预设中心连接检查 ======== """
+if check_presethub_connection():
+    logger.info(f"已连接到预设中心: {config.PRESETHUB_BED_URL}")
+else:
+    logger.warning("预设中心连接失败，请检查网络连接或预设中心地址是否正确")

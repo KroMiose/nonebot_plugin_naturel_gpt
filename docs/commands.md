@@ -139,6 +139,39 @@
       - `chat_key` - 私聊为 `private_<QQ号>`，群聊为 `group_<群号>`
   - `preset_key` - 人格名
 
+## PresetHub 指令
+
+### 搜索 PresetHub 预设
+
+- 指令: `rg search [options] <keyword?>`
+- 功能: 搜索来自 PresetHub 的预设
+- 参数:
+  - `keyword` - 关键字
+  - `options` - _(可选)_ 额外选项
+    - `-p <page_num>` - 页码
+
+### 查询/使用 PresetHub 预设
+
+- 指令: `rg get [options] <preset_id>`
+- 功能: 查询/使用来自 PresetHub 的预设
+- 参数:
+  - `preset_id` - 预设 id
+  - `options` - _(可选)_ 额外选项
+    - `use <preset_key>` - 添加到会话并指定预设名 (`preset_key` 为 `~` 表示不修改预设名)
+    - `-global` - 应用到所有会话
+    - `-target <chat_key>` - 指定会话
+      - `chat_key` - 私聊为 `private_<QQ号>`，群聊为 `group_<群号>`
+
+### 上传预设到 PresetHub
+
+- 指令: `rg upload [options] <preset_key> <preset_intro>`
+- 功能: 上传人格预设到 PresetHub
+- 参数:
+  - `options` - _(可选)_ 额外选项
+    - `-n`  - _(可选)_ 上传后展示的预设标题 (不填则使用 `preset_key`)
+    - `-by` - _(可选)_ 上传者的 QQ 号
+    - `-desc` - _(可选)_ 描述信息
+
 ## 扩展指令
 
 ### 扩展查询

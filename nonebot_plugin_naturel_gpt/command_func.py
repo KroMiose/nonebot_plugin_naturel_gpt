@@ -1,6 +1,6 @@
 import difflib
 import os
-from typing import Optional
+from typing import Optional, Dict
 
 import requests
 
@@ -11,6 +11,8 @@ from .Extension import global_extensions, load_extensions
 from .logger import logger
 from .persistent_data_manager import PersistentDataManager
 
+from .preset_hub_funcs import upload_preset, get_preset, search_preset, delete_preset
+
 # 选项类型  bool只要有就是True，str则需要跟上参数值
 option_type = {
     'target': str,
@@ -20,6 +22,12 @@ option_type = {
     'to_default': bool,
     'default': str,
     'show': bool,
+    'by': str,
+    'desc': str,
+    'n': str,
+    'use': str,
+    'p': str,
+    'ps': str,
 }
 
 class CommandManager:
@@ -503,6 +511,93 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
     reload_config()
     PersistentDataManager.instance.load_from_file()
     return {'msg': f"配置文件重载成功! ver:{config.VERSION}"}
+
+""" PresetHub 相关命令 """
+
+@cmd.register(route='rg/search', params=["keyword"])
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    keyword = param_dict.get('keyword')
+    page = int(option_dict.get('p', '1'))
+    page_size = int(option_dict.get('ps', '10'))
+
+    def gen_preset_info(record: Dict):
+        return (
+            f"+ {record['preset_key']} - id: {record['id']}\n"
+            f"    预设名: {record['name']} by: {record['uploader']}\n"
+        )
+
+    success, data = search_preset(keyword, page=page, page_size=page_size)
+    if success:
+        return {'msg': f"从 PresetHub 中搜索 \"{keyword}\" 结果:\n{''.join([gen_preset_info(r) for r in data['list']])}\n页码:{page}/{data['total']//page_size + 1} - 共 {data['total']} 条\n\ntips: 使用 `rg get <预设id> -u ~` 可应用预设"}
+    else:
+        return {'msg': f"检索预设库数据时出现错误: {data}"}
+
+
+@cmd.register(route='rg/get', params=["preset_id"])
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    preset_id = param_dict.get('preset_id')
+    with_use = option_dict.get('use')
+
+    if not preset_id:
+        return {"msg": "未指定预设ID!"}
+
+    success, data = get_preset(preset_id, bool(with_use))
+    if success:
+        if with_use:
+            target_preset_key = data['preset_key'] if with_use == "~" else with_use
+
+            if option_dict.get('global'):   # 全局应用
+                success_cnt, fail_cnt = ChatManager.instance.add_preset_for_all(preset_key=target_preset_key, bot_self_introl=data['self_intro'])
+                return {'msg': f"添加预设: {target_preset_key} (￣▽￣)-ok! (所有会话) 成功:{success_cnt}，失败:{fail_cnt}", 'is_progress': True}
+            elif option_dict.get('target'): # 指定会话应用
+                target_chat_key = option_dict.get('target')
+                target_chat = ChatManager.instance.get_chat(chat_key=target_chat_key)
+                if not target_chat:
+                    return {'msg': f"会话: {target_chat_key} 不存在! (；′⌒`)"}
+                success, err_msg = target_chat.add_preset(preset_key=target_preset_key, bot_self_introl=data['self_intro'])
+                if success:
+                    return {'msg': f"添加预设: {target_preset_key} (￣▽￣)-ok! (会话: {target_chat_key})", 'is_progress': True}
+                else:
+                    return {'msg': f"添加预设: {target_preset_key} 失败! (会话: {target_chat_key}) (；′⌒`)\n{err_msg}", 'is_progress': True}
+            else:   # 当前会话应用
+                success, err_msg = chat.add_preset(preset_key=target_preset_key, bot_self_introl=data['self_intro'])
+                if success:
+                    return {'msg': f"添加预设: {target_preset_key} (￣▽￣)-ok!", 'is_progress': True}
+                else:
+                    return {'msg': f"添加预设: {target_preset_key} 失败! (；′⌒`)\n{err_msg}", 'is_progress': True}
+
+        else:
+            return {"msg": f"查询到预设信息: {data['name']}\n  预设键: {data['preset_key']}\n  预设值: {data['self_intro']}{('  描述:' + data.get('description')) if data.get('description') else ''}\n  (id: {data['id']})"}
+    else:
+        return {"msg": f"获取预设时出现错误: {data}"}
+
+@cmd.register(route='rg/upload', params=["preset_key", "preset_intro"])
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    preset_key = param_dict['preset_key']
+    self_intro = param_dict.get('preset_intro', '')
+    name = option_dict.get('n', preset_key)
+    uploader = option_dict.get('by', 'Unknown')
+    description = option_dict.get('desc', '')
+
+    if not (preset_key or self_intro):
+        return {"msg": "未指定预设名或预设介绍!"}
+
+    success, data = upload_preset(name, preset_key, self_intro, uploader, description)
+    if success:
+        return {"msg": f"上传预设成功! 预设名: {preset_key}\nid: {data['id']}"}
+    else:
+        return {"msg": f"上传预设时出现错误: {data}"}
+
+@cmd.register(route='rg/ph/del', params=["preset_id"])
+def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
+    preset_id = param_dict.get('preset_id')
+
+    success, data = delete_preset(preset_id)
+    if success:
+        return {"msg": "从 PresetHub 中删除预设成功!"}
+    else:
+        return {"msg": f"删除预设时出现错误: {data}"}
+
 
 # 提交指令注册
 cmd.submit_commands()

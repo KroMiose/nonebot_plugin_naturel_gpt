@@ -163,6 +163,12 @@ class Config(BaseModel, extra=Extra.ignore):
     MC_RCON_PASSWORD: str
     """MC服务器RCON密码"""
 
+    PRESETHUB_BED_URL: str
+    """预设库地址"""
+
+    PRESETHUB_ACCESS_TOKEN: str
+    """预设库访问令牌"""
+
     VERSION:str
     """配置文件版本信息"""
     
@@ -279,6 +285,9 @@ CONFIG_TEMPLATE = {
     'MC_RCON_HOST': '127.0.0.1',  # MC服务器RCON地址
     'MC_RCON_PORT': 25575,  # MC服务器RCON端口
     'MC_RCON_PASSWORD': '',  # MC服务器RCON密码
+
+    'PRESETHUB_BED_URL': 'https://presethub.miose.cn',  # 预设库地址
+    'PRESETHUB_ACCESS_TOKEN': '',   # 预设库访问令牌
 
     'VERSION':'1.0',
     'DEBUG_LEVEL': 0,  # debug level, [0, 1, 2], 0 为关闭，等级越高debug信息越详细
