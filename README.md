@@ -29,7 +29,7 @@
 
 ### 🎭 [2023/12/24] v2.2 PresetHub 预设共享中心上线
 
-NG 专用预设共享中心 PresetHub 上线，可通过指令直接与所有插件用户在线分享人格预设
+NG 专用预设共享中心 PresetHub 上线，可通过 [交互指令](https://ng.kro.zone/#/commands?id=presethub-%e6%8c%87%e4%bb%a4) 直接与所有插件用户在线分享人格预设 | [PresetHub 后端应用开源地址](https://github.com/KroMiose/ng-presethub)
 
 ### 🗺️ [2023/5/21] 文档站上线
 
@@ -128,7 +128,7 @@ nb run
 
 ### [2023/12/24] v2.2.0 PresetHub 预设共享中心上线
 
-- 增加预设 上传/下载/搜索 等相关功能指令及附属功能
+- 增加预设 上传/下载/搜索 等 [相关功能指令](https://ng.kro.zone/#/commands?id=presethub-%e6%8c%87%e4%bb%a4) 及附属功能
 
 ### [2023/12/13] v2.1.9 失效依赖修复
 
