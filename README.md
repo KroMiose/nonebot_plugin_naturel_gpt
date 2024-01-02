@@ -112,7 +112,7 @@ git clone https://github.com/KroMiose/nonebot_plugin_naturel_gpt.git
 ```bash
 cd nonebot_plugin_naturel_gpt
 pip install poetry  # 需要提前安装 Python 环境: 推荐 Python 3.10
-poetry install --dev
+poetry install
 ```
 
 3. 运行 Bot
