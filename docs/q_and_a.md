@@ -43,3 +43,11 @@ TA 会根据下面的信息自动**总结**产生对每个用户的印象：
 - **使用 [人格指令](commands.md#人格指令)** 根据响应提示直接进行编辑
 - **直接删除数据文件** 后重载程序重新生成 (注意：**该方法会造成 bot 记忆丢失**)
 - 如果你的数据文件为 `json` 格式，则可以选择**手动编辑数据文件** (**如果不懂请不要轻易编辑！**)
+
+## 为什么出现出现验证错误，无法自动生成config/naturel_gpt_config.yml文件？
+
+通过pip安装下载的nb-cli会采用新的pydantic v2版本语法，与现有代码的写法冲突。可通过降级pydantic 到v1解决。
+
+```pip install --force-reinstall 'pydantic~=1.10'```
+
+参考来源：https://nonebot.dev/docs/appendices/config
