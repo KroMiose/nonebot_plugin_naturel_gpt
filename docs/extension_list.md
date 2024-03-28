@@ -335,6 +335,34 @@ max_results: 3
 
 <hr />
 
+## [必应聊天扩展模块](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_bing_chat.py)
+
+!> 请勿与其它搜索拓展一并启用
+
+### 简介 <!-- {docsify-ignore} -->
+
+赋予 bot 使用必应 Copilot 查询复杂问题的能力
+
+### 配置 <!-- {docsify-ignore} -->
+
+请根据下方示例配置中的注释来编辑你的扩展配置
+
+```yml
+# [必填] Bing Cookie [_U]
+# 获取方式:
+#   1. 打开 `https://www.bing.com/` 并登录 Microsoft 账号 (!注意: 使用此扩展有账号封禁风险，请自行权衡，作者不对其产生的任何影响负责!)
+#   2. 按 F12 打开开发者工具，切换到 Storage 选项卡，找到 `Cookies` -> `https://www.bing.com` -> `Name = _U`，复制其 `Value` 字段值填写到此处
+_u: ""
+
+# 访问 Bing 的代理服务器地址
+proxy: null
+
+# 限制必应回答的最大长度
+res_size: 1000
+```
+
+<hr />
+
 ## [主动搜索扩展模块](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_search.py)
 
 !> 请勿与其它搜索拓展一并启用
