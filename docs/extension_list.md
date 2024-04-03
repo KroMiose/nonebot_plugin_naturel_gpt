@@ -341,7 +341,7 @@ max_results: 3
 
 ### 简介 <!-- {docsify-ignore} -->
 
-赋予 bot 使用必应 Copilot 查询复杂问题的能力
+赋予 bot 使用必应 Copilot 查询复杂问题的能力，支持连续对话
 
 ### 配置 <!-- {docsify-ignore} -->
 
@@ -352,13 +352,16 @@ max_results: 3
 # 获取方式:
 #   1. 打开 `https://www.bing.com/` 并登录 Microsoft 账号 (!注意: 使用此扩展有账号封禁风险，请自行权衡，作者不对其产生的任何影响负责!)
 #   2. 按 F12 打开开发者工具，切换到 Storage 选项卡，找到 `Cookies` -> `https://www.bing.com` -> `Name = _U`，复制其 `Value` 字段值填写到此处
-_u: ""
+_u: xxxxxxxxxxxx
 
 # 访问 Bing 的代理服务器地址
 proxy: null
 
 # 限制必应回答的最大长度
 res_size: 1000
+
+# 是否显示必应回答
+show_res: false
 ```
 
 <hr />
