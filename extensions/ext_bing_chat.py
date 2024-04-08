@@ -73,7 +73,7 @@ class CustomExtension(Extension):
             self._last_client = client
         except Exception as e:
             logger.error(f"BingChat 模块调用失败: {e}")
-            if "User needs to solve CAPTCHA to continue" in e:
+            if "User needs to solve CAPTCHA to continue" in str(e):
                 return {
                     "text": f"[BingChat] 查询'{raw_question}'时发生错误: 需要处理验证码",
                     "notify": {
