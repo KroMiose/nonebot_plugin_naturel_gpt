@@ -126,6 +126,8 @@ nb run
 <details>
 <summary>点击展开</summary>
 
+### [2024/5/23] 更新扩展sing 唱歌
+
 ### [2023/12/24] v2.2.0 PresetHub 预设共享中心上线
 
 - 增加预设 上传/下载/搜索 等 [相关功能指令](https://ng.kro.zone/#/commands?id=presethub-%e6%8c%87%e4%bb%a4) 及附属功能

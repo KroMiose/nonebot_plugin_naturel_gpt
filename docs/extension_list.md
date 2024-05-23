@@ -71,6 +71,31 @@ url: https://api.openai.com/v1/images/generations
 
 <hr />
 
+## [唱歌扩展](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_sing.py)
+
+### 简介 <!-- {docsify-ignore} -->
+
+什么 机器人还能唱歌？？？？
+
+### 配置 <!-- {docsify-ignore} -->
+
+请根据下方示例配置中的注释来编辑你的扩展配置
+
+```yml
+# 调用 NecoNeuCoSVC_v2 的api
+#点击获得api：https://colab.research.google.com/github/KevinWang676/Bark-Voice-Cloning/blob/main/notebooks/NeuCoSVC_v2_%E5%85%88%E4%BA%AB%E7%89%88.ipynb?authuser=1#scrollTo=BBb8LK0KXw8n 或者运行项目模型：https://github.com/thuhcsi/NeuCoSVC 或者参考colab的内容本地运行
+api: https://xxxxxxxxxxxxxxxx.gradio.live
+
+
+
+#音源： 可以为纯人声歌曲的下载url，人名（质量具有随机性），BV号（你希望翻唱的角色的歌曲）
+singer: BVxxxxxx or name or url
+
+
+```
+
+<hr />
+
 ## [发送随机二次元图片 (ixiaowai)](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_random_pic.py)
 
 !> 请勿与其它发图拓展一并启用
