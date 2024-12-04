@@ -548,4 +548,38 @@ black_words: []
 
 <hr />
 
+## [让BOT看得见图片](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_analyzeimage.py)
+
+### 简介 <!-- {docsify-ignore} -->
+
+调用视觉模型分析图片
+
+### 配置 <!-- {docsify-ignore} -->
+
+请根据下方示例配置来编辑你的扩展配置
+
+```yml
+# api_key
+apiKey: sk-abc12******
+
+# 调用api
+apiUrl: https://oneapi.xxxxxx.com/v1/chat/completions
+
+# 使用模型
+model: gpt-4o-mini
+```
+如果希望每次提及 Bot 并携带图片时，自动调用扩展进行分析，请在以下文件中进行修改：  
+
+**文件路径**:  
+[`nonebot_plugin_naturel_gpt/matcher.py`](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/deea985789c6c697964b459d5f0a905ad8a54890/nonebot_plugin_naturel_gpt/matcher.py#L388)
+
+**修改方式**:  
+在第 388 行处，```# 重置所有扩展调用次数``` 前添加以下代码：  
+
+```python
+raw_res += f"/#analyzeimage&{raw_res}#/"
+```
+
+<hr />
+
 ## [已归档扩展（不推荐使用 / 已失效）](archived_extensions.md)
