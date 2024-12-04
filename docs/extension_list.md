@@ -568,6 +568,17 @@ apiUrl: https://oneapi.xxxxxx.com/v1/chat/completions
 # 使用模型
 model: gpt-4o-mini
 ```
+如果希望每次提及 Bot 并携带图片时，自动调用扩展进行分析，请在以下文件中进行修改：  
+
+**文件路径**:  
+[`nonebot_plugin_naturel_gpt/matcher.py`](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/16dfd03fdd977ca6452483d6dbe72f59e32e3df9/nonebot_plugin_naturel_gpt/matcher.py#L367)
+
+**修改方式**:  
+在第 367 行处，```# 重置所有扩展调用次数``` 前添加以下代码：  
+
+```python
+raw_res += f"/#analyzeimage&{raw_res}#/"
+```
 
 <hr />
 
