@@ -548,4 +548,27 @@ black_words: []
 
 <hr />
 
+## [让BOT看得见图片](https://github.com/KroMiose/nonebot_plugin_naturel_gpt/blob/main/extensions/ext_analyzeimage.py)
+
+### 简介 <!-- {docsify-ignore} -->
+
+调用视觉模型分析图片
+
+### 配置 <!-- {docsify-ignore} -->
+
+请根据下方示例配置来编辑你的扩展配置
+
+```yml
+# api_key
+apiKey: sk-abc12******
+
+# 调用api
+apiUrl: https://oneapi.xxxxxx.com/v1/chat/completions
+
+# 使用模型
+model: gpt-4o-mini
+```
+
+<hr />
+
 ## [已归档扩展（不推荐使用 / 已失效）](archived_extensions.md)
