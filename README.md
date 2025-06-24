@@ -25,9 +25,9 @@
     </a>
 </div>
 
-## 🆙 新 NG 重构版本发布 [Nekro-Agent](https://github.com/KroMiose/nekro-agent)
+## 🆙 新 NG 重构版本发布 [NekroAgent](https://github.com/KroMiose/nekro-agent) 🎉
 
-这是一个全新的基于容器技术的自执行代理 AI 机器人，支持人设扮演、实时代码编写与执行、高可扩展性代理 AI，支持 Docker-Compose 一键部署，欢迎前往体验 -> [Nekro-Agent](https://github.com/KroMiose/nekro-agent)
+这是一个全新的基于容器技术的高智能自执行代理 AI 机器人，通过实时代码生成与执行实现方法级别的扩展，更有人设市场、插件市场等丰富的社区共享资源，支持 Docker-Compose 一键部署，支持跨平台适配接入，支持多人交互，支持原生多模态能力识别与通用文件处理，欢迎前往体验 -> [NekroAgent](https://github.com/KroMiose/nekro-agent)
 
 ## 🎏 NG 进化史
 
