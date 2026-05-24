@@ -87,7 +87,7 @@ class Config(BaseModel):
     """长期对话记忆间隔"""
 
     NG_DATA_PICKLE: bool
-    """是否强制使用pickle，默认使用json"""
+    """已废弃：聊天数据固定使用SQLite存储"""
     NG_DATA_PATH: str
     """数据文件目录"""
     NG_EXT_PATH: str
@@ -125,6 +125,17 @@ class Config(BaseModel):
     """是否将机器人的回复转换成图片"""
     IMG_MAX_WIDTH: int
     """生成图片的最大宽度"""
+
+    ENABLE_MULTIMODAL: bool
+    """是否启用图片/音频多模态输入"""
+    MULTIMODAL_MAX_IMAGES: int
+    """每次请求最多传入最近几张图片"""
+    MULTIMODAL_MAX_AUDIOS: int
+    """每次请求最多传入最近几段音频"""
+    MULTIMODAL_IMAGE_DETAIL: str
+    """图片理解细节等级: auto, low, high"""
+    MULTIMODAL_AUDIO_FORMAT: str
+    """音频传入格式: wav 或 mp3"""
 
     MEMORY_ACTIVE: bool
     """是否启用记忆功能"""
@@ -243,7 +254,7 @@ CONFIG_TEMPLATE = {
     'CHAT_MEMORY_MAX_LENGTH': 16,   # 长期对话记忆长度
     'CHAT_SUMMARY_INTERVAL': 10,  # 长期对话记忆间隔
 
-    'NG_DATA_PICKLE': False,  # 强制使用pickle
+    'NG_DATA_PICKLE': False,  # 已废弃：聊天数据固定使用SQLite存储
     'NG_DATA_PATH': "./data/naturel_gpt/",  # 数据文件目录
     'NG_EXT_PATH': "./data/naturel_gpt/extensions/",  # 扩展目录
     'NG_LOG_PATH': "./data/naturel_gpt/logs/",  # 扩展目录
@@ -264,6 +275,12 @@ CONFIG_TEMPLATE = {
     'ENABLE_COMMAND_TO_IMG': True,    #是否将rg相关指令转换为图片
     'ENABLE_MSG_TO_IMG': False,     #是否将机器人的回复转换成图片
     'IMG_MAX_WIDTH': 800,
+
+    'ENABLE_MULTIMODAL': False,  # 是否启用图片/音频多模态输入
+    'MULTIMODAL_MAX_IMAGES': 3,  # 每次请求最多传入最近几张图片
+    'MULTIMODAL_MAX_AUDIOS': 1,  # 每次请求最多传入最近几段音频
+    'MULTIMODAL_IMAGE_DETAIL': 'auto',  # 图片理解细节等级: auto, low, high
+    'MULTIMODAL_AUDIO_FORMAT': 'mp3',  # 音频传入格式: wav 或 mp3
 
     'MEMORY_ACTIVE': True,  # 是否启用记忆功能
     'MEMORY_MAX_LENGTH': 16,  # 记忆最大条数

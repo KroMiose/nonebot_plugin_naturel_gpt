@@ -127,6 +127,38 @@ class Chat:
                 del self.chat_preset.chat_memory[del_key]
                 if config.DEBUG_LEVEL > 0: logger.info(f"忘记了: {del_key} (超出最大记忆长度)")
 
+    def update_multimodal_context(self, multimodal_data: Optional[Dict[str, List[Dict[str, str]]]]) -> None:
+        """更新当前会话的运行时多模态上下文。"""
+        if not config.ENABLE_MULTIMODAL or not multimodal_data:
+            return
+        context = self._chat_data.tmp_multimodal_context
+        context.setdefault("images", [])
+        context.setdefault("audios", [])
+        context["images"].extend(multimodal_data.get("images") or [])
+        context["audios"].extend(multimodal_data.get("audios") or [])
+        max_images = max(0, config.MULTIMODAL_MAX_IMAGES)
+        max_audios = max(0, config.MULTIMODAL_MAX_AUDIOS)
+        context["images"] = context["images"][-max_images:] if max_images else []
+        context["audios"] = context["audios"][-max_audios:] if max_audios else []
+        if multimodal_data.get("images") or multimodal_data.get("audios"):
+            logger.info(
+                f"[会话: {self.chat_key}] 更新多模态上下文: "
+                f"图片 {len(context['images'])}/{max_images}, "
+                f"音频 {len(context['audios'])}/{max_audios}"
+            )
+
+    def get_multimodal_context(self) -> Dict[str, List[Dict[str, str]]]:
+        """获取将随下一次请求发送给模型的最近多模态上下文。"""
+        if not config.ENABLE_MULTIMODAL:
+            return {"images": [], "audios": []}
+        context = self._chat_data.tmp_multimodal_context
+        max_images = max(0, config.MULTIMODAL_MAX_IMAGES)
+        max_audios = max(0, config.MULTIMODAL_MAX_AUDIOS)
+        return {
+            "images": (context.get("images") or [])[-max_images:] if max_images else [],
+            "audios": (context.get("audios") or [])[-max_audios:] if max_audios else [],
+        }
+
     # def enhance_memory(self, response:str) -> bool:
     #     """增强记忆 如果响应中的内容与记忆中的内容相似，则增强记忆(将改记忆移到最后)"""
     #     for mem_key, mem_value in self.chat_preset.chat_memory.items():#模糊匹配

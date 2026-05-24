@@ -88,9 +88,11 @@ async def handler(matcher_:Matcher, event: MessageEvent, bot:Bot) -> None:
     )
     if config.DEBUG_LEVEL > 1: logger.info(resTmplate)
 
+    chat_text, wake_up, multimodal_data = await gen_chat_text_and_multimodal(event=event, bot=bot)
+
     # 如果是忽略前缀 或者 消息为空，则跳过处理
-    if event.get_plaintext().strip().startswith(config.IGNORE_PREFIX) or not event.get_plaintext():   
-        if config.DEBUG_LEVEL > 1: logger.info("忽略前缀或消息为空，跳过处理...") # 纯图片消息也会被判定为空消息
+    if event.get_plaintext().strip().startswith(config.IGNORE_PREFIX) or not chat_text:
+        if config.DEBUG_LEVEL > 1: logger.info("忽略前缀或消息为空，跳过处理...")
         return
 
     # 判断群聊/私聊
@@ -104,8 +106,6 @@ async def handler(matcher_:Matcher, event: MessageEvent, bot:Bot) -> None:
         if config.DEBUG_LEVEL > 0: logger.info("未知消息来源: " + event.get_session_id())
         return
     
-    chat_text, wake_up = await gen_chat_text(event=event, bot=bot)
-
     # 进行消息响应
     await do_msg_response(
         event.get_user_id(),
@@ -115,6 +115,7 @@ async def handler(matcher_:Matcher, event: MessageEvent, bot:Bot) -> None:
         chat_type,
         chat_key,
         sender_name,
+        multimodal_data=multimodal_data,
         bot=bot,
     )
 
@@ -225,11 +226,12 @@ async def _(matcher_:Matcher, event: MessageEvent, bot:Bot, arg: Message = Comma
 
 
 """ ======== 消息响应方法 ======== """
-async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, matcher: Type[Matcher], chat_type: str, chat_key: str, sender_name: Optional[str] = None, wake_up: bool = False, loop_times=0, loop_data={}, bot:Bot = None): # type: ignore
+async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, matcher: Type[Matcher], chat_type: str, chat_key: str, sender_name: Optional[str] = None, wake_up: bool = False, loop_times=0, loop_data={}, bot:Bot = None, multimodal_data: Optional[Dict[str, List[Dict[str, Any]]]] = None): # type: ignore
     """消息响应方法"""
 
     sender_name = sender_name or 'anonymous'
     chat:Chat = ChatManager.instance.get_or_create_chat(chat_key=chat_key)
+    chat.update_multimodal_context(multimodal_data)
 
     # 判断对话是否被禁用
     if not chat.is_enable:
@@ -328,7 +330,7 @@ async def do_msg_response(trigger_userid:str, trigger_text:str, is_tome:bool, ma
     chat.update_gen_time()  # 更新上次生成时间
     time_before_request = time.time()
     tg = TextGenerator.instance
-    raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.preset_key, 'sender_name': sender_name})  # 生成对话结果
+    raw_res, success = await tg.get_response(prompt=prompt_template, type='chat', custom={'bot_name': chat.preset_key, 'sender_name': sender_name, 'multimodal_data': chat.get_multimodal_context()})  # 生成对话结果
     if not success:  # 如果生成对话结果失败，则直接返回
         logger.warning("生成对话结果失败，跳过处理...")
         await matcher.finish(raw_res)

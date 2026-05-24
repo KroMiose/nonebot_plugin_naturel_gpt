@@ -1,7 +1,8 @@
+import base64
 import re
 import os
 import httpx
-from typing import Tuple, Dict, Optional
+from typing import Any, List, Tuple, Dict, Optional
 from .logger import logger
 from nonebot.utils import run_sync
 from tiktoken import Encoding, encoding_for_model
@@ -52,12 +53,13 @@ class TextGenerator(Singleton["TextGenerator"]):
             if success:
                 return res, True
 
-            # 请求错误处理
+            # 请求错误处理: 先打印详细错误再替换消息
+            logger.error(f"请求 OpenAI API 失败: {res}")
             if "Rate limit" in res:
                 res = '超过每分钟请求次数限制，喝杯茶休息一下吧 (´；ω`)'
                 break
             elif "Error communicating" in res:
-                res = '与 OpenAi 通信时发生错误 (´；ω`)'
+                res = '与 OpenAI 通信时发生错误 (´；ω`)'
             else:
                 res = '哎呀，发生了未知错误 (´；ω`)'
             self.key_index = (self.key_index + 1) % len(self.api_keys)
@@ -68,22 +70,14 @@ class TextGenerator(Singleton["TextGenerator"]):
     def get_chat_response(self, client: OpenAI, prompt, custom: dict = {}) -> Tuple[str, bool]:
         """对话文本生成"""
         try:
-            should_use_chat = self.config['model'].startswith('gpt-3.5-turbo') or self.config['model'].startswith('gpt-4')
+            should_use_chat = not self.config['model'].startswith('text-') and not self.config['model'].startswith('davinci')
             if should_use_chat:
-                response = client.chat.completions.create(
-                    model=self.config['model'],
-                    messages=prompt if isinstance(prompt, list) else [
-                        {'role': 'system', 'content': f"You must strictly follow the user's instructions to give {custom.get('bot_name', 'bot')}'s response."},
-                        {'role': 'user', 'content': prompt},
-                    ],
-                    temperature=self.config['temperature'],
-                    max_tokens=self.config['max_tokens'],
-                    top_p=self.config['top_p'],
-                    frequency_penalty=self.config['frequency_penalty'],
-                    presence_penalty=self.config['presence_penalty'],
-                    timeout=self.config.get('timeout', 30),
-                    stop=[f"\n{custom.get('bot_name', 'AI')}:", f"\n{custom.get('sender_name', 'Human')}:"]
-                )
+                messages = prompt if isinstance(prompt, list) else [
+                    {'role': 'system', 'content': f"You must strictly follow the user's instructions to give {custom.get('bot_name', 'bot')}'s response."},
+                    {'role': 'user', 'content': prompt},
+                ]
+                messages = self._inject_multimodal_content(messages, custom)
+                response = self._create_chat_completion(client, messages)
                 res = ''
                 for choice in response.choices:
                     res += choice.message.content or ''
@@ -96,7 +90,6 @@ class TextGenerator(Singleton["TextGenerator"]):
                     top_p=self.config['top_p'],
                     frequency_penalty=self.config['frequency_penalty'],
                     presence_penalty=self.config['presence_penalty'],
-                    stop=[f"\n{custom.get('bot_name', 'AI')}:", f"\n{custom.get('sender_name', 'Human')}:"]
                 )
                 res = response.choices[0].text.strip() if response.choices else ''
             res = res.strip()
@@ -117,11 +110,181 @@ class TextGenerator(Singleton["TextGenerator"]):
         except Exception as e:
             return f"请求 OpenAi Api 时发生错误: {e}", False
 
+    def _create_chat_completion(self, client: OpenAI, messages: List[Dict[str, Any]]):
+        """创建对话补全；多模态网关不兼容时逐级降级重试。"""
+        try:
+            return self._create_chat_completion_once(client, messages)
+        except Exception as e:
+            if not self._has_multimodal_content(messages):
+                raise e
+
+            image_only_messages = self._drop_audio_content(messages)
+            if image_only_messages != messages:
+                try:
+                    logger.warning(f"多模态音频请求失败，尝试仅使用图片上下文重试: {e}")
+                    return self._create_chat_completion_once(client, image_only_messages)
+                except Exception as image_only_error:
+                    logger.warning(f"图片多模态重试失败，尝试纯文本重试: {image_only_error}")
+            else:
+                logger.warning(f"图片多模态请求失败，尝试纯文本重试: {e}")
+
+            return self._create_chat_completion_once(
+                client,
+                self._drop_multimodal_content(messages),
+            )
+
+    def _create_chat_completion_once(self, client: OpenAI, messages: List[Dict[str, Any]]):
+        return client.chat.completions.create(
+            model=self.config['model'],
+            messages=messages,
+            temperature=self.config['temperature'],
+            max_tokens=self.config['max_tokens'],
+            top_p=self.config['top_p'],
+            frequency_penalty=self.config['frequency_penalty'],
+            presence_penalty=self.config['presence_penalty'],
+            timeout=self.config.get('timeout', 30),
+            stop=None,
+        )
+
+    def _has_multimodal_content(self, messages: List[Dict[str, Any]]) -> bool:
+        for message in messages:
+            content = message.get("content")
+            if isinstance(content, list):
+                for part in content:
+                    if part.get("type") in ("image_url", "input_audio"):
+                        return True
+        return False
+
+    def _drop_audio_content(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        return self._filter_message_content(messages, drop_types={"input_audio"})
+
+    def _drop_multimodal_content(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        return self._filter_message_content(messages, drop_types={"image_url", "input_audio"})
+
+    def _filter_message_content(
+        self,
+        messages: List[Dict[str, Any]],
+        drop_types: set,
+    ) -> List[Dict[str, Any]]:
+        filtered_messages = []
+        for message in messages:
+            copied = dict(message)
+            content = copied.get("content")
+            if isinstance(content, list):
+                filtered_parts = [
+                    part for part in content
+                    if part.get("type") not in drop_types
+                ]
+                if len(filtered_parts) == 1 and filtered_parts[0].get("type") == "text":
+                    copied["content"] = filtered_parts[0].get("text", "")
+                else:
+                    copied["content"] = filtered_parts
+            filtered_messages.append(copied)
+        return filtered_messages
+
+    def _inject_multimodal_content(
+        self,
+        messages: List[Dict[str, Any]],
+        custom: dict,
+    ) -> List[Dict[str, Any]]:
+        """将图片/音频附件追加到最后一条用户消息。"""
+        if not self.config.get("enable_multimodal"):
+            return messages
+
+        multimodal_data = custom.get("multimodal_data") or {}
+        images = (multimodal_data.get("images") or [])[
+            :max(0, int(self.config.get("multimodal_max_images", 0)))
+        ]
+        audios = (multimodal_data.get("audios") or [])[
+            :max(0, int(self.config.get("multimodal_max_audios", 0)))
+        ]
+        if not images and not audios:
+            return messages
+
+        target_idx = None
+        for idx in range(len(messages) - 1, -1, -1):
+            if messages[idx].get("role") == "user":
+                target_idx = idx
+                break
+        if target_idx is None:
+            return messages
+
+        messages = [dict(message) for message in messages]
+        original_content = messages[target_idx].get("content", "")
+        content_parts = (
+            original_content[:]
+            if isinstance(original_content, list)
+            else [{"type": "text", "text": str(original_content)}]
+        )
+
+        image_detail = self.config.get("multimodal_image_detail", "auto")
+        for image in images:
+            image_url = image.get("url")
+            if image_url:
+                content_parts.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": image_url,
+                        "detail": image_detail,
+                    },
+                })
+
+        audio_format = self.config.get("multimodal_audio_format", "mp3")
+        injected_audio_count = 0
+        for audio in audios:
+            audio_data = self._read_audio_as_base64(audio)
+            if not audio_data:
+                continue
+            injected_audio_count += 1
+            content_parts.append({
+                "type": "input_audio",
+                "input_audio": {
+                    "data": audio_data,
+                    "format": audio_format,
+                },
+            })
+
+        messages[target_idx]["content"] = content_parts
+        if images or audios:
+            logger.info(
+                f"多模态上下文注入: 图片 {len(images)} 张, "
+                f"音频 {injected_audio_count}/{len(audios)} 段"
+            )
+        return messages
+
+    def _read_audio_as_base64(self, audio: Dict[str, str]) -> str:
+        """读取音频附件并编码为base64。"""
+        audio_path = audio.get("path")
+        if audio_path and os.path.exists(audio_path):
+            try:
+                with open(audio_path, "rb") as f:
+                    return base64.b64encode(f.read()).decode("ascii")
+            except Exception as e:
+                logger.warning(f"多模态音频读取失败: {e}")
+        elif audio_path:
+            logger.warning(f"多模态音频本地文件不存在，尝试使用URL: {audio_path}")
+
+        audio_url = audio.get("url")
+        if audio_url:
+            return self._fetch_binary_as_base64(audio_url)
+        return ""
+
+    def _fetch_binary_as_base64(self, url: str) -> str:
+        """下载附件并编码为base64。"""
+        try:
+            with httpx.Client(timeout=httpx.Timeout(self.config.get('timeout', 30))) as client:
+                response = client.get(url)
+                response.raise_for_status()
+                return base64.b64encode(response.content).decode("ascii")
+        except Exception as e:
+            logger.warning(f"多模态附件下载失败: {e}")
+            return ""
+
     def get_summarize_response(self, client: OpenAI, prompt: str, custom: dict = {}) -> Tuple[str, bool]:
         """总结文本生成"""
         try:
             response = client.chat.completions.create(
-                model='gpt-3.5-turbo',
+                model=self.config['model'],
                 messages=[
                     {'role': 'user', 'content': prompt},
                 ],
@@ -148,7 +311,7 @@ class TextGenerator(Singleton["TextGenerator"]):
         """印象文本生成"""
         try:
             response = client.chat.completions.create(
-                model='gpt-3.5-turbo-0301',
+                model=self.config['model'],
                 messages=[
                     {'role': 'user', 'content': prompt},
                 ],

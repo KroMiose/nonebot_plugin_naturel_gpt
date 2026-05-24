@@ -49,6 +49,11 @@ TextGenerator.instance.init(api_keys=api_keys, config={
         'presence_penalty': config.CHAT_PRESENCE_PENALTY,
         'max_summary_tokens': config.CHAT_MAX_SUMMARY_TOKENS,
         'timeout': config.OPENAI_TIMEOUT,
+        'enable_multimodal': config.ENABLE_MULTIMODAL,
+        'multimodal_max_images': config.MULTIMODAL_MAX_IMAGES,
+        'multimodal_max_audios': config.MULTIMODAL_MAX_AUDIOS,
+        'multimodal_image_detail': config.MULTIMODAL_IMAGE_DETAIL,
+        'multimodal_audio_format': config.MULTIMODAL_AUDIO_FORMAT,
 }, 
 proxy=config.OPENAI_PROXY_SERVER if config.OPENAI_PROXY_SERVER else None, # 代理服务器配置
 base_url=config.OPENAI_BASE_URL if config.OPENAI_BASE_URL else '', # OpenAI API的base_url
