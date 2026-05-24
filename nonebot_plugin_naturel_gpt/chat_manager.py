@@ -1,4 +1,4 @@
-﻿from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple
 from .singleton import Singleton
 from .chat import Chat
 from .persistent_data_manager import PersistentDataManager

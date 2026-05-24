@@ -47,7 +47,7 @@ class PresetData(StoreSerializable):
     @classmethod
     def create_from_config(cls, preset_config: PresetConfig):
         """从PresetConfig创建一个PresetData实例"""
-        preset_data = PresetData(**preset_config.dict())
+        preset_data = PresetData(**preset_config.model_dump())
         return preset_data
 
     def reset_to_default(self, preset_config: Optional[PresetConfig]):

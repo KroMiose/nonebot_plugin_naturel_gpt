@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import random
 import re
 import time
@@ -144,8 +144,8 @@ async def _(matcher_:Matcher, event: GroupIncreaseNoticeEvent, bot:Bot):  # even
         f"会话: {chat_key}"
         f"\n通知来源: {event.get_user_id()}"
         f"\n是否to-me: {event.is_tome()}"
-        f"\nDict: {event.dict()}"
-        f"\nJSON: {event.json()}"
+        f"\nDict: {event.model_dump()}"
+        f"\nJSON: {event.model_dump_json()}"
     )
     if config.DEBUG_LEVEL > 0: logger.info(resTmplate)
 

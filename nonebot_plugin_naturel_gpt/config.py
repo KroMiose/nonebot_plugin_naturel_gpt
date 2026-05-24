@@ -1,17 +1,19 @@
-﻿from typing import Any, Dict, List
+from typing import Any, Dict, List
 from nonebot.config import Config as NBConfig
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, ConfigDict
 from nonebot import get_driver
 from .logger import logger
 import yaml
 from pathlib import Path
 
-class GlobalConfig(NBConfig, extra=Extra.ignore):
+class GlobalConfig(NBConfig):
+    model_config = ConfigDict(extra='ignore')
     """Plugin Config Here"""
     ng_config_path: str = "config/naturel_gpt_config.yml"
     ng_dev_mode: bool = False
 
-class PresetConfig(BaseModel, extra=Extra.ignore):
+class PresetConfig(BaseModel):
+    model_config = ConfigDict(extra='ignore')
     """人格预设配置项"""
     preset_key:str
     is_locked:bool = False
@@ -20,13 +22,15 @@ class PresetConfig(BaseModel, extra=Extra.ignore):
     """此预设是否仅限私聊"""
     bot_self_introl:str = ''
 
-class ExtConfig(BaseModel, extra=Extra.ignore):
+class ExtConfig(BaseModel):
+    model_config = ConfigDict(extra='ignore')
     """扩展配置项"""
     EXT_NAME:str
     IS_ACTIVE:bool
     EXT_CONFIG:Any
 
-class Config(BaseModel, extra=Extra.ignore):
+class Config(BaseModel):
+    model_config = ConfigDict(extra='ignore')
     """ng 配置数据，默认保存为 naturel_gpt_config.yml"""
     OPENAI_API_KEYS: List[str]
     """OpenAI API Key 列表"""
@@ -294,7 +298,7 @@ CONFIG_TEMPLATE = {
 }
 
 driver = get_driver()
-global_config = GlobalConfig.parse_obj(driver.config)
+global_config = GlobalConfig.model_validate(driver.config.__dict__)
 config_path = global_config.ng_config_path
 config:Config = None # type: ignore
 
@@ -323,7 +327,7 @@ def _load_config_obj_from_file()->Config:
                 config_obj_from_file[k] = CONFIG_TEMPLATE[k]
                 logger.info(f"Naturel GPT 配置文件缺少 {k} 项，将使用默认值")
 
-        config_obj = Config.parse_obj(config_obj_from_file)
+        config_obj = Config.model_validate(config_obj_from_file)
     return config_obj
 
 def save_config():
@@ -337,7 +341,7 @@ def save_config():
 
     # 保存配置文件
     with open(config_path, 'w', encoding='utf-8') as f:
-        yaml.dump(config.dict(), f, allow_unicode=True, sort_keys=False)
+        yaml.dump(config.model_dump(), f, allow_unicode=True, sort_keys=False)
 
 def load_config_from_file_then_save():
     """加载配置文件，然后保存回文件"""
@@ -353,7 +357,7 @@ def reload_config():
     assert(config)
 
     config_tmp = _load_config_obj_from_file()
-    for k in config.dict():
+    for k in config.model_dump():
         setattr(config, k, getattr(config_tmp,k))
     logger.info(f'Naturel GPT 配置文件重载成功! ver:{config.VERSION}')
 

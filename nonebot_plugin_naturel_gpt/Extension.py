@@ -1,4 +1,4 @@
-﻿import importlib
+import importlib
 import time
 import os
 import sys

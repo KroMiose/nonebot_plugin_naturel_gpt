@@ -1,4 +1,4 @@
-﻿import copy
+import copy
 import time
 import random
 from typing import Dict, List, Optional, Tuple

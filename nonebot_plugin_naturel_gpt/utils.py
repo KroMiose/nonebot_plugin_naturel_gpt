@@ -1,4 +1,4 @@
-﻿import hashlib
+import hashlib
 from typing import Dict, Optional, Tuple, Union
 import asyncio
 import requests

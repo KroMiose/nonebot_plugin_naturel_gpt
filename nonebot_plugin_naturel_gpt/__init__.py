@@ -56,7 +56,7 @@ base_url=config.OPENAI_BASE_URL if config.OPENAI_BASE_URL else '', # OpenAI API�
 
 """ ======== 加载扩展模块 ======== """
 # Extension 模块有作为 __main__ 执行的需求，此时无法加载 class Config, 因此需要传递字典
-load_extensions(config.dict())
+load_extensions(config.model_dump())
 
 """ ======== 预设中心连接检查 ======== """
 if check_presethub_connection():
