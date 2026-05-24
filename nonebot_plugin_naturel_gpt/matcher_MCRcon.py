@@ -1,4 +1,4 @@
-﻿import json
+import json
 import re
 from typing import Type
 from nonebot import on_message, on_notice

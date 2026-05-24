@@ -441,7 +441,7 @@ def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
 
 @cmd.register(route='rg/ext/reload', params=['ext_name'])
 def _(option_dict, param_dict, chat:Chat, chat_presets_dict:dict):
-    load_extensions(config.dict())
+    load_extensions(config.model_dump())
     return {'msg': f"重载扩展成功!"}
 
 def find_ext(ext_name: str) -> Optional[ExtConfig]:

@@ -129,7 +129,7 @@ CHAT_MEMORY_MAX_LENGTH: 16
 # 触发印象总结的对话间隔
 CHAT_SUMMARY_INTERVAL: 10
 
-# 是否使用 pickle（.pkl 文件）存储插件数据
+# 已废弃：聊天数据固定使用 SQLite 存储，此项不再生效
 NG_DATA_PICKLE: false
 
 # 插件数据文件目录
@@ -193,6 +193,21 @@ ENABLE_MSG_TO_IMG: false
 
 # 机器人通过文本生成图片的最大宽度（像素）
 IMG_MAX_WIDTH: 800
+
+# 是否启用图片/音频多模态输入
+ENABLE_MULTIMODAL: false
+
+# 每次请求最多传入最近几张图片
+MULTIMODAL_MAX_IMAGES: 3
+
+# 每次请求最多传入最近几段音频
+MULTIMODAL_MAX_AUDIOS: 1
+
+# 图片理解细节等级: auto, low, high
+MULTIMODAL_IMAGE_DETAIL: auto
+
+# 音频传入格式: wav 或 mp3
+MULTIMODAL_AUDIO_FORMAT: mp3
 
 # 是否开启主动记忆（需要同时启用记忆扩展）
 # 开启后 Bot 会自行管理记忆

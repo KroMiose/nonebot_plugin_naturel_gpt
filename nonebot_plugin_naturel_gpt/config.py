@@ -1,17 +1,19 @@
-﻿from typing import Any, Dict, List
+from typing import Any, Dict, List
 from nonebot.config import Config as NBConfig
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, ConfigDict
 from nonebot import get_driver
 from .logger import logger
 import yaml
 from pathlib import Path
 
-class GlobalConfig(NBConfig, extra=Extra.ignore):
+class GlobalConfig(NBConfig):
+    model_config = ConfigDict(extra='ignore')
     """Plugin Config Here"""
     ng_config_path: str = "config/naturel_gpt_config.yml"
     ng_dev_mode: bool = False
 
-class PresetConfig(BaseModel, extra=Extra.ignore):
+class PresetConfig(BaseModel):
+    model_config = ConfigDict(extra='ignore')
     """人格预设配置项"""
     preset_key:str
     is_locked:bool = False
@@ -20,13 +22,15 @@ class PresetConfig(BaseModel, extra=Extra.ignore):
     """此预设是否仅限私聊"""
     bot_self_introl:str = ''
 
-class ExtConfig(BaseModel, extra=Extra.ignore):
+class ExtConfig(BaseModel):
+    model_config = ConfigDict(extra='ignore')
     """扩展配置项"""
     EXT_NAME:str
     IS_ACTIVE:bool
     EXT_CONFIG:Any
 
-class Config(BaseModel, extra=Extra.ignore):
+class Config(BaseModel):
+    model_config = ConfigDict(extra='ignore')
     """ng 配置数据，默认保存为 naturel_gpt_config.yml"""
     OPENAI_API_KEYS: List[str]
     """OpenAI API Key 列表"""
@@ -83,7 +87,7 @@ class Config(BaseModel, extra=Extra.ignore):
     """长期对话记忆间隔"""
 
     NG_DATA_PICKLE: bool
-    """是否强制使用pickle，默认使用json"""
+    """已废弃：聊天数据固定使用SQLite存储"""
     NG_DATA_PATH: str
     """数据文件目录"""
     NG_EXT_PATH: str
@@ -121,6 +125,17 @@ class Config(BaseModel, extra=Extra.ignore):
     """是否将机器人的回复转换成图片"""
     IMG_MAX_WIDTH: int
     """生成图片的最大宽度"""
+
+    ENABLE_MULTIMODAL: bool
+    """是否启用图片/音频多模态输入"""
+    MULTIMODAL_MAX_IMAGES: int
+    """每次请求最多传入最近几张图片"""
+    MULTIMODAL_MAX_AUDIOS: int
+    """每次请求最多传入最近几段音频"""
+    MULTIMODAL_IMAGE_DETAIL: str
+    """图片理解细节等级: auto, low, high"""
+    MULTIMODAL_AUDIO_FORMAT: str
+    """音频传入格式: wav 或 mp3"""
 
     MEMORY_ACTIVE: bool
     """是否启用记忆功能"""
@@ -239,7 +254,7 @@ CONFIG_TEMPLATE = {
     'CHAT_MEMORY_MAX_LENGTH': 16,   # 长期对话记忆长度
     'CHAT_SUMMARY_INTERVAL': 10,  # 长期对话记忆间隔
 
-    'NG_DATA_PICKLE': False,  # 强制使用pickle
+    'NG_DATA_PICKLE': False,  # 已废弃：聊天数据固定使用SQLite存储
     'NG_DATA_PATH': "./data/naturel_gpt/",  # 数据文件目录
     'NG_EXT_PATH': "./data/naturel_gpt/extensions/",  # 扩展目录
     'NG_LOG_PATH': "./data/naturel_gpt/logs/",  # 扩展目录
@@ -260,6 +275,12 @@ CONFIG_TEMPLATE = {
     'ENABLE_COMMAND_TO_IMG': True,    #是否将rg相关指令转换为图片
     'ENABLE_MSG_TO_IMG': False,     #是否将机器人的回复转换成图片
     'IMG_MAX_WIDTH': 800,
+
+    'ENABLE_MULTIMODAL': False,  # 是否启用图片/音频多模态输入
+    'MULTIMODAL_MAX_IMAGES': 3,  # 每次请求最多传入最近几张图片
+    'MULTIMODAL_MAX_AUDIOS': 1,  # 每次请求最多传入最近几段音频
+    'MULTIMODAL_IMAGE_DETAIL': 'auto',  # 图片理解细节等级: auto, low, high
+    'MULTIMODAL_AUDIO_FORMAT': 'mp3',  # 音频传入格式: wav 或 mp3
 
     'MEMORY_ACTIVE': True,  # 是否启用记忆功能
     'MEMORY_MAX_LENGTH': 16,  # 记忆最大条数
@@ -294,7 +315,7 @@ CONFIG_TEMPLATE = {
 }
 
 driver = get_driver()
-global_config = GlobalConfig.parse_obj(driver.config)
+global_config = GlobalConfig.model_validate(driver.config.__dict__)
 config_path = global_config.ng_config_path
 config:Config = None # type: ignore
 
@@ -323,7 +344,7 @@ def _load_config_obj_from_file()->Config:
                 config_obj_from_file[k] = CONFIG_TEMPLATE[k]
                 logger.info(f"Naturel GPT 配置文件缺少 {k} 项，将使用默认值")
 
-        config_obj = Config.parse_obj(config_obj_from_file)
+        config_obj = Config.model_validate(config_obj_from_file)
     return config_obj
 
 def save_config():
@@ -337,7 +358,7 @@ def save_config():
 
     # 保存配置文件
     with open(config_path, 'w', encoding='utf-8') as f:
-        yaml.dump(config.dict(), f, allow_unicode=True, sort_keys=False)
+        yaml.dump(config.model_dump(), f, allow_unicode=True, sort_keys=False)
 
 def load_config_from_file_then_save():
     """加载配置文件，然后保存回文件"""
@@ -353,7 +374,7 @@ def reload_config():
     assert(config)
 
     config_tmp = _load_config_obj_from_file()
-    for k in config.dict():
+    for k in config.model_dump():
         setattr(config, k, getattr(config_tmp,k))
     logger.info(f'Naturel GPT 配置文件重载成功! ver:{config.VERSION}')
 

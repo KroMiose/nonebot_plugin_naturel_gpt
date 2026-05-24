@@ -1,33 +1,38 @@
-[tool.poetry]
+[project]
 name = "nonebot-plugin-naturel-gpt"
 version = "2.2.0"
 description = "一个基于NoneBot框架的Ai聊天插件，对接OpenAi文本生成接口"
-authors = ["KroMiose <li_xiangff@163.com>"]
-license = "Apache License 2.0"
+authors = [
+    {name = "KroMiose", email = "li_xiangff@163.com"}
+]
 readme = "README.md"
-packages = [{ include = "nonebot_plugin_naturel_gpt" }]
+requires-python = ">=3.10"
+dependencies = [
+    "nonebot2>=2.3.0",
+    "openai>=1.0.0",
+    "nonebot-adapter-onebot>=2.4.0",
+    "jieba>=0.42.1",
+    "numpy>=1.21.3",
+    "httpx>=0.24.1",
+    "aiosmtplib>=2.0.1",
+    "anyio>=3.6.2",
+    "aiohttp>=3.8.4",
+    "tiktoken>=0.7.0",
+    "pydantic>=2.0.0"
+]
 
-[tool.poetry.dependencies]
-python = "^3.8"
-nonebot2 = "^2.0.0rc3"
-openai = ">=0.27.0,<=0.28.0"
-nonebot-adapter-onebot = "^2.2.1"
-jieba = "^0.42.1"
-numpy = "^1.21.3"
-httpx = "^0.24.1"
-aiosmtplib = "^2.0.1"
-anyio = "^3.6.2"
-aiohttp = "^3.8.4"
-tiktoken = "0.4.0"
-
-[tool.poetry.group.dev.dependencies]
-nb-cli = "^1.2.8"
-nonebot2 = {extras = ["fastapi"], version = "^2.1.2"}
+[dependency-groups]
+dev = [
+    "nb-cli>=1.2.8",
+    "nonebot2[fastapi]>=2.1.2"
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["nonebot_plugin_naturel_gpt"]
 
 [tool.nonebot]
 adapters = [

@@ -8,3 +8,4 @@ data
 ext_cache
 .env.dev
 .env.prod
+.claude

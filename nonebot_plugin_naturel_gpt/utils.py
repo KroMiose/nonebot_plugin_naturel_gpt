@@ -1,5 +1,5 @@
-﻿import hashlib
-from typing import Dict, Optional, Tuple, Union
+import hashlib
+from typing import Any, Dict, List, Optional, Tuple, Union
 import asyncio
 import requests
 import aiohttp
@@ -63,25 +63,98 @@ async def default_permission_check_func(matcher:Matcher, event: Event, bot:Bot, 
     
 async def gen_chat_text(event: MessageEvent, bot:Bot) -> Tuple[str, bool]:
     """生成合适的会话消息内容(eg. 将cq at 解析为真实的名字)"""
+    text, wake_up, _ = await gen_chat_text_and_multimodal(event, bot)
+    return text, wake_up
+
+async def gen_chat_text_and_multimodal(
+    event: MessageEvent,
+    bot: Bot,
+) -> Tuple[str, bool, Dict[str, List[Dict[str, Any]]]]:
+    """生成会话文本，并提取可传给模型的多模态附件。"""
+    multimodal: Dict[str, List[Dict[str, Any]]] = {
+        "images": [],
+        "audios": [],
+    }
+
     if not isinstance(event, GroupMessageEvent):
-        return event.get_plaintext(), False
-    else:
-        wake_up = False
-        msg = ''
+        msg = event.get_plaintext()
         for seg in event.message:
-            if seg.is_text():
-                msg += seg.data.get('text', '')
-            elif seg.type == 'at':
-                qq = seg.data.get('qq', None)
-                if qq:
-                    if qq == 'all':
-                        msg += '@全体成员'
-                        wake_up = True
-                    else:
-                        user_name = await get_user_name(event=event, bot=bot,user_id=int(qq))
-                        if user_name:
-                            msg += f'@{user_name}' # 保持给bot看到的内容与真实用户看到的一致
-        return msg, wake_up
+            if seg.type == "image":
+                url = seg.data.get("url") or seg.data.get("file")
+                if url:
+                    multimodal["images"].append({"url": url})
+            elif seg.type == "record":
+                audio_data = await _resolve_audio_data(seg, bot)
+                if audio_data:
+                    multimodal["audios"].append(audio_data)
+        return _append_multimodal_placeholders(msg, multimodal), False, multimodal
+
+    wake_up = False
+    msg = ''
+    for seg in event.message:
+        if seg.is_text():
+            msg += seg.data.get('text', '')
+        elif seg.type == 'at':
+            qq = seg.data.get('qq', None)
+            if qq:
+                if qq == 'all':
+                    msg += '@全体成员'
+                    wake_up = True
+                else:
+                    user_name = await get_user_name(event=event, bot=bot,user_id=int(qq))
+                    if user_name:
+                        msg += f'@{user_name}' # 保持给bot看到的内容与真实用户看到的一致
+        elif seg.type == "image":
+            url = seg.data.get("url") or seg.data.get("file")
+            if url:
+                multimodal["images"].append({"url": url})
+        elif seg.type == "record":
+            audio_data = await _resolve_audio_data(seg, bot)
+            if audio_data:
+                multimodal["audios"].append(audio_data)
+    return _append_multimodal_placeholders(msg, multimodal), wake_up, multimodal
+
+async def _resolve_audio_data(
+    seg: MessageSegment,
+    bot: Bot,
+) -> Optional[Dict[str, str]]:
+    """优先将OneBot语音转换为配置指定格式。"""
+    file_id = seg.data.get("file")
+    source_url = seg.data.get("url") or file_id
+    source_path = seg.data.get("path")
+    if source_path:
+        return {"path": source_path, "url": source_url or ""}
+
+    if file_id and config.ENABLE_MULTIMODAL:
+        try:
+            record = await bot.call_api(
+                "get_record",
+                file=file_id,
+                out_format=config.MULTIMODAL_AUDIO_FORMAT,
+            )
+            record_file = record.get("file") if isinstance(record, dict) else None
+            if record_file:
+                return {"path": record_file, "url": source_url or ""}
+        except Exception:
+            pass
+
+    return {"url": source_url} if source_url else None
+
+def _append_multimodal_placeholders(
+    msg: str,
+    multimodal: Dict[str, List[Dict[str, Any]]],
+) -> str:
+    """为聊天历史补充可读的附件占位文本。"""
+    placeholders = []
+    image_count = len(multimodal.get("images", []))
+    audio_count = len(multimodal.get("audios", []))
+    if image_count:
+        placeholders.append(f"[图片 x{image_count}]")
+    if audio_count:
+        placeholders.append(f"[音频 x{audio_count}]")
+    if not placeholders:
+        return msg
+    return " ".join([part for part in [msg.strip(), *placeholders] if part])
     
 
 async def get_user_name(event: Union[MessageEvent, GroupIncreaseNoticeEvent], bot:Bot, user_id:int) -> Optional[str]:
